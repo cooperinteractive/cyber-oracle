@@ -15,14 +15,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     background: radial-gradient(ellipse at center, #0a0820 0%, #02000a 70%);
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     color: #e0e0e0;
     overflow-x: hidden;
     overflow-y: auto;
     position: relative;
-    padding: 24px 16px 70px;
+    padding: 16px 16px 70px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
 
@@ -615,16 +615,18 @@
 
   .learn-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .learn-card {
-    display: block;
-    padding: 14px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
     background: linear-gradient(135deg, rgba(0, 30, 60, 0.55), rgba(40, 0, 60, 0.55));
     border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 12px;
+    border-radius: 10px;
     text-decoration: none;
     color: #fff;
     transition: all 0.25s ease;
@@ -633,39 +635,48 @@
   }
 
   .learn-card:hover, .learn-card:focus-visible {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: rgba(255, 0, 200, 0.6);
-    box-shadow: 0 6px 30px rgba(255, 0, 200, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 0, 200, 0.2);
     outline: none;
   }
 
   .learn-card-icon {
-    font-size: 1.4rem;
-    margin-bottom: 6px;
-    display: inline-block;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+  }
+
+  .learn-card-text {
+    min-width: 0;
+    flex: 1;
   }
 
   .learn-card-title {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: #00ffff;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .learn-card-desc {
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     color: #c8d8ff;
-    line-height: 1.45;
+    line-height: 1.35;
     font-weight: 300;
   }
 
-  @media (max-width: 480px) {
-    .learn-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .learn-card { padding: 12px; }
-    .learn-card-title { font-size: 0.78rem; }
-    .learn-card-desc { font-size: 0.68rem; }
+  @media (max-width: 420px) {
+    .learn-card { padding: 8px 10px; gap: 8px; }
+    .learn-card-title { font-size: 0.72rem; }
+    .learn-card-desc { font-size: 0.62rem; }
+    .learn-card-icon { font-size: 1rem; width: 22px; }
   }
 
   @media (max-width: 480px) {
@@ -755,23 +766,31 @@
     <div class="learn-grid">
       <a class="learn-card" href="superposition.html">
         <span class="learn-card-icon" aria-hidden="true">&#9883;</span>
-        <div class="learn-card-title">Superposition</div>
-        <div class="learn-card-desc">Both states at once, until you look</div>
+        <div class="learn-card-text">
+          <div class="learn-card-title">Superposition</div>
+          <div class="learn-card-desc">Both states at once</div>
+        </div>
       </a>
       <a class="learn-card" href="entanglement.html">
         <span class="learn-card-icon" aria-hidden="true">&#8734;</span>
-        <div class="learn-card-title">Entanglement</div>
-        <div class="learn-card-desc">Two particles, one shared fate</div>
+        <div class="learn-card-text">
+          <div class="learn-card-title">Entanglement</div>
+          <div class="learn-card-desc">One shared fate</div>
+        </div>
       </a>
       <a class="learn-card" href="quantum-tunneling.html">
         <span class="learn-card-icon" aria-hidden="true">&#8633;</span>
-        <div class="learn-card-title">Quantum Tunneling</div>
-        <div class="learn-card-desc">Walking straight through walls</div>
+        <div class="learn-card-text">
+          <div class="learn-card-title">Tunneling</div>
+          <div class="learn-card-desc">Through the walls</div>
+        </div>
       </a>
       <a class="learn-card" href="schrodingers-cat.html">
         <span class="learn-card-icon" aria-hidden="true">&#128008;</span>
-        <div class="learn-card-title">Schrodinger's Cat</div>
-        <div class="learn-card-desc">Alive and dead, simultaneously</div>
+        <div class="learn-card-text">
+          <div class="learn-card-title">Schrodinger's Cat</div>
+          <div class="learn-card-desc">Alive and dead</div>
+        </div>
       </a>
     </div>
   </nav>
@@ -1070,5 +1089,6 @@ questionInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); observe(); }
 });
 </script>
+<script src="nav.js"></script>
 </body>
 </html>
