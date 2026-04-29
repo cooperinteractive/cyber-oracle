@@ -12,7 +12,26 @@
     { file: 'entanglement.html',     title: 'Entanglement',     short: 'Entangle' },
     { file: 'quantum-tunneling.html',title: 'Quantum Tunneling',short: 'Tunneling' },
     { file: 'schrodingers-cat.html', title: "Schrodinger's Cat",short: 'Cat' },
-    { file: 'games.html',            title: 'Cyber Games',      short: 'Games' }
+    { file: 'games.html',            title: 'Cyber Games',      short: 'Games' },
+    { file: 'phish-or-legit.html',   title: 'Phish or Legit?',  short: 'Phish' },
+    { file: 'password-slot.html',    title: 'Password Slots',   short: 'Slots' },
+    { file: 'incident-response.html',title: 'Incident Response',short: 'Pager' },
+    { file: 'whack-a-mole.html',     title: 'Vuln Whack-a-Mole',short: 'Patch' },
+    { file: 'social-engineering.html',title:'Social Engineering',short:'Social' },
+    { file: 'build-your-stack.html', title: 'Build Your Stack', short: 'Stack' },
+    { file: 'honeypot.html',         title: 'Honey Pot',        short: 'Honey' },
+    { file: 'cipher-lab.html',       title: 'Cipher Lab',       short: 'Cipher' },
+    { file: 'cia-triad.html',        title: 'CIA Triad Defense',short: 'CIA' },
+    { file: 'prompt-injection.html', title: 'Prompt Injection', short: 'Prompt' },
+    { file: 'deepfake-detective.html',title:'Deepfake Detective',short:'Deepfake' },
+    { file: 'shadow-it.html',        title: 'Shadow IT Hunter', short: 'Shadow' },
+    { file: 'decryption-race.html',  title: 'Decryption Race',  short: 'Decrypt' },
+    { file: 'attack-surface.html',   title: 'Attack Surface',   short: 'Surface' },
+    { file: 'insider-threat-bingo.html',title:'Insider Bingo',  short: 'Bingo' },
+    { file: 'connect-four.html',     title: 'Cyber Connect Four',short:'Connect' },
+    { file: 'permission-panic.html', title: 'Permission Panic', short: 'Perms' },
+    { file: 'backup-blaster.html',   title: 'Backup Blaster',   short: 'Backup' },
+    { file: 'zero-trust-gatekeeper.html',title:'Zero Trust Gatekeeper',short:'Trust' }
   ];
 
   // Figure out which page we are on. Treat "/" or empty path as index.html.

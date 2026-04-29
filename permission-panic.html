@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permission Panic | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #12051f 0%, #02000a 82%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e8eef8;
+    padding: 16px 16px 60px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 18% 28%, #fff, transparent),
+      radial-gradient(1px 1px at 78% 18%, #9ff, transparent),
+      radial-gradient(2px 2px at 58% 72%, #f8c, transparent);
+    background-size: 220% 220%;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link {
+    color: #ff77dd; text-decoration: none; font-family: 'Courier New', monospace;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 12px; border: 1px solid rgba(255, 119, 221, 0.45); border-radius: 20px;
+  }
+  .back-link:hover, .back-link:focus-visible { background: rgba(255, 119, 221, 0.12); color: #fff; outline: none; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 {
+    font-size: clamp(1.45rem, 4.8vw, 2.25rem); font-weight: 200;
+    letter-spacing: 4px; text-transform: uppercase;
+    background: linear-gradient(90deg, #ff77dd, #00ffff, #00ff88, #ff77dd);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+  @keyframes hueShift { to { background-position: 300% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.82rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat {
+    background: rgba(0, 16, 38, 0.68);
+    border: 1px solid rgba(0, 255, 255, 0.22);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+  .stat-label { font-family: 'Courier New', monospace; font-size: 0.58rem; letter-spacing: 1.4px; color: #8aa0c0; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-value { font-family: 'Courier New', monospace; font-size: 1.28rem; font-weight: 700; color: #00ffff; text-shadow: 0 0 10px rgba(0,255,255,0.45); }
+  .stat-value.trust { color: #00ff88; }
+  .stat-value.risk { color: #ffaa00; }
+  .timer {
+    height: 8px; background: rgba(0,0,0,0.45); border-radius: 999px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px;
+  }
+  .timer-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #00ff88, #00ffff, #ff77dd); transition: width 0.2s linear; }
+  .consent-card {
+    background: linear-gradient(180deg, rgba(35, 14, 56, 0.94), rgba(7, 12, 28, 0.96));
+    border: 1px solid rgba(255, 119, 221, 0.28);
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 14px 46px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.08);
+    margin-bottom: 14px;
+  }
+  .app-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .app-name { font-size: 1.25rem; font-weight: 700; color: #fff; line-height: 1.2; }
+  .app-meta { color: #9fb4d0; font-family: 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 1.4px; text-transform: uppercase; margin-top: 4px; }
+  .risk-pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 10px; font-family: 'Courier New', monospace; font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
+  .risk-low { color: #00ff88; } .risk-med { color: #ffaa00; } .risk-high { color: #ff5f8f; }
+  .request { color: #dce8ff; line-height: 1.55; margin-bottom: 14px; }
+  .scope-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  .scope {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 9px 10px;
+    color: #cfe8ff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.76rem;
+  }
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .action-btn {
+    border: 2px solid rgba(0,255,255,0.35);
+    border-radius: 8px;
+    background: rgba(0, 10, 30, 0.7);
+    color: #fff;
+    padding: 14px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: transform 0.18s, background 0.18s, border-color 0.18s;
+  }
+  .action-btn:hover, .action-btn:focus-visible { transform: translateY(-2px); border-color: #ff77dd; outline: none; background: rgba(255,119,221,0.12); }
+  .action-btn:disabled { opacity: 0.45; cursor: wait; transform: none; }
+  .reveal {
+    display: none;
+    border-radius: 8px;
+    border: 1px solid rgba(0,255,255,0.22);
+    background: rgba(0, 16, 38, 0.72);
+    padding: 14px;
+    line-height: 1.55;
+  }
+  .reveal.visible { display: block; animation: revealIn 0.28s ease; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal-title { font-family: 'Courier New', monospace; font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; color: #00ffff; margin-bottom: 6px; }
+  .next-btn, .restart-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #ff77dd, #00ffff);
+    color: #041020;
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .lesson {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.28);
+    border: 1px dashed rgba(255,255,255,0.14);
+    color: #b8c8d8;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  @media (max-width: 620px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .scope-list, .actions { grid-template-columns: 1fr; }
+    .app-row { align-items: flex-start; flex-direction: column; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar"><a class="back-link" href="games.html">&larr; Games</a></div>
+  <header>
+    <h1>Permission Panic</h1>
+    <p class="subtitle">Least privilege, under pressure</p>
+  </header>
+
+  <main>
+    <section class="stats" aria-label="Game statistics">
+      <div class="stat"><div class="stat-label">Round</div><div id="round" class="stat-value">1/8</div></div>
+      <div class="stat"><div class="stat-label">Score</div><div id="score" class="stat-value">0</div></div>
+      <div class="stat"><div class="stat-label">Trust</div><div id="trust" class="stat-value trust">100</div></div>
+      <div class="stat"><div class="stat-label">Risk</div><div id="risk" class="stat-value risk">0</div></div>
+    </section>
+    <div class="timer" aria-hidden="true"><div id="timerFill" class="timer-fill"></div></div>
+
+    <section class="consent-card" aria-labelledby="appName">
+      <div class="app-row">
+        <div>
+          <h2 id="appName" class="app-name"></h2>
+          <div id="appMeta" class="app-meta"></div>
+        </div>
+        <div id="riskPill" class="risk-pill"></div>
+      </div>
+      <p id="request" class="request"></p>
+      <div id="scopes" class="scope-list" aria-label="Requested permissions"></div>
+      <div class="actions">
+        <button class="action-btn" data-action="approve" type="button">Approve</button>
+        <button class="action-btn" data-action="limit" type="button">Limit</button>
+        <button class="action-btn" data-action="deny" type="button">Deny</button>
+      </div>
+      <div id="reveal" class="reveal" role="status" aria-live="polite"></div>
+    </section>
+    <p class="lesson">Goal: protect productivity without rubber-stamping every consent prompt. "Limit" means approve only the minimum scopes or require an admin-reviewed app role.</p>
+  </main>
+</div>
+
+<script src="sounds.js"></script>
+<script src="nav.js"></script>
+<script>
+(() => {
+  const scenarios = [
+    { app: 'ExpenseSnap', team: 'Finance', risk: 'low', request: 'New invoice scanner needs to upload receipts and read only its own expense folder.', scopes: ['Read expense folder', 'Upload receipts', 'No mailbox access', 'Verified publisher'], best: 'approve', explain: 'This is narrow and business-aligned. Approve because the app asks only for the data it needs.' },
+    { app: 'SlideSpark AI', team: 'Sales', risk: 'high', request: 'Presentation helper asks to read every SharePoint site, all mail, and all Teams chats to make better pitch decks.', scopes: ['Read all files', 'Read all mail', 'Read all chats', 'Export contacts'], best: 'deny', explain: 'Broad tenant-wide read access for slide creation is overreach. Deny and request a scoped integration.' },
+    { app: 'Calendar Triage', team: 'Executive Assistant', risk: 'med', request: 'Scheduling tool wants calendar read/write for one executive and asks for mailbox send permission too.', scopes: ['Read calendar', 'Write calendar', 'Send mail as user', 'Unverified add-in'], best: 'limit', explain: 'Calendar access fits the job, but send-as is too much. Limit the request to calendar permissions and verify the publisher.' },
+    { app: 'BuildBot CI', team: 'Engineering', risk: 'med', request: 'Deployment bot needs repository read access and permission to write deployment statuses.', scopes: ['Read selected repos', 'Write commit status', 'No secrets read', 'Service account'], best: 'approve', explain: 'The scope is selected repositories and deployment metadata, not broad account access. Approve with service-account ownership.' },
+    { app: 'Free PDF Magic', team: 'Marketing', risk: 'high', request: 'A browser extension promises instant PDF conversion and wants to read and change data on every website.', scopes: ['Read all websites', 'Change all websites', 'Unknown publisher', 'Personal account login'], best: 'deny', explain: 'This is classic consent phishing territory: broad browser access, unknown publisher, and a personal login path.' },
+    { app: 'Vendor Portal', team: 'Procurement', risk: 'med', request: 'Supplier portal asks for profile info, company email, and permission to upload contract PDFs to one project library.', scopes: ['Basic profile', 'Company email', 'Upload to one library', 'Vendor-managed'], best: 'limit', explain: 'The workflow is valid, but vendor-managed apps should be constrained to one library and reviewed before expansion.' },
+    { app: 'MFA Helper', team: 'IT', risk: 'low', request: 'Internal tool needs to read device compliance state and enroll recovery methods for managed accounts.', scopes: ['Read managed devices', 'Enroll recovery method', 'Admin owned', 'Audit logging enabled'], best: 'approve', explain: 'Admin-owned, logged, and tied to managed identity work. Approve, then keep it in the normal audit trail.' },
+    { app: 'Inbox Mood Ring', team: 'Everyone', risk: 'high', request: 'Fun sentiment tool asks to read all mailbox contents so it can color-code your day.', scopes: ['Read all mail', 'Process attachments', 'Third-party AI', 'No retention terms'], best: 'deny', explain: 'The value is low and the data exposure is huge. Deny anything that turns mailboxes into training material without controls.' }
+  ];
+
+  const roundSeconds = 18;
+  const state = { index: 0, score: 0, trust: 100, risk: 0, locked: false, time: roundSeconds, timer: null };
+  const el = {
+    round: document.getElementById('round'), score: document.getElementById('score'), trust: document.getElementById('trust'),
+    risk: document.getElementById('risk'), timerFill: document.getElementById('timerFill'), appName: document.getElementById('appName'),
+    appMeta: document.getElementById('appMeta'), riskPill: document.getElementById('riskPill'), request: document.getElementById('request'),
+    scopes: document.getElementById('scopes'), reveal: document.getElementById('reveal'), buttons: Array.from(document.querySelectorAll('.action-btn'))
+  };
+
+  function sound(name) { if (window.CyberSounds && CyberSounds[name]) CyberSounds[name](); }
+  function updateStats() {
+    el.round.textContent = Math.min(state.index + 1, scenarios.length) + '/' + scenarios.length;
+    el.score.textContent = state.score;
+    el.trust.textContent = state.trust;
+    el.risk.textContent = state.risk;
+  }
+  function riskCost(scenario, action) {
+    if (action === scenario.best) return 0;
+    if (scenario.risk === 'high' && action === 'approve') return 22;
+    if (scenario.risk === 'low' && action === 'deny') return 8;
+    return 12;
+  }
+  function trustCost(scenario, action) {
+    if (action === scenario.best) return action === 'limit' ? 1 : 0;
+    if (scenario.risk === 'low' && action === 'deny') return 15;
+    if (scenario.risk === 'high' && action === 'approve') return 8;
+    return 6;
+  }
+  function startTimer() {
+    clearInterval(state.timer);
+    state.time = roundSeconds;
+    el.timerFill.style.width = '100%';
+    state.timer = setInterval(() => {
+      state.time -= 0.2;
+      el.timerFill.style.width = Math.max(0, (state.time / roundSeconds) * 100) + '%';
+      if (state.time <= 0) choose('timeout');
+    }, 200);
+  }
+  function render() {
+    const scenario = scenarios[state.index];
+    state.locked = false;
+    el.reveal.className = 'reveal';
+    el.reveal.innerHTML = '';
+    el.appName.textContent = scenario.app;
+    el.appMeta.textContent = scenario.team + ' request';
+    el.riskPill.textContent = scenario.risk + ' risk';
+    el.riskPill.className = 'risk-pill risk-' + scenario.risk;
+    el.request.textContent = scenario.request;
+    el.scopes.innerHTML = scenario.scopes.map(scope => '<div class="scope">' + scope + '</div>').join('');
+    el.buttons.forEach(btn => btn.disabled = false);
+    updateStats();
+    startTimer();
+  }
+  function finishGame() {
+    clearInterval(state.timer);
+    const verdict = state.risk <= 30 && state.trust >= 70 ? 'Consent guardian' : state.risk <= 55 ? 'Recoverable reviewer' : 'Click-through casualty';
+    document.querySelector('.consent-card').innerHTML = [
+      '<div class="app-name">Run complete: ' + verdict + '</div>',
+      '<p class="request">Final score: ' + state.score + '. Trust: ' + state.trust + '. Risk accepted: ' + state.risk + '.</p>',
+      '<div class="reveal visible"><div class="reveal-title">Takeaway</div>Great permission review is not "deny everything." It is matching scope to job, publisher, data sensitivity, and reversibility.</div>',
+      '<button class="restart-btn" type="button" onclick="location.reload()">Restart</button>'
+    ].join('');
+    sound(state.risk <= 55 ? 'win' : 'lose');
+  }
+  function choose(action) {
+    if (state.locked) return;
+    state.locked = true;
+    clearInterval(state.timer);
+    el.buttons.forEach(btn => btn.disabled = true);
+    const scenario = scenarios[state.index];
+    const correct = action === scenario.best;
+    if (correct) {
+      state.score += 100 + Math.round(state.time * 6);
+      sound('correct');
+    } else {
+      state.risk = Math.min(99, state.risk + riskCost(scenario, action));
+      state.trust = Math.max(0, state.trust - trustCost(scenario, action));
+      sound(action === 'timeout' ? 'timeWarn' : 'wrong');
+    }
+    updateStats();
+    el.reveal.className = 'reveal visible';
+    el.reveal.innerHTML = [
+      '<div class="reveal-title">' + (correct ? 'Good call' : 'Better move: ' + scenario.best) + '</div>',
+      '<p>' + scenario.explain + '</p>',
+      '<button class="next-btn" type="button">' + (state.index === scenarios.length - 1 ? 'Finish run' : 'Next request') + '</button>'
+    ].join('');
+    el.reveal.querySelector('button').focus();
+    el.reveal.querySelector('button').addEventListener('click', () => {
+      state.index++;
+      if (state.index >= scenarios.length) finishGame();
+      else render();
+    });
+  }
+  el.buttons.forEach(btn => btn.addEventListener('click', () => choose(btn.dataset.action)));
+  render();
+})();
+</script>
+</body>
+</html>

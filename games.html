@@ -76,6 +76,27 @@
     font-weight: 300;
   }
 
+  .arcade-banner {
+    position: relative;
+    min-height: clamp(180px, 34vw, 320px);
+    margin: 0 auto 36px;
+    border: 1px solid rgba(0, 255, 255, 0.22);
+    border-radius: 8px;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(2, 0, 10, 0.05), rgba(2, 0, 10, 0.45)),
+      url("assets/cyber-arcade-banner.png") center / cover no-repeat;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45), 0 0 42px rgba(0, 255, 255, 0.08);
+  }
+
+  .arcade-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(2, 0, 10, 0.36));
+    pointer-events: none;
+  }
+
   .tier {
     margin-bottom: 36px;
   }
@@ -261,6 +282,7 @@
     .tier-header { flex-wrap: wrap; gap: 8px; }
     .tier-blurb { text-align: left; flex-basis: 100%; }
     .game-grid { grid-template-columns: 1fr; }
+    .arcade-banner { min-height: 170px; background-position: center; }
   }
 </style>
 </head>
@@ -275,6 +297,8 @@
   <p class="intro">
     A growing arcade of bite-sized cybersecurity games. Each one teaches a real concept through play. Pick a tier, pick a game, and try to keep your streak alive.
   </p>
+
+  <div class="arcade-banner" role="img" aria-label="Neon cyber arcade cabinets with security-themed screens"></div>
 
   <main>
 
@@ -520,6 +544,51 @@
         <div class="game-name">Cyber Connect Four</div>
         <div class="game-tagline">Red Team vs. Blue Team</div>
         <div class="game-desc">Classic Connect Four with attacker and defender themed pieces. Drag a piece over a column and drop it. Four in a row breaches the perimeter, or holds the line.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- TIER 7: Fresh drops -->
+  <section class="tier" aria-labelledby="tier7">
+    <div class="tier-header">
+      <span class="tier-emoji" aria-hidden="true">&#10024;</span>
+      <h2 id="tier7" class="tier-title">Fresh Drops</h2>
+      <span class="tier-blurb">New training loops</span>
+    </div>
+    <div class="game-grid">
+
+      <a class="game-card live" href="permission-panic.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128272;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Permission Panic</div>
+        <div class="game-tagline">Least privilege, under pressure</div>
+        <div class="game-desc">Apps ask for risky scopes. Approve, deny, or limit each request before trust drains. Teaches consent fatigue and why "just allow" gets expensive.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <a class="game-card live" href="backup-blaster.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128190;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Backup Blaster</div>
+        <div class="game-tagline">Restore before ransom spreads</div>
+        <div class="game-desc">Ransomware hits the timeline. Pick clean snapshots, isolate systems, and recover inside the RPO. Fast restores beat loud heroics.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <a class="game-card live" href="zero-trust-gatekeeper.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128737;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Zero Trust Gatekeeper</div>
+        <div class="game-tagline">Never trust. Verify elegantly.</div>
+        <div class="game-desc">Every access request has context: user, device, location, data, behavior. Allow, challenge, or block. Learn why zero trust is a decision loop.</div>
         <div class="game-cta">Play now</div>
       </a>
 

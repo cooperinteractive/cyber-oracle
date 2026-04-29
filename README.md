@@ -1,6 +1,6 @@
 # Cyber Oracle
 
-A pair of interactive web toys for cybersecurity learning, plus four animated explainers for core quantum-computing concepts. Each page is a self-contained HTML file with no build step and no dependencies. Drop them on any static host (GitHub Pages, Netlify, your own site, a SharePoint embed) and they work.
+A collection of interactive cybersecurity and quantum-learning web toys. Each page is a self-contained HTML file with no build step and no dependencies. Drop them on any static host (GitHub Pages, Netlify, your own site, a SharePoint embed) and they work.
 
 ## Pages
 
@@ -18,6 +18,21 @@ A pair of interactive web toys for cybersecurity learning, plus four animated ex
 | `honeypot.html` | **Game.** Place traps (firewall, tarpit, sandbox, canary) to catch attackers approaching a fake server. Threat-intel feed shows TTPs. |
 | `prompt-injection.html` | **Game.** Five-level chatbot challenge teaching the most common prompt injection techniques (direct, override, roleplay, smuggling, multi-turn). |
 | `decryption-race.html` | **Game.** Side-by-side classical vs. quantum cracking of an RSA key. Pick from RSA-128 to RSA-4096. Quantum always wins. |
+| `password-slot.html` | **Game.** Slot machine for password entropy and crack-time intuition. |
+| `incident-response.html` | **Game.** Pager-driven incident response scenarios with consequences. |
+| `social-engineering.html` | **Game.** Branching dialogue about persuasion, pressure, and refusal. |
+| `build-your-stack.html` | **Game.** Spend a limited security budget across layered defenses. |
+| `cipher-lab.html` | **Game.** Transform text through historical and modern encryption styles. |
+| `cia-triad.html` | **Game.** Balance confidentiality, integrity, and availability under pressure. |
+| `deepfake-detective.html` | **Game.** Spot synthetic media clues and reveal the tells. |
+| `shadow-it.html` | **Game.** Audit departments for unsanctioned SaaS and risky workflows. |
+| `attack-surface.html` | **Game.** Visualize exposed assets and hidden external risk. |
+| `insider-threat-bingo.html` | **Game.** Match insider-risk indicators against employee profiles. |
+| `connect-four.html` | **Game.** Local multiplayer red-team vs. blue-team Connect Four. |
+| `permission-panic.html` | **Game.** Consent prompt triage for least-privilege app permissions. |
+| `backup-blaster.html` | **Game.** Ransomware recovery drill for clean snapshots, isolation, and RPO tradeoffs. |
+| `zero-trust-gatekeeper.html` | **Game.** Context-based access decisions: allow, challenge, or block. |
+| `assets/cyber-arcade-banner.png` | Generated hub banner art for the game arcade. |
 
 ## Accessibility
 

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero Trust Gatekeeper | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #041520 0%, #02000a 82%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e8eef8;
+    padding: 16px 16px 60px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 22% 24%, #fff, transparent),
+      radial-gradient(1px 1px at 72% 76%, #aaf, transparent),
+      radial-gradient(circle at 50% 0%, rgba(0,255,255,0.14), transparent 34%);
+    background-size: 220% 220%;
+    opacity: 0.24;
+    pointer-events: none;
+  }
+  .container { max-width: 780px; margin: 0 auto; position: relative; z-index: 1; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link {
+    color: #00ff88; text-decoration: none; font-family: 'Courier New', monospace;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 12px; border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 20px;
+  }
+  .back-link:hover, .back-link:focus-visible { background: rgba(0,255,136,0.1); color: #fff; outline: none; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 {
+    font-size: clamp(1.35rem, 4.8vw, 2.2rem); font-weight: 200; letter-spacing: 4px; text-transform: uppercase;
+    background: linear-gradient(90deg, #00ff88, #00ffff, #7e7cff, #00ff88);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+  @keyframes hueShift { to { background-position: 300% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.82rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat {
+    background: rgba(0, 24, 34, 0.68); border: 1px solid rgba(0,255,136,0.22); border-radius: 8px;
+    padding: 10px 8px; text-align: center; backdrop-filter: blur(8px);
+  }
+  .stat-label { font-family: 'Courier New', monospace; font-size: 0.58rem; letter-spacing: 1.4px; color: #8aa0c0; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-value { font-family: 'Courier New', monospace; font-size: 1.28rem; font-weight: 700; color: #00ffff; text-shadow: 0 0 10px rgba(0,255,255,0.45); }
+  .stat-value.risk { color: #ff5f8f; } .stat-value.friction { color: #ffaa00; }
+  .gate-card {
+    background: linear-gradient(180deg, rgba(5, 35, 46, 0.94), rgba(7, 12, 28, 0.96));
+    border: 1px solid rgba(0,255,136,0.26); border-radius: 8px; padding: 18px;
+    box-shadow: 0 14px 46px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.08);
+    margin-bottom: 14px;
+  }
+  .request-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+  .request-title { font-size: 1.22rem; font-weight: 800; color: #fff; line-height: 1.25; }
+  .request-meta { color: #9bcab6; font-family: 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 1.4px; text-transform: uppercase; margin-top: 4px; }
+  .sensitivity { border: 1px solid currentColor; border-radius: 999px; padding: 5px 10px; font-family: 'Courier New', monospace; font-size: 0.68rem; letter-spacing: 1.5px; color: #00ffff; text-transform: uppercase; white-space: nowrap; }
+  .signals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  .signal {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .signal-label { display: block; color: #8aa0c0; font-family: 'Courier New', monospace; font-size: 0.62rem; letter-spacing: 1.3px; text-transform: uppercase; margin-bottom: 5px; }
+  .signal-value { color: #fff; line-height: 1.35; }
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .action-btn, .next-btn, .restart-btn {
+    border: 2px solid rgba(0,255,136,0.35); border-radius: 8px; background: rgba(0, 10, 30, 0.72);
+    color: #fff; padding: 14px 10px; cursor: pointer; font-family: inherit; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .action-btn:hover, .action-btn:focus-visible { transform: translateY(-2px); border-color: #00ffff; outline: none; background: rgba(0,255,255,0.12); }
+  .action-btn:disabled { opacity: 0.45; cursor: wait; transform: none; }
+  .next-btn, .restart-btn { width: 100%; margin-top: 12px; background: linear-gradient(90deg, #00ff88, #00ffff); color: #041020; border: 0; }
+  .reveal { display: none; border-radius: 8px; border: 1px solid rgba(0,255,136,0.22); background: rgba(0, 16, 38, 0.72); padding: 14px; line-height: 1.55; }
+  .reveal.visible { display: block; animation: revealIn 0.28s ease; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal-title { font-family: 'Courier New', monospace; font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; color: #00ffff; margin-bottom: 6px; }
+  .lesson { margin-top: 16px; padding: 14px; border-radius: 8px; background: rgba(0,0,0,0.28); border: 1px dashed rgba(255,255,255,0.14); color: #b8c8d8; font-size: 0.88rem; line-height: 1.55; }
+  @media (max-width: 640px) { .stats, .signals, .actions { grid-template-columns: 1fr; } .request-head { flex-direction: column; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar"><a class="back-link" href="games.html">&larr; Games</a></div>
+  <header>
+    <h1>Zero Trust Gatekeeper</h1>
+    <p class="subtitle">Never trust. Verify elegantly.</p>
+  </header>
+  <main>
+    <section class="stats" aria-label="Game statistics">
+      <div class="stat"><div class="stat-label">Request</div><div id="round" class="stat-value">1/8</div></div>
+      <div class="stat"><div class="stat-label">Score</div><div id="score" class="stat-value">0</div></div>
+      <div class="stat"><div class="stat-label">Risk</div><div id="risk" class="stat-value risk">0</div></div>
+      <div class="stat"><div class="stat-label">Friction</div><div id="friction" class="stat-value friction">0</div></div>
+    </section>
+    <section class="gate-card" aria-labelledby="requestTitle">
+      <div class="request-head">
+        <div><h2 id="requestTitle" class="request-title"></h2><div id="requestMeta" class="request-meta"></div></div>
+        <div id="sensitivity" class="sensitivity"></div>
+      </div>
+      <div id="signals" class="signals" aria-label="Access signals"></div>
+      <div class="actions">
+        <button class="action-btn" data-action="allow" type="button">Allow</button>
+        <button class="action-btn" data-action="challenge" type="button">Challenge</button>
+        <button class="action-btn" data-action="block" type="button">Block</button>
+      </div>
+      <div id="reveal" class="reveal" role="status" aria-live="polite"></div>
+    </section>
+    <p class="lesson">Goal: pick the lowest-friction decision that still matches the risk. Zero trust is continuous context, not a permanent state of suspicion.</p>
+  </main>
+</div>
+<script src="sounds.js"></script>
+<script src="nav.js"></script>
+<script>
+(() => {
+  const requests = [
+    { user: 'Maya - payroll manager', app: 'Payroll export', sensitivity: 'High', signals: ['Managed laptop', 'Known office network', 'MFA fresh 4 min ago', 'Normal business hours'], best: 'allow', explain: 'Strong identity, managed device, known network, fresh MFA, and expected data access. Allow without extra friction.' },
+    { user: 'Contractor account', app: 'Source repository', sensitivity: 'High', signals: ['Unmanaged device', 'New country', 'MFA push fatigue pattern', 'First access to repo'], best: 'block', explain: 'Too many anomalous signals converge. Block and investigate before any code access is granted.' },
+    { user: 'Ravi - sales lead', app: 'CRM dashboard', sensitivity: 'Medium', signals: ['Managed phone', 'Hotel Wi-Fi', 'Impossible travel warning', 'MFA last seen yesterday'], best: 'challenge', explain: 'The device is managed, but location and travel signals need fresh proof. Challenge with stronger MFA.' },
+    { user: 'Service account', app: 'Nightly report job', sensitivity: 'Medium', signals: ['Known workload identity', 'Expected schedule', 'No interactive login', 'Reads selected data set'], best: 'allow', explain: 'Expected automated behavior with scoped data. Allow and keep logging.' },
+    { user: 'Former employee token', app: 'Cloud storage', sensitivity: 'High', signals: ['Account disabled in HR', 'API token still active', 'Bulk download request', 'External IP'], best: 'block', explain: 'Disabled human identity plus active token means lifecycle failure. Block the token immediately.' },
+    { user: 'Dana - engineer', app: 'Production shell', sensitivity: 'Critical', signals: ['Managed laptop', 'New admin role', 'No ticket reference', 'After-hours access'], best: 'challenge', explain: 'This may be legitimate, but critical shell access needs step-up auth and change/ticket validation.' },
+    { user: 'Intern account', app: 'Design files', sensitivity: 'Low', signals: ['Managed laptop', 'Known network', 'Read-only folder', 'Training cohort access'], best: 'allow', explain: 'Low sensitivity, read-only access, and expected context. Allow and avoid unnecessary friction.' },
+    { user: 'Shared kiosk login', app: 'Executive email archive', sensitivity: 'Critical', signals: ['Shared account', 'No MFA', 'Sensitive mailbox', 'Unusual download volume'], best: 'block', explain: 'Shared identity and no MFA cannot satisfy critical data access. Block and move the workflow to named accounts.' }
+  ];
+  const state = { index: 0, score: 0, risk: 0, friction: 0, locked: false };
+  const el = {
+    round: document.getElementById('round'), score: document.getElementById('score'), risk: document.getElementById('risk'), friction: document.getElementById('friction'),
+    title: document.getElementById('requestTitle'), meta: document.getElementById('requestMeta'), sensitivity: document.getElementById('sensitivity'),
+    signals: document.getElementById('signals'), reveal: document.getElementById('reveal'), buttons: Array.from(document.querySelectorAll('.action-btn'))
+  };
+  function sound(name) { if (window.CyberSounds && CyberSounds[name]) CyberSounds[name](); }
+  function updateStats() {
+    el.round.textContent = Math.min(state.index + 1, requests.length) + '/' + requests.length;
+    el.score.textContent = state.score;
+    el.risk.textContent = state.risk;
+    el.friction.textContent = state.friction;
+  }
+  function render() {
+    const request = requests[state.index];
+    state.locked = false;
+    el.title.textContent = request.user;
+    el.meta.textContent = 'Requests ' + request.app;
+    el.sensitivity.textContent = request.sensitivity;
+    el.signals.innerHTML = request.signals.map((signal, i) => '<div class="signal"><span class="signal-label">Signal ' + (i + 1) + '</span><span class="signal-value">' + signal + '</span></div>').join('');
+    el.reveal.className = 'reveal';
+    el.reveal.innerHTML = '';
+    el.buttons.forEach(btn => btn.disabled = false);
+    updateStats();
+  }
+  function penalties(best, action) {
+    if (best === action) return { risk: 0, friction: action === 'challenge' ? 4 : 0 };
+    if (best === 'block' && action === 'allow') return { risk: 25, friction: 0 };
+    if (best === 'allow' && action === 'block') return { risk: 0, friction: 18 };
+    if (best === 'allow' && action === 'challenge') return { risk: 0, friction: 8 };
+    if (best === 'challenge' && action === 'allow') return { risk: 14, friction: 0 };
+    if (best === 'challenge' && action === 'block') return { risk: 0, friction: 10 };
+    return { risk: 12, friction: 6 };
+  }
+  function finish() {
+    const rating = state.risk <= 25 && state.friction <= 42 ? 'Context champion' : state.risk <= 55 ? 'Risk-aware reviewer' : 'Perimeter nostalgist';
+    document.querySelector('.gate-card').innerHTML = [
+      '<div class="request-title">Run complete: ' + rating + '</div>',
+      '<p class="incident-copy">Final score: ' + state.score + '. Residual risk: ' + state.risk + '. User friction: ' + state.friction + '.</p>',
+      '<div class="reveal visible"><div class="reveal-title">Takeaway</div>The best zero-trust decision is proportional. Let good context flow, step up uncertain context, and stop converging bad signals.</div>',
+      '<button class="restart-btn" type="button" onclick="location.reload()">Restart</button>'
+    ].join('');
+    sound(state.risk <= 55 ? 'win' : 'lose');
+  }
+  function choose(action) {
+    if (state.locked) return;
+    state.locked = true;
+    el.buttons.forEach(btn => btn.disabled = true);
+    const request = requests[state.index];
+    const correct = action === request.best;
+    const cost = penalties(request.best, action);
+    state.risk += cost.risk;
+    state.friction += cost.friction;
+    state.score += correct ? 150 : Math.max(0, 60 - cost.risk - cost.friction);
+    updateStats();
+    sound(correct ? 'correct' : 'wrong');
+    el.reveal.className = 'reveal visible';
+    el.reveal.innerHTML = [
+      '<div class="reveal-title">' + (correct ? 'Proportional decision' : 'Better move: ' + request.best) + '</div>',
+      '<p>' + request.explain + '</p>',
+      '<button class="next-btn" type="button">' + (state.index === requests.length - 1 ? 'Finish run' : 'Next request') + '</button>'
+    ].join('');
+    el.reveal.querySelector('button').focus();
+    el.reveal.querySelector('button').addEventListener('click', () => { state.index++; if (state.index >= requests.length) finish(); else render(); });
+  }
+  el.buttons.forEach(btn => btn.addEventListener('click', () => choose(btn.dataset.action)));
+  render();
+})();
+</script>
+</body>
+</html>
