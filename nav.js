@@ -98,12 +98,6 @@
     ].join('');
     document.body.insertBefore(nav, document.body.firstChild);
 
-    // Also inject a duplicate at the bottom for symmetry
-    var bottomNav = nav.cloneNode(true);
-    bottomNav.style.marginTop = '24px';
-    bottomNav.style.marginBottom = '24px';
-    document.body.appendChild(bottomNav);
-
     // Keyboard shortcuts: left/right arrow with Alt key
     document.addEventListener('keydown', function (e) {
       if (!e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) return;
