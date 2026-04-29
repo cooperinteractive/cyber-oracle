@@ -11,7 +11,8 @@
     { file: 'superposition.html',    title: 'Superposition',    short: 'Superpos.' },
     { file: 'entanglement.html',     title: 'Entanglement',     short: 'Entangle' },
     { file: 'quantum-tunneling.html',title: 'Quantum Tunneling',short: 'Tunneling' },
-    { file: 'schrodingers-cat.html', title: "Schrodinger's Cat",short: 'Cat' }
+    { file: 'schrodingers-cat.html', title: "Schrodinger's Cat",short: 'Cat' },
+    { file: 'games.html',            title: 'Cyber Games',      short: 'Games' }
   ];
 
   // Figure out which page we are on. Treat "/" or empty path as index.html.

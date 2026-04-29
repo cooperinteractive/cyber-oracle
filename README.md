@@ -12,6 +12,12 @@ A pair of interactive web toys for cybersecurity learning, plus four animated ex
 | `entanglement.html` | Animated explainer: two interactive particles you can measure, with a glowing entanglement link that breaks on observation, then a BB84/QKD visualization with an optional eavesdropper. |
 | `quantum-tunneling.html` | Animated explainer: classical bounce vs. quantum wave tunneling on a live canvas, then the cybersecurity metaphor (Shor's algorithm, HNDL attacks). |
 | `schrodingers-cat.html` | Animated explainer: open-the-box thought experiment with random alive/dead collapse, plus the data-shelf-life security parallel. |
+| `games.html` | **Cyber Games hub.** Table of contents for the interactive game arcade. Tiered grid of live games and "coming soon" placeholders. |
+| `phish-or-legit.html` | **Game.** Phishing recognition trainer with 13 realistic emails. Score, streak, accuracy. Reveals the red flags after each guess. |
+| `whack-a-mole.html` | **Game.** 60-second arcade game where CVEs pop up and you click to patch. Combo multiplier, breaches counter, accelerating spawn rate. |
+| `honeypot.html` | **Game.** Place traps (firewall, tarpit, sandbox, canary) to catch attackers approaching a fake server. Threat-intel feed shows TTPs. |
+| `prompt-injection.html` | **Game.** Five-level chatbot challenge teaching the most common prompt injection techniques (direct, override, roleplay, smuggling, multi-turn). |
+| `decryption-race.html` | **Game.** Side-by-side classical vs. quantum cracking of an RSA key. Pick from RSA-128 to RSA-4096. Quantum always wins. |
 
 ## Accessibility
 

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Decryption Race | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 30% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent);
+    background-size: 200% 200%;
+    opacity: 0.25;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .back-link {
+    color: #00ffff;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+
+  .back-link:hover, .back-link:focus-visible {
+    background: rgba(0, 255, 255, 0.1);
+    color: #fff;
+    outline: none;
+  }
+
+  header { text-align: center; margin-bottom: 18px; }
+
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #66aaff, #ff00cc, #66aaff);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 5s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Target message panel */
+  .target-panel {
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid rgba(255, 200, 0, 0.3);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(8px);
+    text-align: center;
+  }
+
+  .target-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    color: #ffcc66;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .target-cipher {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #fff;
+    letter-spacing: 1px;
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  .target-meta {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #8aa0c0;
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* Race lanes */
+  .race {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .lane {
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lane.classical {
+    border-color: rgba(102, 170, 255, 0.4);
+  }
+
+  .lane.quantum {
+    border-color: rgba(255, 0, 200, 0.4);
+  }
+
+  .lane.classical::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #66aaff, transparent);
+  }
+
+  .lane.quantum::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff00cc, transparent);
+  }
+
+  .lane-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .lane-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .lane.classical .lane-icon {
+    background: linear-gradient(135deg, #1a3a5a, #0a1f3a);
+    border: 1px solid #66aaff;
+    color: #66aaff;
+    box-shadow: 0 0 12px rgba(102, 170, 255, 0.4);
+  }
+
+  .lane.quantum .lane-icon {
+    background: linear-gradient(135deg, #3a0a3a, #1a0030);
+    border: 1px solid #ff00cc;
+    color: #ff66cc;
+    box-shadow: 0 0 12px rgba(255, 0, 200, 0.4);
+  }
+
+  .lane-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+
+  .lane-subtitle {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: #8aa0c0;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .lane.classical .lane-subtitle { color: #88aabb; }
+  .lane.quantum .lane-subtitle { color: #cc88bb; }
+
+  /* Counter */
+  .counter {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    text-align: center;
+    padding: 14px 8px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .lane.classical .counter {
+    color: #66aaff;
+    text-shadow: 0 0 12px rgba(102, 170, 255, 0.6);
+    border: 1px solid rgba(102, 170, 255, 0.2);
+  }
+
+  .lane.quantum .counter {
+    color: #ff66cc;
+    text-shadow: 0 0 12px rgba(255, 0, 200, 0.6);
+    border: 1px solid rgba(255, 0, 200, 0.2);
+  }
+
+  .counter-big {
+    font-size: 1.6rem;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    word-break: break-all;
+  }
+
+  .counter-label {
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  /* Progress bar */
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.1s linear;
+    background-size: 200% 100%;
+    animation: progressGlow 1.5s linear infinite;
+  }
+
+  .lane.classical .progress-fill {
+    background: linear-gradient(90deg, #1a3a5a, #66aaff, #aaccff, #66aaff);
+    box-shadow: 0 0 10px rgba(102, 170, 255, 0.5);
+  }
+
+  .lane.quantum .progress-fill {
+    background: linear-gradient(90deg, #3a0a3a, #ff00cc, #ffaaff, #ff00cc);
+    box-shadow: 0 0 10px rgba(255, 0, 200, 0.5);
+  }
+
+  @keyframes progressGlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* Status display */
+  .status {
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: #c8d8ff;
+    line-height: 1.6;
+    height: 60px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+
+  .status-line { padding: 1px 0; }
+  .status-line.tick { color: #00ff88; }
+  .status-line.fail { color: #ff6688; }
+
+  /* Won state */
+  .lane.won {
+    border-color: rgba(0, 255, 136, 0.7);
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+  }
+
+  .lane.won::before { background: linear-gradient(90deg, #00ff88, transparent); }
+
+  .lane.won .counter {
+    color: #00ff88;
+    text-shadow: 0 0 12px rgba(0, 255, 136, 0.7);
+    animation: wonPulse 0.6s ease-out;
+  }
+
+  @keyframes wonPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .key-revealed {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: #66ffaa;
+    text-align: center;
+    word-break: break-all;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    display: none;
+  }
+
+  .key-revealed.visible { display: block; animation: revealIn 0.4s ease; }
+
+  @keyframes revealIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Controls */
+  .controls {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    background: linear-gradient(90deg, rgba(102, 170, 255, 0.2), rgba(255, 0, 200, 0.2));
+    border: 1px solid rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+    padding: 14px 32px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    margin: 0 6px;
+  }
+
+  .btn:hover, .btn:focus-visible {
+    background: linear-gradient(90deg, rgba(102, 170, 255, 0.35), rgba(255, 0, 200, 0.35));
+    color: #fff;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+    outline: none;
+    transform: translateY(-2px);
+  }
+
+  .btn:disabled { opacity: 0.4; cursor: wait; }
+
+  /* Verdict */
+  .verdict {
+    background: linear-gradient(135deg, rgba(60, 0, 60, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(255, 0, 200, 0.4);
+    border-radius: 16px;
+    padding: 22px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .verdict.visible { display: block; animation: revealIn 0.5s ease; }
+
+  .verdict h2 {
+    font-size: 1.3rem;
+    background: linear-gradient(90deg, #00ff88, #00ffff, #ff00cc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .verdict-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .verdict-stat {
+    background: rgba(0, 0, 30, 0.5);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .verdict-stat-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    color: #8aa0c0;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .verdict-stat-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .verdict p {
+    color: #d8e8ff;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin-bottom: 14px;
+  }
+
+  /* Key size selector */
+  .key-selector {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .key-btn {
+    padding: 8px 14px;
+    background: rgba(0, 0, 30, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .key-btn.active {
+    background: rgba(0, 255, 255, 0.2);
+    color: #fff;
+    border-color: rgba(0, 255, 255, 0.7);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  }
+
+  .key-btn:hover, .key-btn:focus-visible {
+    color: #fff;
+    outline: none;
+  }
+
+  @media (max-width: 600px) {
+    .race { grid-template-columns: 1fr; }
+    .verdict-stats { grid-template-columns: 1fr; }
+    .counter-big { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 0, 200, 0.4); color: #ff66cc; cursor: default;">PQC pitch</span>
+  </div>
+
+  <header>
+    <h1>The Decryption Race</h1>
+    <div class="subtitle">Classical vs. quantum, one RSA key</div>
+  </header>
+
+  <div class="key-selector" role="tablist" aria-label="Key size">
+    <button type="button" class="key-btn active" data-bits="128">RSA-128 (warmup)</button>
+    <button type="button" class="key-btn" data-bits="512">RSA-512 (1990s)</button>
+    <button type="button" class="key-btn" data-bits="2048">RSA-2048 (today)</button>
+    <button type="button" class="key-btn" data-bits="4096">RSA-4096 (paranoid)</button>
+  </div>
+
+  <div class="target-panel">
+    <div class="target-label">Encrypted message</div>
+    <div class="target-cipher" id="cipher">9F:23:1A:C8:7B:2E:55:F0:A1:90:34:DD:6E:88:11:C2</div>
+    <div class="target-meta" id="meta">RSA-128 &middot; semiprime modulus</div>
+  </div>
+
+  <main>
+    <div class="race">
+
+      <!-- Classical lane -->
+      <div class="lane classical" id="laneClassical">
+        <div class="lane-header">
+          <div class="lane-icon">&#128187;</div>
+          <div>
+            <div class="lane-title">Classical Computer</div>
+            <div class="lane-subtitle">Best-known sieve, 2026 hardware</div>
+          </div>
+        </div>
+        <div class="counter">
+          <div class="counter-big" id="classicalCounter">0</div>
+          <div class="counter-label" id="classicalLabel">Operations</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="classicalProgress"></div></div>
+        <div class="status" id="classicalStatus"></div>
+        <div class="key-revealed" id="classicalKey"></div>
+      </div>
+
+      <!-- Quantum lane -->
+      <div class="lane quantum" id="laneQuantum">
+        <div class="lane-header">
+          <div class="lane-icon">&#9883;</div>
+          <div>
+            <div class="lane-title">Quantum Computer</div>
+            <div class="lane-subtitle">Shor's algorithm, fault-tolerant</div>
+          </div>
+        </div>
+        <div class="counter">
+          <div class="counter-big" id="quantumCounter">0</div>
+          <div class="counter-label" id="quantumLabel">Operations</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="quantumProgress"></div></div>
+        <div class="status" id="quantumStatus"></div>
+        <div class="key-revealed" id="quantumKey"></div>
+      </div>
+
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="raceBtn" type="button">Start the race</button>
+    </div>
+
+    <div class="verdict" id="verdict" role="status">
+      <h2>Race Complete</h2>
+      <div class="verdict-stats">
+        <div class="verdict-stat">
+          <div class="verdict-stat-label">Quantum finished in</div>
+          <div class="verdict-stat-value" id="qTime">--</div>
+        </div>
+        <div class="verdict-stat">
+          <div class="verdict-stat-label">Classical would need</div>
+          <div class="verdict-stat-value" id="cTime">--</div>
+        </div>
+      </div>
+      <p id="verdictText"></p>
+      <button class="btn" id="raceAgainBtn" type="button">Race again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+// Profiles for each key size: realistic-ish numbers based on published research.
+// Classical "ops to complete" uses the General Number Field Sieve complexity.
+// Quantum uses a polynomial number of qubit operations under Shor's algorithm.
+// In the simulation, both finish, but classical takes far longer per "tick".
+const profiles = {
+  128: {
+    cipher: '9F:23:1A:C8:7B:2E:55:F0:A1:90:34:DD:6E:88:11:C2',
+    meta: 'RSA-128 &middot; semiprime modulus n = p &middot; q',
+    classicalOps: 1.5e9, classicalTimeReal: 'about 1 hour',
+    quantumOps: 4.5e6, quantumTimeReal: 'a few seconds',
+    raceClassicalSeconds: 5.0, raceQuantumSeconds: 1.6,
+    privateKey: '0x71fe338bba1c40b9...AB12',
+    plaintext: '"Meet me at noon."'
+  },
+  512: {
+    cipher: 'F4:88:23:CE:99:1B:0A:FF:5E:21:7C:34:BB:8E:90:11:23:55:A0:DE:F1:00:1A:39:5C',
+    meta: 'RSA-512 &middot; broken in 1999 with months of compute',
+    classicalOps: 2.7e15, classicalTimeReal: 'about 2 weeks (heavy cluster)',
+    quantumOps: 1.6e7, quantumTimeReal: 'minutes',
+    raceClassicalSeconds: 18, raceQuantumSeconds: 2.4,
+    privateKey: '0xa3e7f9bc4d810229...22FF',
+    plaintext: '"Phase 2 launches Friday."'
+  },
+  2048: {
+    cipher: 'B3:1F:00:FE:C8:8A:23:99:B2:0E:7D:55:6F:A1:DD:23:BB:7C:90:5F:E1:00:8E:34:CC:99:11:DE:23:00:AB:CD',
+    meta: 'RSA-2048 &middot; the standard for TLS, code signing, banking',
+    classicalOps: 3.4e34, classicalTimeReal: 'about 300 trillion years',
+    quantumOps: 4.0e9, quantumTimeReal: 'roughly 8 hours',
+    raceClassicalSeconds: 600, raceQuantumSeconds: 4.5,
+    privateKey: '0xe119aac7f0e23bb0...DA77',
+    plaintext: '"Wire transfer confirmed."'
+  },
+  4096: {
+    cipher: 'E0:99:5F:23:DD:11:F1:8A:23:CC:FF:00:7B:34:55:DE:99:11:8E:23:00:CC:FF:23:11:8E:34:CC:DD:99:11:F1:23:CC:99:55:DE:11:8E:23',
+    meta: 'RSA-4096 &middot; high-assurance, used in long-lived signing keys',
+    classicalOps: 1.7e58, classicalTimeReal: 'longer than the age of the universe',
+    quantumOps: 3.2e10, quantumTimeReal: 'about 3 days',
+    raceClassicalSeconds: 600, raceQuantumSeconds: 7.0,
+    privateKey: '0xff8e3441c7e9a022...0099',
+    plaintext: '"Encrypted forever, they thought."'
+  }
+};
+
+let currentBits = 128;
+let racing = false;
+let qWon = false;
+
+const cipherEl = document.getElementById('cipher');
+const metaEl = document.getElementById('meta');
+const classicalCounter = document.getElementById('classicalCounter');
+const classicalLabel = document.getElementById('classicalLabel');
+const classicalProgress = document.getElementById('classicalProgress');
+const classicalStatus = document.getElementById('classicalStatus');
+const classicalKeyBox = document.getElementById('classicalKey');
+const laneClassical = document.getElementById('laneClassical');
+const quantumCounter = document.getElementById('quantumCounter');
+const quantumLabel = document.getElementById('quantumLabel');
+const quantumProgress = document.getElementById('quantumProgress');
+const quantumStatus = document.getElementById('quantumStatus');
+const quantumKeyBox = document.getElementById('quantumKey');
+const laneQuantum = document.getElementById('laneQuantum');
+const raceBtn = document.getElementById('raceBtn');
+const verdict = document.getElementById('verdict');
+const qTime = document.getElementById('qTime');
+const cTime = document.getElementById('cTime');
+const verdictText = document.getElementById('verdictText');
+const raceAgainBtn = document.getElementById('raceAgainBtn');
+const keyBtns = Array.from(document.querySelectorAll('.key-btn'));
+
+const CLASSICAL_TICKS = [
+  'Spinning up sieve...',
+  'Smoothness testing candidate primes...',
+  'Building factor base...',
+  'Polynomial selection in progress...',
+  'Lattice reduction step 1 of many...',
+  'Sieving over rational integers...',
+  'Linear algebra phase...',
+  'Square root extraction...',
+  'Recombining factors...',
+  'Trying another residue class...',
+  'Memory pressure: 2.4 PB...',
+  'CPU temp: please send help...',
+  'Estimated remaining time: a long time...'
+];
+
+const QUANTUM_TICKS = [
+  'Initializing qubit register...',
+  'Loading n into computational basis...',
+  'Applying Hadamard transform...',
+  'Modular exponentiation in superposition...',
+  'Quantum Fourier transform begins...',
+  'Measuring period r...',
+  'Classical post-processing finds gcd(a^(r/2)+-1, n)...',
+  'Found nontrivial factor.',
+  'Polynomial-time success.'
+];
+
+function selectKey(bits) {
+  if (racing) return;
+  currentBits = bits;
+  keyBtns.forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.bits, 10) === bits);
+  });
+  const p = profiles[bits];
+  cipherEl.textContent = p.cipher;
+  metaEl.innerHTML = p.meta;
+  reset();
+}
+
+keyBtns.forEach(b => {
+  b.addEventListener('click', () => selectKey(parseInt(b.dataset.bits, 10)));
+});
+
+function reset() {
+  classicalCounter.textContent = '0';
+  classicalProgress.style.width = '0%';
+  classicalStatus.innerHTML = '';
+  classicalKeyBox.classList.remove('visible');
+  classicalKeyBox.innerHTML = '';
+  laneClassical.classList.remove('won');
+
+  quantumCounter.textContent = '0';
+  quantumProgress.style.width = '0%';
+  quantumStatus.innerHTML = '';
+  quantumKeyBox.classList.remove('visible');
+  quantumKeyBox.innerHTML = '';
+  laneQuantum.classList.remove('won');
+
+  verdict.classList.remove('visible');
+  raceBtn.disabled = false;
+  raceBtn.textContent = 'Start the race';
+}
+
+function fmt(n) {
+  if (n < 1000) return Math.round(n).toString();
+  if (n < 1e6) return (n / 1e3).toFixed(1) + 'k';
+  if (n < 1e9) return (n / 1e6).toFixed(1) + 'M';
+  if (n < 1e12) return (n / 1e9).toFixed(1) + 'B';
+  if (n < 1e15) return (n / 1e12).toFixed(1) + 'T';
+  if (n < 1e18) return (n / 1e15).toFixed(1) + 'Q';
+  if (n < 1e21) return (n / 1e18).toFixed(2) + ' quintillion';
+  return n.toExponential(2);
+}
+
+function appendStatus(el, text, cls) {
+  const line = document.createElement('div');
+  line.className = 'status-line ' + (cls || '');
+  line.textContent = text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  while (el.children.length > 5) el.removeChild(el.firstChild);
+}
+
+function startRace() {
+  if (racing) return;
+  reset();
+  racing = true;
+  qWon = false;
+  raceBtn.disabled = true;
+  raceBtn.textContent = 'Racing...';
+
+  const p = profiles[currentBits];
+  const startTime = performance.now();
+
+  // Classical: log a tick every 1.5s, increment counter slowly toward target.
+  // We cap progress at ~50% so it visually never finishes within the round.
+  let classicalTickIdx = 0;
+  const classicalLogger = setInterval(() => {
+    if (!racing) { clearInterval(classicalLogger); return; }
+    appendStatus(classicalStatus, CLASSICAL_TICKS[classicalTickIdx % CLASSICAL_TICKS.length]);
+    classicalTickIdx++;
+  }, 1500);
+
+  // Animate classical counter creeping
+  let classicalRaf;
+  function tickClassical() {
+    if (!racing) return;
+    const elapsed = (performance.now() - startTime) / 1000;
+    // Reach maybe 1-3% of work during a 7-10s race
+    const frac = Math.min(0.04, elapsed / p.raceClassicalSeconds);
+    const ops = p.classicalOps * frac;
+    classicalCounter.textContent = fmt(ops);
+    classicalLabel.textContent = 'Operations (' + (frac * 100).toFixed(2) + '% complete)';
+    classicalProgress.style.width = (frac * 100) + '%';
+    classicalRaf = requestAnimationFrame(tickClassical);
+  }
+  classicalRaf = requestAnimationFrame(tickClassical);
+
+  // Quantum: faster ticks, finishes the race
+  let quantumTickIdx = 0;
+  const quantumDuration = p.raceQuantumSeconds * 1000; // ms
+  const tickInterval = quantumDuration / QUANTUM_TICKS.length;
+  const quantumLogger = setInterval(() => {
+    if (quantumTickIdx >= QUANTUM_TICKS.length) {
+      clearInterval(quantumLogger);
+      return;
+    }
+    const cls = quantumTickIdx === QUANTUM_TICKS.length - 2 ? 'tick' : '';
+    appendStatus(quantumStatus, QUANTUM_TICKS[quantumTickIdx], cls);
+    quantumTickIdx++;
+  }, tickInterval);
+
+  let quantumRaf;
+  function tickQuantum() {
+    if (!racing) return;
+    const elapsed = (performance.now() - startTime) / 1000;
+    const frac = Math.min(1, elapsed / p.raceQuantumSeconds);
+    const ops = p.quantumOps * frac;
+    quantumCounter.textContent = fmt(ops);
+    quantumLabel.textContent = 'Qubit operations (' + (frac * 100).toFixed(0) + '%)';
+    quantumProgress.style.width = (frac * 100) + '%';
+
+    if (frac >= 1) {
+      // Quantum wins
+      qWon = true;
+      laneQuantum.classList.add('won');
+      quantumKeyBox.innerHTML = `Private key recovered:<br><strong>${p.privateKey}</strong><br>Plaintext: ${p.plaintext}`;
+      quantumKeyBox.classList.add('visible');
+      finishRace();
+      return;
+    }
+    quantumRaf = requestAnimationFrame(tickQuantum);
+  }
+  quantumRaf = requestAnimationFrame(tickQuantum);
+
+  function finishRace() {
+    racing = false;
+    cancelAnimationFrame(classicalRaf);
+    cancelAnimationFrame(quantumRaf);
+    clearInterval(classicalLogger);
+    clearInterval(quantumLogger);
+    appendStatus(classicalStatus, 'Quantum finished. Classical still working...', 'fail');
+
+    qTime.textContent = p.quantumTimeReal;
+    cTime.textContent = p.classicalTimeReal;
+
+    if (currentBits >= 2048) {
+      verdictText.innerHTML = `RSA-${currentBits} is the foundation of nearly every TLS connection on the internet. Today, it is unbreakable. With a sufficiently large quantum computer, it is read in hours. <strong style="color:#ff66cc">This is why post-quantum cryptography matters now</strong>: any encrypted traffic captured today can be decrypted later.`;
+    } else if (currentBits >= 512) {
+      verdictText.innerHTML = `RSA-${currentBits} is already considered weak by modern standards (RSA-512 was first broken in 1999). The quantum gap is large but not absurd. <strong>The lesson scales:</strong> what is safe at one key size today is not safe at the same key size tomorrow.`;
+    } else {
+      verdictText.innerHTML = `RSA-${currentBits} is a teaching size, not a real-world key. Even classical computers can crack it in seconds. The quantum advantage shines at much larger keys, where the classical timeline becomes geological.`;
+    }
+
+    setTimeout(() => verdict.classList.add('visible'), 600);
+    raceBtn.textContent = 'Start the race';
+    raceBtn.disabled = false;
+  }
+}
+
+raceBtn.addEventListener('click', startRace);
+raceAgainBtn.addEventListener('click', startRace);
+
+selectKey(128);
+</script>
+</body>
+</html>

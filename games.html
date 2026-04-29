@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Games | Interactive Security Training</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 20%, #fcc, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 980px; margin: 0 auto; position: relative; z-index: 1; }
+
+  header { text-align: center; margin: 18px 0 32px; }
+
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 200;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #00ff88, #00ffff, #ff00cc, #00ff88);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 8s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.95rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 12px;
+    text-shadow: 0 0 12px rgba(200, 216, 255, 0.4);
+    font-style: italic;
+  }
+
+  .intro {
+    text-align: center;
+    color: #b8c8d8;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    max-width: 640px;
+    margin: 0 auto 36px;
+    font-weight: 300;
+  }
+
+  .tier {
+    margin-bottom: 36px;
+  }
+
+  .tier-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+  }
+
+  .tier-emoji {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .tier-title {
+    font-size: 0.85rem;
+    color: #00ffff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+    flex: 1;
+  }
+
+  .tier-blurb {
+    font-size: 0.75rem;
+    color: #8aa0c0;
+    font-style: italic;
+    text-align: right;
+    letter-spacing: 1px;
+  }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .game-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.6), rgba(40, 0, 60, 0.6));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 14px;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+  }
+
+  .game-card.live::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #00ff88, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    animation: cardShimmer 3s linear infinite;
+  }
+
+  @keyframes cardShimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .game-card.live:hover, .game-card.live:focus-visible {
+    transform: translateY(-4px);
+    border-color: rgba(255, 0, 200, 0.6);
+    box-shadow: 0 10px 35px rgba(255, 0, 200, 0.2), 0 0 60px rgba(0, 255, 255, 0.1);
+    outline: none;
+  }
+
+  .game-card.coming-soon {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .game-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .game-icon {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .game-status {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .game-status.live {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    text-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+  }
+
+  .game-status.soon {
+    color: #888;
+    background: rgba(150, 150, 150, 0.06);
+    border: 1px solid rgba(150, 150, 150, 0.25);
+  }
+
+  .game-name {
+    font-size: 1.15rem;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .game-tagline {
+    font-size: 0.78rem;
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  }
+
+  .game-desc {
+    font-size: 0.8rem;
+    color: #b8c8d8;
+    line-height: 1.55;
+    flex: 1;
+    font-weight: 300;
+  }
+
+  .game-cta {
+    margin-top: 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #ff00cc;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(255, 0, 200, 0.5);
+  }
+
+  .game-card.live .game-cta::after {
+    content: '  \2192';
+    transition: transform 0.3s;
+    display: inline-block;
+  }
+
+  .game-card.live:hover .game-cta::after {
+    transform: translateX(6px);
+  }
+
+  .footer-note {
+    text-align: center;
+    color: #8aa0c0;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    margin-top: 24px;
+    padding: 18px;
+    background: rgba(0, 10, 30, 0.4);
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    border-radius: 12px;
+  }
+
+  .footer-note strong { color: #c8d8ff; }
+
+  @media (max-width: 520px) {
+    .tier-header { flex-wrap: wrap; gap: 8px; }
+    .tier-blurb { text-align: left; flex-basis: 100%; }
+    .game-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Cyber Games</h1>
+    <p class="subtitle">Interactive security training, one game at a time</p>
+  </header>
+
+  <p class="intro">
+    A growing arcade of bite-sized cybersecurity games. Each one teaches a real concept through play. Pick a tier, pick a game, and try to keep your streak alive.
+  </p>
+
+  <main>
+
+  <!-- TIER 1: Top tier -->
+  <section class="tier" aria-labelledby="tier1">
+    <div class="tier-header">
+      <span class="tier-emoji" aria-hidden="true">&#127919;</span>
+      <h2 id="tier1" class="tier-title">Top Tier</h2>
+      <span class="tier-blurb">Highest training value</span>
+    </div>
+    <div class="game-grid">
+
+      <a class="game-card live" href="phish-or-legit.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128231;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Phish or Legit?</div>
+        <div class="game-tagline">10 seconds. One decision.</div>
+        <div class="game-desc">Realistic emails flash on screen. Spot the phish before the timer runs out. Reveals red flags after each guess. Trains the muscle every employee actually needs.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#127920;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Password Strength Slot Machine</div>
+        <div class="game-tagline">Vegas, but for entropy</div>
+        <div class="game-desc">Three reels spin. Land on a password. The bar shows crack time, from "1.2 seconds" to "47 trillion years." Length beats complexity, made visceral.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128242;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Incident Response: The Pager</div>
+        <div class="game-tagline">3 a.m. and the on-call is you</div>
+        <div class="game-desc">Realistic alerts. Four response options. Each scenario plays out with consequences. Like Oregon Trail for SOC teams.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TIER 2: Highly playable -->
+  <section class="tier" aria-labelledby="tier2">
+    <div class="tier-header">
+      <span class="tier-emoji" aria-hidden="true">&#127918;</span>
+      <h2 id="tier2" class="tier-title">Highly Playable</h2>
+      <span class="tier-blurb">Most fun</span>
+    </div>
+    <div class="game-grid">
+
+      <a class="game-card live" href="whack-a-mole.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128296;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Vulnerability Whack-a-Mole</div>
+        <div class="game-tagline">Patch them before they pop</div>
+        <div class="game-desc">CVEs pop out of holes labeled RDP, SSL, S3, Log4j. Whack them with PATCH before they breach. Score tracks your real-world SLA pace.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#127916;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Social Engineering: Choose Your Adventure</div>
+        <div class="game-tagline">Refuse politely or get owned</div>
+        <div class="game-desc">Branching dialogue puts you in the attacker's chair, or the defender's. Either way, you learn how the trick works.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#129518;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Build Your Stack</div>
+        <div class="game-tagline">Defense in depth, on a budget</div>
+        <div class="game-desc">Drag-and-drop firewalls, EDR, MFA, SIEM. Survive waves of threats. The optimal stack isn't the most expensive one.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TIER 3: Niche but cool -->
+  <section class="tier" aria-labelledby="tier3">
+    <div class="tier-header">
+      <span class="tier-emoji" aria-hidden="true">&#129504;</span>
+      <h2 id="tier3" class="tier-title">Niche But Cool</h2>
+      <span class="tier-blurb">For the curious</span>
+    </div>
+    <div class="game-grid">
+
+      <a class="game-card live" href="honeypot.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#127855;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Honey Pot</div>
+        <div class="game-tagline">Lure, observe, learn</div>
+        <div class="game-desc">A "vulnerable" server attracts attackers. Drop traps to catch them. Watch their TTPs in real time and harvest threat intel.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128274;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Cipher Lab</div>
+        <div class="game-tagline">From Caesar to Kyber</div>
+        <div class="game-desc">Type a sentence, watch it transform through every cipher in history. Visualizes how encryption scrambles meaning.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#9879;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">CIA Triad Tower Defense</div>
+        <div class="game-tagline">Confidentiality, Integrity, Availability</div>
+        <div class="game-desc">Three towers. Three threat types. Pick which two to fortify. Teaches the fundamental security tradeoff through gameplay.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TIER 4: AI-era -->
+  <section class="tier" aria-labelledby="tier4">
+    <div class="tier-header">
+      <span class="tier-emoji" aria-hidden="true">&#129302;</span>
+      <h2 id="tier4" class="tier-title">AI-Era Threats</h2>
+      <span class="tier-blurb">2026's hot topics</span>
+    </div>
+    <div class="game-grid">
+
+      <a class="game-card live" href="prompt-injection.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128293;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">Prompt Injection Lab</div>
+        <div class="game-tagline">Trick the AI, level by level</div>
+        <div class="game-desc">A guarded chatbot has a secret. Talk it into spilling. Each level is harder and teaches a real prompt-injection technique.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128247;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Deepfake Detective</div>
+        <div class="game-tagline">Real or generated?</div>
+        <div class="game-desc">Side-by-side photos and audio clips. Pick the real one. Reveal what gave the fake away.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#128737;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Shadow IT Hunter</div>
+        <div class="game-tagline">Audit the office floor</div>
+        <div class="game-desc">Click on departments, expose unauthorized SaaS accounts, personal email use, that one Slack workspace nobody tracks.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TIER 5: Visually striking -->
+  <section class="tier" aria-labelledby="tier5">
+    <div class="tier-header">
+      <span class="tier-emoji" aria-hidden="true">&#127912;</span>
+      <h2 id="tier5" class="tier-title">Visually Striking</h2>
+      <span class="tier-blurb">Hollywood-grade</span>
+    </div>
+    <div class="game-grid">
+
+      <a class="game-card live" href="decryption-race.html">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#9889;</span>
+          <span class="game-status live">Live</span>
+        </div>
+        <div class="game-name">The Decryption Race</div>
+        <div class="game-tagline">Classical vs. quantum</div>
+        <div class="game-desc">Two computers race to crack the same RSA key. Animated counters tick. Quantum wins absurdly fast. The PQC pitch in 30 seconds.</div>
+        <div class="game-cta">Play now</div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#127760;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Attack Surface Visualizer</div>
+        <div class="game-tagline">Your exposed assets, in 3D</div>
+        <div class="game-desc">Type a company name. Watch a sphere of domains, IPs, GitHub leaks, and exposed buckets light up. Hover for details.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+      <div class="game-card coming-soon">
+        <div class="game-card-head">
+          <span class="game-icon" aria-hidden="true">&#127919;</span>
+          <span class="game-status soon">Soon</span>
+        </div>
+        <div class="game-name">Insider Threat Bingo</div>
+        <div class="game-tagline">Mark the red flags</div>
+        <div class="game-desc">A 5x5 card of insider-threat indicators. Random employee profiles play, you mark squares. Win means you spotted them.</div>
+        <div class="game-cta">Coming soon</div>
+      </div>
+
+    </div>
+  </section>
+
+  </main>
+
+  <p class="footer-note">
+    <strong>Note:</strong> These games are designed for awareness and training. They simplify real concepts but use authentic terminology and realistic scenarios. Built to be embedded in SharePoint, intranets, or used as standalone training modules.
+  </p>
+</div>
+
+<script src="nav.js"></script>
+</body>
+</html>

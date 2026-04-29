@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vulnerability Whack-a-Mole | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a1020 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+    cursor: default;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 255, 136, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 136, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .back-link {
+    color: #00ff88;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+
+  .back-link:hover, .back-link:focus-visible {
+    background: rgba(0, 255, 136, 0.1);
+    color: #fff;
+    outline: none;
+  }
+
+  header { text-align: center; margin-bottom: 20px; }
+
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #00ff88, #ffaa00, #ff4488, #00ff88);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  .hud {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .hud-cell {
+    background: rgba(0, 20, 30, 0.7);
+    border: 1px solid rgba(0, 255, 136, 0.25);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+
+  .hud-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: #8aa0c0;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .hud-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+    font-family: 'Courier New', monospace;
+  }
+
+  .hud-value.time { color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+  .hud-value.time.low { color: #ff4488; text-shadow: 0 0 10px rgba(255, 68, 136, 0.6); animation: pulse 0.5s infinite; }
+  .hud-value.misses { color: #ff6b88; text-shadow: 0 0 10px rgba(255, 100, 130, 0.5); }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* Game grid */
+  .game-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    background: rgba(0, 10, 20, 0.6);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 255, 136, 0.05);
+    margin-bottom: 18px;
+    cursor: crosshair;
+  }
+
+  .hole {
+    position: relative;
+    aspect-ratio: 1;
+    background:
+      radial-gradient(ellipse at 50% 70%, #1a1a1a, #0a0a0a 60%, #050505 100%);
+    border-radius: 50% / 30%;
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    overflow: hidden;
+    box-shadow:
+      inset 0 6px 20px rgba(0, 0, 0, 0.9),
+      inset 0 -2px 8px rgba(0, 255, 136, 0.05);
+  }
+
+  .hole-label {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    color: rgba(0, 255, 136, 0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+
+  /* The mole = a CVE label that pops up */
+  .mole {
+    position: absolute;
+    bottom: -100%;
+    left: 8%;
+    right: 8%;
+    height: 80%;
+    border-radius: 12px 12px 6px 6px;
+    background: linear-gradient(180deg, #ff4488, #aa0044);
+    border: 2px solid #ff77aa;
+    box-shadow: 0 0 25px rgba(255, 68, 136, 0.6), inset 0 -10px 20px rgba(0, 0, 0, 0.4);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 6px;
+    transition: bottom 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .mole.up { bottom: 8%; }
+  .mole.whacked {
+    background: linear-gradient(180deg, #00ff88, #00aa55);
+    border-color: #66ffaa;
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+    animation: whackBounce 0.4s ease-out;
+  }
+
+  @keyframes whackBounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.3); }
+    100% { transform: scale(0); }
+  }
+
+  .mole-cve {
+    font-size: 0.65rem;
+    opacity: 0.85;
+    margin-bottom: 2px;
+  }
+
+  .mole-name {
+    font-size: 0.85rem;
+    line-height: 1.1;
+  }
+
+  .mole-severity {
+    margin-top: 4px;
+    font-size: 0.55rem;
+    padding: 1px 6px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    letter-spacing: 1.5px;
+  }
+
+  /* Score popup */
+  .popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 5;
+    animation: popupRise 0.8s ease-out forwards;
+  }
+
+  .popup.good { color: #00ff88; text-shadow: 0 0 10px #00ff88; font-size: 1.1rem; }
+  .popup.bad { color: #ff4488; text-shadow: 0 0 10px #ff4488; font-size: 1rem; }
+
+  @keyframes popupRise {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -200%) scale(1.4); }
+  }
+
+  /* Controls */
+  .controls {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    background: linear-gradient(90deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 255, 0.2));
+    border: 1px solid rgba(0, 255, 136, 0.6);
+    color: #00ff88;
+    padding: 14px 32px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+  }
+
+  .btn:hover, .btn:focus-visible {
+    background: linear-gradient(90deg, rgba(0, 255, 136, 0.35), rgba(0, 255, 255, 0.35));
+    color: #fff;
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+    outline: none;
+    transform: translateY(-2px);
+  }
+
+  /* Game over */
+  .game-over {
+    text-align: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, rgba(0, 60, 30, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+
+  @keyframes revealIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .game-over h2 {
+    font-size: 1.3rem;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .final-score {
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+    margin-bottom: 6px;
+  }
+
+  .final-grade {
+    font-size: 0.95rem;
+    color: #c8d8ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .final-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Custom hammer cursor on board */
+  .game-board.active { cursor: crosshair; }
+
+  /* Instructions */
+  .instructions {
+    text-align: center;
+    color: #8aa0c0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 480px) {
+    .hud { grid-template-columns: repeat(2, 1fr); }
+    .game-board { grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px; }
+    .mole-name { font-size: 0.7rem; }
+    .mole-cve { font-size: 0.55rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;">60s round</span>
+  </div>
+
+  <header>
+    <h1>Vulnerability Whack-a-Mole</h1>
+    <div class="subtitle">Patch them before they pop</div>
+  </header>
+
+  <div class="hud" role="status">
+    <div class="hud-cell"><div class="hud-label">Patches</div><div class="hud-value" id="score">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Combo</div><div class="hud-value" id="combo">x1</div></div>
+    <div class="hud-cell"><div class="hud-label">Misses</div><div class="hud-value misses" id="misses">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Time</div><div class="hud-value time" id="timer">60</div></div>
+  </div>
+
+  <p class="instructions">Click each CVE to patch it. Critical bugs are worth more. Missed patches breach your network.</p>
+
+  <main>
+    <div class="game-board" id="board">
+      <div class="hole" data-i="0"><span class="hole-label">RDP</span></div>
+      <div class="hole" data-i="1"><span class="hole-label">SSL/TLS</span></div>
+      <div class="hole" data-i="2"><span class="hole-label">S3 BUCKET</span></div>
+      <div class="hole" data-i="3"><span class="hole-label">LOG4J</span></div>
+      <div class="hole" data-i="4"><span class="hole-label">PRINT SPOOLER</span></div>
+      <div class="hole" data-i="5"><span class="hole-label">VPN</span></div>
+      <div class="hole" data-i="6"><span class="hole-label">SQL DB</span></div>
+      <div class="hole" data-i="7"><span class="hole-label">EXCHANGE</span></div>
+      <div class="hole" data-i="8"><span class="hole-label">KERNEL</span></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn" type="button">Start patching</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2 id="gameOverTitle">Round Complete</h2>
+      <div class="final-score" id="finalScore">0</div>
+      <div class="final-grade" id="finalGrade"></div>
+      <div class="final-stats" id="finalStats"></div>
+      <button class="btn" id="playAgain" type="button">Play again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const cves = [
+  { name: 'BlueKeep', cve: 'CVE-2019-0708', severity: 'critical', value: 200 },
+  { name: 'Heartbleed', cve: 'CVE-2014-0160', severity: 'critical', value: 200 },
+  { name: 'Open Bucket', cve: 'S3-MISCFG', severity: 'high', value: 150 },
+  { name: 'Log4Shell', cve: 'CVE-2021-44228', severity: 'critical', value: 250 },
+  { name: 'PrintNightmare', cve: 'CVE-2021-34527', severity: 'high', value: 150 },
+  { name: 'Pulse VPN', cve: 'CVE-2019-11510', severity: 'critical', value: 200 },
+  { name: 'SQL Inject', cve: 'CWE-89', severity: 'medium', value: 100 },
+  { name: 'ProxyLogon', cve: 'CVE-2021-26855', severity: 'critical', value: 220 },
+  { name: 'Spectre', cve: 'CVE-2017-5753', severity: 'medium', value: 100 },
+  { name: 'EternalBlue', cve: 'CVE-2017-0144', severity: 'critical', value: 250 },
+  { name: 'Shellshock', cve: 'CVE-2014-6271', severity: 'high', value: 180 },
+  { name: 'POODLE', cve: 'CVE-2014-3566', severity: 'medium', value: 100 },
+  { name: 'Spring4Shell', cve: 'CVE-2022-22965', severity: 'critical', value: 220 },
+  { name: 'Drupalgeddon', cve: 'CVE-2018-7600', severity: 'high', value: 160 },
+  { name: 'Sudo Baron', cve: 'CVE-2021-3156', severity: 'high', value: 170 }
+];
+
+const ROUND_LENGTH = 60;
+const board = document.getElementById('board');
+const holes = Array.from(board.querySelectorAll('.hole'));
+const scoreEl = document.getElementById('score');
+const comboEl = document.getElementById('combo');
+const missesEl = document.getElementById('misses');
+const timerEl = document.getElementById('timer');
+const startBtn = document.getElementById('startBtn');
+const gameOver = document.getElementById('gameOver');
+const finalScore = document.getElementById('finalScore');
+const finalGrade = document.getElementById('finalGrade');
+const finalStats = document.getElementById('finalStats');
+const playAgain = document.getElementById('playAgain');
+
+let score = 0;
+let misses = 0;
+let combo = 1;
+let comboTimer = null;
+let timeLeft = ROUND_LENGTH;
+let running = false;
+let popInterval = null;
+let countdown = null;
+let activeMoles = new Map(); // hole index -> {el, cve, timeoutId}
+
+function popMole() {
+  if (!running) return;
+  const free = holes.filter((_, i) => !activeMoles.has(i));
+  if (free.length === 0) return;
+  const hole = free[Math.floor(Math.random() * free.length)];
+  const i = parseInt(hole.dataset.i, 10);
+  const cve = cves[Math.floor(Math.random() * cves.length)];
+
+  const mole = document.createElement('div');
+  mole.className = 'mole';
+  mole.innerHTML = `
+    <div class="mole-cve">${cve.cve}</div>
+    <div class="mole-name">${cve.name}</div>
+    <div class="mole-severity">${cve.severity}</div>
+  `;
+  hole.appendChild(mole);
+  // Force reflow then animate
+  void mole.offsetWidth;
+  mole.classList.add('up');
+
+  const lifetime = Math.max(900, 1800 - (ROUND_LENGTH - timeLeft) * 14);
+  const timeoutId = setTimeout(() => {
+    if (!activeMoles.has(i)) return;
+    // Missed it
+    misses++;
+    missesEl.textContent = misses;
+    spawnPopup(hole, '-1 BREACH', 'bad');
+    combo = 1; comboEl.textContent = 'x1';
+    activeMoles.delete(i);
+    mole.classList.remove('up');
+    setTimeout(() => mole.remove(), 250);
+  }, lifetime);
+
+  mole.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (mole.classList.contains('whacked')) return;
+    clearTimeout(timeoutId);
+    mole.classList.add('whacked');
+    const earned = Math.round(cve.value * combo);
+    score += earned;
+    scoreEl.textContent = score;
+    spawnPopup(hole, '+' + earned, 'good');
+    combo = Math.min(5, combo + 0.5);
+    comboEl.textContent = 'x' + combo.toFixed(1);
+    if (comboTimer) clearTimeout(comboTimer);
+    comboTimer = setTimeout(() => { combo = 1; comboEl.textContent = 'x1'; }, 2000);
+    activeMoles.delete(i);
+    setTimeout(() => mole.remove(), 400);
+  });
+
+  activeMoles.set(i, { el: mole, timeoutId });
+}
+
+function spawnPopup(hole, text, kind) {
+  const p = document.createElement('div');
+  p.className = 'popup ' + kind;
+  p.textContent = text;
+  hole.appendChild(p);
+  setTimeout(() => p.remove(), 800);
+}
+
+function start() {
+  score = 0; misses = 0; combo = 1; timeLeft = ROUND_LENGTH;
+  scoreEl.textContent = '0';
+  missesEl.textContent = '0';
+  comboEl.textContent = 'x1';
+  timerEl.textContent = ROUND_LENGTH;
+  timerEl.classList.remove('low');
+  gameOver.classList.remove('visible');
+  startBtn.style.display = 'none';
+  running = true;
+
+  // Pop moles at increasing rate
+  function scheduleNext() {
+    if (!running) return;
+    const popsPerSec = 1.5 + (1 - timeLeft / ROUND_LENGTH) * 2.5;
+    const delay = 1000 / popsPerSec + (Math.random() - 0.5) * 200;
+    popInterval = setTimeout(() => { popMole(); scheduleNext(); }, delay);
+  }
+  scheduleNext();
+
+  // Tick clock
+  countdown = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 10) timerEl.classList.add('low');
+    if (timeLeft <= 0) end();
+  }, 1000);
+}
+
+function end() {
+  running = false;
+  if (popInterval) clearTimeout(popInterval);
+  if (countdown) clearInterval(countdown);
+  // Remove any remaining moles
+  activeMoles.forEach(({ el, timeoutId }) => {
+    clearTimeout(timeoutId);
+    el.remove();
+  });
+  activeMoles.clear();
+
+  finalScore.textContent = score;
+  let grade;
+  if (score >= 5000) grade = 'CISO-tier - SOC bows to you';
+  else if (score >= 3500) grade = 'Excellent - your patch SLA is enviable';
+  else if (score >= 2000) grade = 'Solid - your network would survive';
+  else if (score >= 1000) grade = 'Risky - the attackers got most of these';
+  else grade = 'Concerning - your network is now a botnet';
+  finalGrade.textContent = grade;
+  finalStats.innerHTML = `<span>${misses} breaches</span><span>${score} points</span>`;
+  gameOver.classList.add('visible');
+}
+
+startBtn.addEventListener('click', start);
+playAgain.addEventListener('click', start);
+
+// Keyboard: Space to start
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (!running && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    start();
+  }
+});
+</script>
+</body>
+</html>

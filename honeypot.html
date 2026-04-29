@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Honey Pot | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 30% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent);
+    background-size: 200% 200%;
+    opacity: 0.2;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .back-link {
+    color: #ffaa00;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 170, 0, 0.4);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+
+  .back-link:hover, .back-link:focus-visible {
+    background: rgba(255, 170, 0, 0.1);
+    color: #fff;
+    outline: none;
+  }
+
+  header { text-align: center; margin-bottom: 20px; }
+
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ffaa00, #ff44aa, #ffaa00);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 5s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  .hud {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .hud-cell {
+    background: rgba(20, 10, 0, 0.7);
+    border: 1px solid rgba(255, 170, 0, 0.25);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+
+  .hud-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: #c8a070;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .hud-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffaa00;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.6);
+    font-family: 'Courier New', monospace;
+  }
+
+  .hud-value.intel { color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+  .hud-value.caught { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+  .hud-value.breached { color: #ff4488; text-shadow: 0 0 10px rgba(255, 68, 136, 0.5); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  /* The simulated network arena */
+  .arena {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.4;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0, 60, 40, 0.3), rgba(0, 0, 20, 0.8) 70%),
+      linear-gradient(180deg, #0a1828, #050810);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(0, 0, 0, 0.4);
+    cursor: crosshair;
+  }
+
+  .arena.placing { cursor: copy; }
+
+  /* The fake server */
+  .server {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #553a1a, #2a1d0a);
+    border: 2px solid #ffaa00;
+    box-shadow:
+      0 0 30px rgba(255, 170, 0, 0.5),
+      inset 0 -8px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    z-index: 3;
+    font-family: 'Courier New', monospace;
+  }
+
+  .server::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 16px;
+    background: radial-gradient(circle, rgba(255, 170, 0, 0.4), transparent 70%);
+    z-index: -1;
+    animation: serverPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes serverPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  .server-icon { font-size: 1.6rem; margin-bottom: 2px; }
+  .server-label {
+    font-size: 0.5rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #ffcc66;
+  }
+  .server-name {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  /* Attackers */
+  .attacker {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ff77aa, #cc0044);
+    box-shadow: 0 0 12px #ff4488, 0 0 20px rgba(255, 68, 136, 0.6);
+    z-index: 2;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+
+  .attacker::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 100, 130, 0.3);
+    animation: attackerRing 1.4s linear infinite;
+  }
+
+  @keyframes attackerRing {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  .attacker.caught {
+    background: radial-gradient(circle at 35% 35%, #66ff99, #00aa55);
+    box-shadow: 0 0 25px #00ff88, 0 0 40px rgba(0, 255, 136, 0.8);
+  }
+
+  .attacker.caught::after { display: none; }
+
+  .attacker.fading { opacity: 0; }
+
+  /* Trail dots */
+  .trail-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 68, 136, 0.5);
+    pointer-events: none;
+    animation: trailFade 1s ease-out forwards;
+  }
+
+  @keyframes trailFade {
+    from { opacity: 0.7; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.3); }
+  }
+
+  /* Placed traps */
+  .trap {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 0 15px currentColor;
+    pointer-events: none;
+  }
+
+  .trap.firewall { background: rgba(255, 60, 60, 0.25); border: 2px dashed #ff6666; color: #ff6666; }
+  .trap.tarpit { background: rgba(0, 100, 200, 0.25); border: 2px dashed #66aaff; color: #66aaff; }
+  .trap.sandbox { background: rgba(180, 0, 200, 0.25); border: 2px dashed #cc66ff; color: #cc66ff; }
+  .trap.canary { background: rgba(255, 200, 0, 0.25); border: 2px dashed #ffcc66; color: #ffcc66; }
+
+  .trap-radius {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.15;
+    pointer-events: none;
+    animation: radiusPulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes radiusPulse {
+    0%, 100% { opacity: 0.08; transform: scale(0.95); }
+    50% { opacity: 0.18; transform: scale(1.05); }
+  }
+
+  /* Trap palette */
+  .palette {
+    background: rgba(20, 10, 0, 0.7);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 14px;
+    padding: 14px;
+    backdrop-filter: blur(8px);
+  }
+
+  .palette-title {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #ffcc66;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.4);
+  }
+
+  .trap-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 170, 0, 0.15);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .trap-option:hover, .trap-option.active {
+    border-color: rgba(255, 170, 0, 0.7);
+    background: rgba(255, 170, 0, 0.1);
+  }
+
+  .trap-option.active {
+    box-shadow: 0 0 18px rgba(255, 170, 0, 0.4);
+    transform: translateX(2px);
+  }
+
+  .trap-option:disabled, .trap-option.spent {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .trap-icon {
+    font-size: 1.2rem;
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .trap-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .trap-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+
+  .trap-cost {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    color: #c8a070;
+    letter-spacing: 1px;
+  }
+
+  /* Intel feed */
+  .intel-feed {
+    background: rgba(0, 20, 30, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 14px;
+    padding: 14px;
+    backdrop-filter: blur(8px);
+    margin-bottom: 14px;
+  }
+
+  .intel-title {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #00ffff;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  }
+
+  .intel-log {
+    max-height: 130px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: #aac0d0;
+  }
+
+  .intel-log p {
+    padding: 2px 0;
+    border-bottom: 1px dashed rgba(0, 255, 255, 0.08);
+  }
+
+  .intel-log .ts { color: #66aaff; margin-right: 6px; }
+  .intel-log .good { color: #00ff88; }
+  .intel-log .bad { color: #ff6688; }
+  .intel-log .info { color: #ffcc66; }
+
+  .controls {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    background: linear-gradient(90deg, rgba(255, 170, 0, 0.2), rgba(255, 68, 170, 0.2));
+    border: 1px solid rgba(255, 170, 0, 0.6);
+    color: #ffaa00;
+    padding: 14px 32px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+  }
+
+  .btn:hover, .btn:focus-visible {
+    background: linear-gradient(90deg, rgba(255, 170, 0, 0.35), rgba(255, 68, 170, 0.35));
+    color: #fff;
+    box-shadow: 0 0 30px rgba(255, 170, 0, 0.4);
+    outline: none;
+    transform: translateY(-2px);
+  }
+
+  .game-over {
+    text-align: center;
+    padding: 26px 20px;
+    background: linear-gradient(135deg, rgba(60, 40, 0, 0.7), rgba(60, 0, 30, 0.7));
+    border: 1px solid rgba(255, 170, 0, 0.5);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+
+  @keyframes revealIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .game-over h2 {
+    font-size: 1.3rem;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .final-score {
+    font-size: 3rem;
+    color: #ffaa00;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 25px rgba(255, 170, 0, 0.5);
+    margin-bottom: 6px;
+  }
+
+  .final-grade {
+    font-size: 0.95rem;
+    color: #c8d8ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .instructions {
+    text-align: center;
+    color: #8aa0c0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .palette { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px; }
+    .palette-title { width: 100%; margin-bottom: 6px; }
+    .trap-option { flex: 1; min-width: 130px; margin-bottom: 0; padding: 8px; }
+  }
+
+  @media (max-width: 480px) {
+    .hud { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(0, 255, 255, 0.4); color: #00ffff; cursor: default;">90s round</span>
+  </div>
+
+  <header>
+    <h1>Honey Pot</h1>
+    <div class="subtitle">Lure them in. Learn their tricks.</div>
+  </header>
+
+  <div class="hud" role="status">
+    <div class="hud-cell"><div class="hud-label">Intel</div><div class="hud-value intel" id="intel">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Caught</div><div class="hud-value caught" id="caught">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Breached</div><div class="hud-value breached" id="breached">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Time</div><div class="hud-value" id="timer">90</div></div>
+  </div>
+
+  <p class="instructions">Pick a trap, click in the arena to place it. Catch attackers before they reach the honeypot.</p>
+
+  <main>
+    <div class="layout">
+      <div class="arena" id="arena">
+        <div class="server">
+          <div class="server-icon">&#127855;</div>
+          <div class="server-label">honeypot</div>
+          <div class="server-name">db-prod-01</div>
+        </div>
+      </div>
+
+      <aside class="palette" aria-label="Trap palette">
+        <div class="palette-title">Traps</div>
+        <button type="button" class="trap-option" data-type="firewall" data-cost="20" data-radius="80">
+          <span class="trap-icon">&#128293;</span>
+          <span class="trap-info">
+            <span class="trap-name">Firewall</span>
+            <span class="trap-cost">cost: 20 intel</span>
+          </span>
+        </button>
+        <button type="button" class="trap-option" data-type="tarpit" data-cost="35" data-radius="110">
+          <span class="trap-icon">&#127807;</span>
+          <span class="trap-info">
+            <span class="trap-name">Tarpit</span>
+            <span class="trap-cost">cost: 35 intel</span>
+          </span>
+        </button>
+        <button type="button" class="trap-option" data-type="sandbox" data-cost="50" data-radius="140">
+          <span class="trap-icon">&#9881;</span>
+          <span class="trap-info">
+            <span class="trap-name">Sandbox</span>
+            <span class="trap-cost">cost: 50 intel</span>
+          </span>
+        </button>
+        <button type="button" class="trap-option" data-type="canary" data-cost="15" data-radius="60">
+          <span class="trap-icon">&#128039;</span>
+          <span class="trap-info">
+            <span class="trap-name">Canary</span>
+            <span class="trap-cost">cost: 15 intel</span>
+          </span>
+        </button>
+      </aside>
+    </div>
+
+    <div class="intel-feed">
+      <div class="intel-title">Threat intel feed</div>
+      <div class="intel-log" id="log"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn" type="button">Activate honeypot</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2>Round Complete</h2>
+      <div class="final-score" id="finalScore">0</div>
+      <div class="final-grade" id="finalGrade"></div>
+      <div style="color:#c8d8ff;font-size:0.85rem;margin-bottom:18px;font-family:'Courier New',monospace;" id="finalStats"></div>
+      <button class="btn" id="playAgain" type="button">Play again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const arena = document.getElementById('arena');
+const intelEl = document.getElementById('intel');
+const caughtEl = document.getElementById('caught');
+const breachedEl = document.getElementById('breached');
+const timerEl = document.getElementById('timer');
+const startBtn = document.getElementById('startBtn');
+const gameOver = document.getElementById('gameOver');
+const finalScore = document.getElementById('finalScore');
+const finalGrade = document.getElementById('finalGrade');
+const finalStats = document.getElementById('finalStats');
+const playAgain = document.getElementById('playAgain');
+const log = document.getElementById('log');
+const trapOptions = Array.from(document.querySelectorAll('.trap-option'));
+
+const ROUND_LENGTH = 90;
+const ATTACKER_TYPES = [
+  { name: 'Brute force', ttp: 'Tried 14,287 password combos', speed: 0.6, cls: 'bad' },
+  { name: 'SQL injection', ttp: 'Probed login forms with UNION SELECT', speed: 0.7, cls: 'bad' },
+  { name: 'Port scan', ttp: 'Scanned 1-1024 from 185.220.x.x', speed: 0.9, cls: 'info' },
+  { name: 'Credential stuffer', ttp: 'Reused leaked creds from MyFitnessPal 2018', speed: 0.7, cls: 'bad' },
+  { name: 'Ransomware probe', ttp: 'Looked for SMB shares', speed: 0.5, cls: 'bad' },
+  { name: 'Crypto miner', ttp: 'Searched for /admin/ panels', speed: 0.8, cls: 'bad' },
+  { name: 'Reconnaissance bot', ttp: 'GET /robots.txt, /admin, /.env', speed: 1.0, cls: 'info' },
+  { name: 'Log4j scanner', ttp: 'Tried JNDI lookup in User-Agent', speed: 0.7, cls: 'bad' },
+  { name: 'Web shell installer', ttp: 'POSTed PHP backdoor to /uploads/', speed: 0.6, cls: 'bad' }
+];
+
+let intel = 0;
+let caught = 0;
+let breached = 0;
+let timeLeft = ROUND_LENGTH;
+let running = false;
+let selectedTrap = null;
+let attackers = [];
+let traps = []; // { x, y, type, radius, cost }
+let spawnTimer = null;
+let countdown = null;
+let rafId = null;
+
+function logEvent(text, cls) {
+  const p = document.createElement('p');
+  const ts = new Date();
+  const tt = ts.toTimeString().slice(0, 8);
+  p.innerHTML = `<span class="ts">[${tt}]</span><span class="${cls || ''}">${text}</span>`;
+  log.insertBefore(p, log.firstChild);
+  while (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+function updateHud() {
+  intelEl.textContent = intel;
+  caughtEl.textContent = caught;
+  breachedEl.textContent = breached;
+  // Update trap option affordability
+  trapOptions.forEach(opt => {
+    const cost = parseInt(opt.dataset.cost, 10);
+    if (intel < cost) opt.classList.add('spent');
+    else opt.classList.remove('spent');
+  });
+}
+
+function selectTrap(opt) {
+  if (!running) return;
+  const cost = parseInt(opt.dataset.cost, 10);
+  if (intel < cost) return;
+  trapOptions.forEach(o => o.classList.remove('active'));
+  if (selectedTrap && selectedTrap.dataset.type === opt.dataset.type) {
+    selectedTrap = null;
+    arena.classList.remove('placing');
+  } else {
+    opt.classList.add('active');
+    selectedTrap = opt;
+    arena.classList.add('placing');
+  }
+}
+
+trapOptions.forEach(opt => opt.addEventListener('click', () => selectTrap(opt)));
+
+arena.addEventListener('click', (e) => {
+  if (!running || !selectedTrap) return;
+  const cost = parseInt(selectedTrap.dataset.cost, 10);
+  if (intel < cost) return;
+  intel -= cost;
+
+  const rect = arena.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const type = selectedTrap.dataset.type;
+  const radius = parseInt(selectedTrap.dataset.radius, 10);
+
+  placeTrap(x, y, type, radius);
+  logEvent(`Placed ${type} at (${Math.round(x)}, ${Math.round(y)})`, 'info');
+
+  selectedTrap.classList.remove('active');
+  selectedTrap = null;
+  arena.classList.remove('placing');
+  updateHud();
+});
+
+function placeTrap(x, y, type, radius) {
+  // Visual radius
+  const ring = document.createElement('div');
+  ring.className = 'trap-radius';
+  ring.style.left = (x - radius) + 'px';
+  ring.style.top = (y - radius) + 'px';
+  ring.style.width = (radius * 2) + 'px';
+  ring.style.height = (radius * 2) + 'px';
+  if (type === 'firewall') ring.style.background = 'radial-gradient(circle, rgba(255,80,80,0.5), transparent 70%)';
+  if (type === 'tarpit') ring.style.background = 'radial-gradient(circle, rgba(80,160,255,0.5), transparent 70%)';
+  if (type === 'sandbox') ring.style.background = 'radial-gradient(circle, rgba(180,80,255,0.5), transparent 70%)';
+  if (type === 'canary') ring.style.background = 'radial-gradient(circle, rgba(255,200,80,0.5), transparent 70%)';
+  arena.appendChild(ring);
+
+  const t = document.createElement('div');
+  t.className = 'trap ' + type;
+  t.style.left = x + 'px';
+  t.style.top = y + 'px';
+  const icons = { firewall: '\u{1F525}', tarpit: '\u{1F33F}', sandbox: '⚙', canary: '\u{1F407}' };
+  t.textContent = icons[type] || '?';
+  arena.appendChild(t);
+
+  traps.push({ x, y, type, radius, el: t, ringEl: ring });
+}
+
+function spawnAttacker() {
+  if (!running) return;
+  const rect = arena.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+
+  // Spawn from a random edge
+  const side = Math.floor(Math.random() * 4);
+  let x, y;
+  if (side === 0) { x = Math.random() * w; y = -20; }
+  else if (side === 1) { x = w + 20; y = Math.random() * h; }
+  else if (side === 2) { x = Math.random() * w; y = h + 20; }
+  else { x = -20; y = Math.random() * h; }
+
+  const type = ATTACKER_TYPES[Math.floor(Math.random() * ATTACKER_TYPES.length)];
+  const speedMultiplier = 0.6 + (1 - timeLeft / ROUND_LENGTH) * 1.2; // accelerate over time
+
+  const el = document.createElement('div');
+  el.className = 'attacker';
+  el.style.left = (x - 12) + 'px';
+  el.style.top = (y - 12) + 'px';
+  arena.appendChild(el);
+
+  attackers.push({
+    el, x, y, type,
+    speed: type.speed * speedMultiplier,
+    caught: false,
+    slowed: 1,
+    lastTrail: 0
+  });
+}
+
+function update() {
+  if (!running) { rafId = null; return; }
+  const rect = arena.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const now = performance.now();
+
+  for (let i = attackers.length - 1; i >= 0; i--) {
+    const a = attackers[i];
+    if (a.caught) continue;
+
+    // Move toward server
+    const dx = cx - a.x;
+    const dy = cy - a.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 40) {
+      // Reached server = breach
+      breached++;
+      logEvent(`BREACH: ${a.type.name} reached the honeypot`, 'bad');
+      a.el.classList.add('fading');
+      setTimeout(() => a.el.remove(), 400);
+      attackers.splice(i, 1);
+      updateHud();
+      continue;
+    }
+
+    // Check trap effects
+    a.slowed = 1;
+    let caughtBy = null;
+    for (const t of traps) {
+      const tdx = t.x - a.x;
+      const tdy = t.y - a.y;
+      const td = Math.hypot(tdx, tdy);
+      if (td < t.radius) {
+        if (t.type === 'firewall' && Math.random() < 0.04) { caughtBy = t; break; }
+        if (t.type === 'sandbox' && Math.random() < 0.06) { caughtBy = t; break; }
+        if (t.type === 'tarpit') a.slowed = Math.min(a.slowed, 0.2);
+        if (t.type === 'canary' && Math.random() < 0.02) { caughtBy = t; break; }
+      }
+    }
+
+    if (caughtBy) {
+      a.caught = true;
+      caught++;
+      const intelGain = 12 + Math.floor(Math.random() * 18);
+      intel += intelGain;
+      logEvent(`Caught ${a.type.name}: ${a.type.ttp} (+${intelGain} intel)`, a.type.cls);
+      a.el.classList.add('caught');
+      setTimeout(() => { a.el.classList.add('fading'); }, 600);
+      setTimeout(() => a.el.remove(), 1100);
+      setTimeout(() => {
+        const i2 = attackers.indexOf(a);
+        if (i2 >= 0) attackers.splice(i2, 1);
+      }, 1100);
+      updateHud();
+      continue;
+    }
+
+    // Move
+    a.x += (dx / dist) * a.speed * a.slowed;
+    a.y += (dy / dist) * a.speed * a.slowed;
+    a.el.style.left = (a.x - 12) + 'px';
+    a.el.style.top = (a.y - 12) + 'px';
+
+    // Trail
+    if (now - a.lastTrail > 100) {
+      const trail = document.createElement('div');
+      trail.className = 'trail-dot';
+      trail.style.left = (a.x - 2) + 'px';
+      trail.style.top = (a.y - 2) + 'px';
+      arena.appendChild(trail);
+      setTimeout(() => trail.remove(), 1000);
+      a.lastTrail = now;
+    }
+  }
+
+  rafId = requestAnimationFrame(update);
+}
+
+function start() {
+  // Reset
+  attackers.forEach(a => a.el.remove());
+  attackers = [];
+  traps.forEach(t => { t.el.remove(); t.ringEl.remove(); });
+  traps = [];
+  intel = 60; // starting intel budget
+  caught = 0;
+  breached = 0;
+  timeLeft = ROUND_LENGTH;
+  log.innerHTML = '';
+  selectedTrap = null;
+  trapOptions.forEach(o => o.classList.remove('active'));
+  arena.classList.remove('placing');
+  gameOver.classList.remove('visible');
+  startBtn.style.display = 'none';
+  running = true;
+  updateHud();
+  timerEl.textContent = ROUND_LENGTH;
+  logEvent('Honeypot activated. Awaiting first contact.', 'info');
+
+  // Schedule attackers
+  function scheduleNext() {
+    if (!running) return;
+    const ratePerSec = 0.7 + (1 - timeLeft / ROUND_LENGTH) * 2.0;
+    const delay = 1000 / ratePerSec + (Math.random() - 0.5) * 300;
+    spawnTimer = setTimeout(() => { spawnAttacker(); scheduleNext(); }, delay);
+  }
+  scheduleNext();
+
+  countdown = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if (timeLeft <= 0) end();
+  }, 1000);
+
+  if (!rafId) rafId = requestAnimationFrame(update);
+}
+
+function end() {
+  running = false;
+  clearInterval(countdown);
+  clearTimeout(spawnTimer);
+
+  finalScore.textContent = intel;
+  let grade;
+  if (caught >= 18 && breached <= 2) grade = 'Threat hunter elite';
+  else if (caught >= 12) grade = 'Solid tradecraft';
+  else if (caught >= 6) grade = 'Decent intel haul';
+  else grade = 'Let too many through';
+  finalGrade.textContent = grade;
+  finalStats.innerHTML = `${caught} caught &middot; ${breached} breaches &middot; ${intel} final intel`;
+  gameOver.classList.add('visible');
+}
+
+startBtn.addEventListener('click', start);
+playAgain.addEventListener('click', start);
+</script>
+</body>
+</html>

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phish or Legit? | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a1020 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 30% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.25;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .back-link {
+    color: #00ffff;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+
+  .back-link:hover, .back-link:focus-visible {
+    background: rgba(0, 255, 255, 0.1);
+    color: #fff;
+    outline: none;
+  }
+
+  header { text-align: center; margin-bottom: 24px; }
+
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff4488, #ffaa00, #ff4488);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 5s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Score panel */
+  .score-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .score-cell {
+    background: rgba(0, 20, 40, 0.6);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+
+  .score-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: #8aa0c0;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .score-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    font-family: 'Courier New', monospace;
+  }
+
+  .score-value.streak { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+  .score-value.accuracy { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+
+  /* Email card */
+  .email-card {
+    background: linear-gradient(180deg, #1a1f2e, #0f1420);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s, opacity 0.4s;
+  }
+
+  .email-card.swipe-left { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
+  .email-card.swipe-right { transform: translateX(120%) rotate(12deg); opacity: 0; }
+
+  .email-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  .email-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+  }
+
+  .email-label {
+    color: #8aa0c0;
+    min-width: 60px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-top: 1px;
+  }
+
+  .email-value {
+    color: #fff;
+    flex: 1;
+    word-break: break-word;
+  }
+
+  .email-value.suspicious-ready {
+    /* baseline styling. Suspicious markers added on reveal. */
+  }
+
+  .email-subject {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .email-body {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #d8dde8;
+    white-space: pre-line;
+  }
+
+  .email-body a {
+    color: #66aaff;
+    text-decoration: underline;
+  }
+
+  /* Decision buttons */
+  .decision-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .decision-btn {
+    padding: 16px;
+    border-radius: 14px;
+    border: 2px solid;
+    background: rgba(0, 0, 30, 0.4);
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(6px);
+  }
+
+  .decision-btn.phish {
+    border-color: rgba(255, 80, 100, 0.6);
+    color: #ff6b88;
+    text-shadow: 0 0 10px rgba(255, 80, 100, 0.5);
+  }
+
+  .decision-btn.legit {
+    border-color: rgba(100, 255, 150, 0.6);
+    color: #66ff99;
+    text-shadow: 0 0 10px rgba(100, 255, 150, 0.5);
+  }
+
+  .decision-btn:hover, .decision-btn:focus-visible {
+    transform: translateY(-2px);
+    outline: none;
+  }
+
+  .decision-btn.phish:hover, .decision-btn.phish:focus-visible {
+    background: rgba(255, 80, 100, 0.15);
+    box-shadow: 0 6px 20px rgba(255, 80, 100, 0.3);
+  }
+
+  .decision-btn.legit:hover, .decision-btn.legit:focus-visible {
+    background: rgba(100, 255, 150, 0.15);
+    box-shadow: 0 6px 20px rgba(100, 255, 150, 0.3);
+  }
+
+  .decision-btn:disabled { opacity: 0.4; cursor: wait; }
+
+  /* Reveal panel */
+  .reveal {
+    background: rgba(0, 20, 40, 0.6);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .reveal.visible { display: block; animation: revealIn 0.4s ease; }
+
+  @keyframes revealIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal.correct { border: 1px solid rgba(0, 255, 136, 0.5); }
+  .reveal.wrong { border: 1px solid rgba(255, 80, 100, 0.5); }
+
+  .reveal-verdict {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .reveal.correct .reveal-verdict { color: #00ff88; text-shadow: 0 0 12px rgba(0, 255, 136, 0.6); }
+  .reveal.wrong .reveal-verdict { color: #ff6b88; text-shadow: 0 0 12px rgba(255, 80, 100, 0.6); }
+
+  .reveal-truth {
+    font-size: 0.9rem;
+    color: #c8d8ff;
+    margin-bottom: 12px;
+  }
+
+  .reveal-truth strong { color: #fff; }
+
+  .flags-title {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #ffaa00;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.5);
+  }
+
+  .flags-title.green { color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.5); }
+
+  .flags-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .flags-list li {
+    padding: 6px 0 6px 22px;
+    position: relative;
+    font-size: 0.85rem;
+    color: #d8dde8;
+    line-height: 1.5;
+  }
+
+  .flags-list li::before {
+    content: '\26A0';
+    position: absolute;
+    left: 0;
+    color: #ffaa00;
+  }
+
+  .flags-list.green li::before {
+    content: '\2713';
+    color: #00ff88;
+  }
+
+  .next-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.15), rgba(255, 0, 200, 0.15));
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    color: #fff;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.2s;
+  }
+
+  .next-btn:hover, .next-btn:focus-visible {
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.25), rgba(255, 0, 200, 0.25));
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+    outline: none;
+  }
+
+  /* Game over screen */
+  .game-over {
+    text-align: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, rgba(60, 0, 60, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(255, 0, 200, 0.4);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+
+  .game-over h2 {
+    font-size: 1.5rem;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00ffff, #ff00cc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .final-score {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+    margin-bottom: 6px;
+  }
+
+  .final-grade {
+    font-size: 1rem;
+    color: #c8d8ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .final-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+  }
+
+  .play-again {
+    padding: 14px 28px;
+    background: rgba(0, 255, 255, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+  }
+
+  .play-again:hover, .play-again:focus-visible {
+    background: rgba(0, 255, 255, 0.25);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+    outline: none;
+  }
+
+  .progress {
+    height: 4px;
+    background: rgba(0, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    animation: progressGlow 2s linear infinite;
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 2px;
+  }
+
+  @keyframes progressGlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  @media (max-width: 480px) {
+    .score-panel { grid-template-columns: repeat(2, 1fr); }
+    .decision-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;">Round 1</span>
+  </div>
+
+  <header>
+    <h1>Phish or Legit?</h1>
+    <div class="subtitle">Spot the threat before you click</div>
+  </header>
+
+  <div class="score-panel" role="status" aria-label="Current score">
+    <div class="score-cell">
+      <div class="score-label">Score</div>
+      <div class="score-value" id="score">0</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-label">Streak</div>
+      <div class="score-value streak" id="streak">0</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-label">Accuracy</div>
+      <div class="score-value accuracy" id="accuracy">--</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-label">Round</div>
+      <div class="score-value" id="round">1</div>
+    </div>
+  </div>
+
+  <div class="progress" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+
+  <main>
+    <div class="email-card" id="emailCard">
+      <div class="email-header">
+        <div class="email-row">
+          <span class="email-label">From</span>
+          <span class="email-value" id="emailFrom"></span>
+        </div>
+        <div class="email-row">
+          <span class="email-label">To</span>
+          <span class="email-value" id="emailTo">you@yourcompany.com</span>
+        </div>
+        <div class="email-row">
+          <span class="email-label">Subject</span>
+          <span class="email-value email-subject" id="emailSubject"></span>
+        </div>
+      </div>
+      <div class="email-body" id="emailBody"></div>
+    </div>
+
+    <div class="decision-row" id="decisionRow">
+      <button class="decision-btn phish" id="btnPhish" type="button">Phish</button>
+      <button class="decision-btn legit" id="btnLegit" type="button">Legit</button>
+    </div>
+
+    <div class="reveal" id="reveal" role="status" aria-live="polite">
+      <div class="reveal-verdict" id="verdict"></div>
+      <div class="reveal-truth" id="truth"></div>
+      <div class="flags-title" id="flagsTitle">Red flags</div>
+      <ul class="flags-list" id="flagsList"></ul>
+      <button class="next-btn" id="nextBtn" type="button">Next email</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2 id="gameOverTitle">Round Complete</h2>
+      <div class="final-score" id="finalScore">0</div>
+      <div class="final-grade" id="finalGrade"></div>
+      <div class="final-stats" id="finalStats"></div>
+      <button class="play-again" id="playAgain" type="button">Play again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const emails = [
+  {
+    from: 'IT Support <it-support@yourcompany.com.security-alert.net>',
+    subject: 'URGENT: Password expires in 1 hour',
+    body: 'Your Microsoft 365 password will expire in 1 hour. Failure to verify will result in account suspension.\n\nCLICK HERE TO VERIFY: http://m365-renew.security-alert.net/login\n\nThank you,\nIT Helpdesk',
+    isPhish: true,
+    flags: [
+      'Sender domain ends in security-alert.net, not your real company domain',
+      'Manufactured urgency: "1 hour" pressure to bypass critical thinking',
+      'Generic greeting, no name',
+      'Link goes to a suspicious external domain, not Microsoft',
+      'Real IT teams never ask you to verify passwords by clicking links'
+    ]
+  },
+  {
+    from: 'Sarah Chen <s.chen@linkedin.com>',
+    subject: "Sarah Chen has accepted your invitation",
+    body: 'Sarah Chen has accepted your invitation to connect.\n\nView Sarah\'s profile: https://www.linkedin.com/in/sarahchen-pm\n\nYou now have 1 new connection.\n\nUnsubscribe from these emails.',
+    isPhish: false,
+    flags: [
+      'Sender domain matches the real linkedin.com',
+      'Tone is calm and informational, not urgent',
+      'Link points to the real linkedin.com domain',
+      'Standard transactional notification, easy to verify by going to LinkedIn directly',
+      'No password requests, no attachments, no demands for action'
+    ]
+  },
+  {
+    from: 'Amazon <auto-confirm@amaz0n-shipping.com>',
+    subject: 'Your package could not be delivered',
+    body: 'Hello Customer,\n\nWe attempted delivery of your order #4471-XX but were unable to complete it. To reschedule, please confirm your billing address.\n\nReschedule here: https://amaz0n-shipping.com/redelivery?id=8473\n\nIf not rescheduled within 24 hours your package will be returned.',
+    isPhish: true,
+    flags: [
+      'Domain "amaz0n-shipping.com" uses a zero instead of an O (lookalike)',
+      '"Hello Customer" - no name, no real account context',
+      'Asks for billing info via a clicked link',
+      '24-hour deadline manufactures urgency',
+      'Order number format is generic, not Amazon\'s real format'
+    ]
+  },
+  {
+    from: 'Slack <feedback@slack.com>',
+    subject: 'Your weekly summary for Acme Workspace',
+    body: 'Here\'s what happened in your workspace last week:\n\n* 47 messages sent in #general\n* 12 new threads in #engineering\n* 3 new files shared\n\nView the full report in Slack.\n\nManage your email preferences at slack.com/account.',
+    isPhish: false,
+    flags: [
+      'Sender domain is the real slack.com',
+      'Content matches a recognizable pattern (weekly digest)',
+      'No links to click, no requests for credentials',
+      'Settings link points to the legitimate slack.com domain',
+      'Information is non-sensitive and non-actionable'
+    ]
+  },
+  {
+    from: 'CEO Jennifer Walsh <jen.walsh@yourcompany-inc.com>',
+    subject: 'Quick favor - need this done in next hour',
+    body: 'Hi,\n\nI\'m in a meeting and can\'t talk on the phone. I need you to help me with something urgent and confidential.\n\nCan you purchase 5 Apple gift cards ($200 each) and send me the codes? I\'ll reimburse you. Time-sensitive.\n\nDo not discuss this with anyone else.\n\nThanks,\nJennifer',
+    isPhish: true,
+    flags: [
+      'Domain "yourcompany-inc.com" is similar to but not your real company domain',
+      'Classic CEO fraud / business email compromise pattern',
+      'Demands secrecy ("do not discuss with anyone")',
+      'Requests gift cards - a hallmark of social engineering',
+      'Pressures urgency and isolation simultaneously',
+      'No real CEO would email a stranger to buy gift cards'
+    ]
+  },
+  {
+    from: 'GitHub <noreply@github.com>',
+    subject: '[GitHub] A new SSH key was added to your account',
+    body: 'Hello @louiscooper,\n\nA new SSH key was added to your account.\n\nKey title: MacBook Pro\nKey fingerprint: SHA256:aJk2mF...\n\nIf you did not generate this key, you can remove it at https://github.com/settings/keys and we recommend resetting your password.',
+    isPhish: false,
+    flags: [
+      'Sender domain is the real github.com',
+      'Content is a recognized security event notification',
+      'Informational, not asking you to click and log in',
+      'Uses your actual handle in the greeting',
+      'Provides direct path to settings, not a redirect link',
+      'This is exactly the kind of email you WANT to see (it tells you about real changes)'
+    ]
+  },
+  {
+    from: 'DocuSign <dse@docusign.net>',
+    subject: 'Please DocuSign: Q4_Contract_FINAL.pdf',
+    body: 'You have received a document to review and sign.\n\nFROM: Mark Rivera (Acme Corp)\nDOCUMENT: Q4_Contract_FINAL.pdf\n\nREVIEW DOCUMENT: https://na3.docusign.net/Signing/Mtredirect.aspx?ti=89234jfk',
+    isPhish: 'maybe',
+    isPhish: true,
+    flags: [
+      'Even legitimate-looking DocuSign emails are heavily abused',
+      'You weren\'t expecting a contract from Mark Rivera',
+      'Always verify by going directly to DocuSign.com and checking your inbox there',
+      'Phishers register similar domains like docusign.net.security-confirm.com',
+      'When in doubt: verify the sender out-of-band before clicking',
+      'In this case, the sender domain is real, but unexpected document requests are still high-risk'
+    ]
+  },
+  {
+    from: 'Calendly <notifications@calendly.com>',
+    subject: 'New event: Coffee chat with Marcus Lee at 2pm',
+    body: 'Marcus Lee has scheduled a meeting with you.\n\nWhen: Thursday, May 8, 2:00 PM\nWhere: Google Meet (link will be sent 15 min before)\nDuration: 30 minutes\n\nReschedule or cancel: https://calendly.com/your-account/reschedule',
+    isPhish: false,
+    flags: [
+      'Sender domain matches calendly.com',
+      'Content matches a meeting you would expect to see',
+      'Reschedule link goes to the real calendly.com',
+      'No credential prompts or unusual requests',
+      'Easily verified by checking your actual Calendly account'
+    ]
+  },
+  {
+    from: 'Microsoft Account Team <account-security-noreply@accountprotection.microsoft.com>',
+    subject: 'Unusual sign-in activity',
+    body: 'We detected something unusual about a recent sign-in to your Microsoft account.\n\nCountry/region: Russia\nIP address: 185.220.101.42\nDate: Today\n\nIf this was you, you can ignore this email. If you don\'t recognize this activity, please secure your account: https://account.microsoft.com/security',
+    isPhish: false,
+    flags: [
+      'Sender domain "accountprotection.microsoft.com" is a real Microsoft domain',
+      'Pattern matches Microsoft\'s known security alert format',
+      'Provides specific details (country, IP) you can verify',
+      'Action link goes to the real account.microsoft.com',
+      'BUT - always go to account.microsoft.com directly to be safe, never click the link'
+    ]
+  },
+  {
+    from: 'HR <hr-team@yourcompanys-hr.com>',
+    subject: 'New employee handbook - acknowledgment required',
+    body: 'Hi team,\n\nWe\'ve updated the employee handbook for 2026. All employees must review and acknowledge by Friday.\n\nDownload here: handbook2026.zip\n\nOpen the file and run the acknowledgment tool to confirm receipt.\n\nThanks,\nHR',
+    isPhish: true,
+    flags: [
+      'Domain "yourcompanys-hr.com" is a lookalike, not your real internal HR domain',
+      'Asks you to run a tool from a downloaded ZIP',
+      'ZIP files containing executables are a classic malware delivery method',
+      'Real HR uses your internal HR portal, not zip downloads',
+      'Generic greeting "Hi team" instead of your name',
+      'Manufactured deadline to discourage verification'
+    ]
+  },
+  {
+    from: 'Stripe <receipts@stripe.com>',
+    subject: 'Receipt for your payment to Acme SaaS Inc.',
+    body: 'You paid $49.00 to Acme SaaS Inc. on April 28, 2026.\n\nDescription: Monthly subscription\nCard: Visa ending in 4242\n\nView receipt: https://dashboard.stripe.com/receipts/payment/CR_8KFm...\n\nQuestions? Reply to this email or contact Acme SaaS Inc. directly.',
+    isPhish: false,
+    flags: [
+      'Sender domain is the real stripe.com',
+      'Receipt format matches Stripe\'s known pattern',
+      'Specific transaction details that match a real charge',
+      'Link goes to dashboard.stripe.com, the legitimate domain',
+      'No urgency, no credential requests',
+      'Easily cross-checked against your card statement'
+    ]
+  },
+  {
+    from: 'Helpdesk Support <support@office365-helpdesk-online.com>',
+    subject: 'Your shared mailbox has 7 quarantined messages',
+    body: 'You have 7 messages held in quarantine:\n\n1. Invoice from Vendor (Today)\n2. Q1 Report Update (Today)\n3. Re: Project Phoenix\n4. Meeting reminder\n5. Wire transfer confirmation\n6. Contract for review\n7. Password reset request\n\nReview and release these messages at: http://office365-helpdesk-online.com/quarantine/login\n\nMessages will be deleted in 24 hours.',
+    isPhish: true,
+    flags: [
+      'Sender domain is not Microsoft or your company',
+      'Real Microsoft quarantine notifications come from your actual tenant',
+      'Tempting message titles ("Wire transfer", "Invoice") are designed to make you click',
+      '24-hour deletion deadline is fake urgency',
+      'Login page would steal your credentials',
+      'Real quarantine review happens inside your Outlook web client'
+    ]
+  }
+];
+
+// Shuffle once per session
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const ROUND_SIZE = 8;
+let deck = [];
+let idx = 0;
+let score = 0;
+let streak = 0;
+let correct = 0;
+let answered = 0;
+let locked = false;
+
+const emailCard = document.getElementById('emailCard');
+const emailFrom = document.getElementById('emailFrom');
+const emailSubject = document.getElementById('emailSubject');
+const emailBody = document.getElementById('emailBody');
+const btnPhish = document.getElementById('btnPhish');
+const btnLegit = document.getElementById('btnLegit');
+const reveal = document.getElementById('reveal');
+const verdict = document.getElementById('verdict');
+const truth = document.getElementById('truth');
+const flagsTitle = document.getElementById('flagsTitle');
+const flagsList = document.getElementById('flagsList');
+const nextBtn = document.getElementById('nextBtn');
+const decisionRow = document.getElementById('decisionRow');
+const gameOver = document.getElementById('gameOver');
+const finalScore = document.getElementById('finalScore');
+const finalGrade = document.getElementById('finalGrade');
+const finalStats = document.getElementById('finalStats');
+const playAgain = document.getElementById('playAgain');
+const progressBar = document.getElementById('progressBar');
+
+function newRound() {
+  deck = shuffle([...emails]).slice(0, ROUND_SIZE);
+  idx = 0;
+  score = 0;
+  streak = 0;
+  correct = 0;
+  answered = 0;
+  locked = false;
+  gameOver.classList.remove('visible');
+  decisionRow.style.display = '';
+  emailCard.style.display = '';
+  reveal.classList.remove('visible');
+  updateStats();
+  showEmail();
+}
+
+function showEmail() {
+  reveal.classList.remove('visible');
+  emailCard.classList.remove('swipe-left', 'swipe-right');
+  const e = deck[idx];
+  emailFrom.textContent = e.from;
+  emailSubject.textContent = e.subject;
+  emailBody.textContent = e.body;
+  btnPhish.disabled = false;
+  btnLegit.disabled = false;
+  locked = false;
+  document.getElementById('round').textContent = (idx + 1) + ' of ' + ROUND_SIZE;
+  progressBar.style.width = ((idx) / ROUND_SIZE * 100) + '%';
+}
+
+function decide(userSaysPhish) {
+  if (locked) return;
+  locked = true;
+  btnPhish.disabled = true;
+  btnLegit.disabled = true;
+
+  const e = deck[idx];
+  const right = (userSaysPhish && e.isPhish) || (!userSaysPhish && !e.isPhish);
+  answered++;
+
+  // Swipe out
+  emailCard.classList.add(userSaysPhish ? 'swipe-left' : 'swipe-right');
+
+  if (right) {
+    correct++;
+    streak++;
+    const bonus = Math.min(streak * 5, 30);
+    score += 100 + bonus;
+    verdict.textContent = streak > 1 ? `Correct - streak x${streak}` : 'Correct';
+    reveal.className = 'reveal correct visible';
+  } else {
+    streak = 0;
+    score = Math.max(0, score - 50);
+    verdict.textContent = 'Wrong';
+    reveal.className = 'reveal wrong visible';
+  }
+
+  truth.innerHTML = e.isPhish
+    ? 'This was a <strong style="color:#ff6b88">phishing email</strong>.'
+    : 'This was a <strong style="color:#66ff99">legitimate email</strong>.';
+
+  flagsTitle.textContent = e.isPhish ? 'Red flags you should have spotted' : 'Why this one is safe';
+  flagsTitle.className = e.isPhish ? 'flags-title' : 'flags-title green';
+  flagsList.innerHTML = '';
+  flagsList.className = e.isPhish ? 'flags-list' : 'flags-list green';
+  e.flags.forEach(f => {
+    const li = document.createElement('li');
+    li.textContent = f;
+    flagsList.appendChild(li);
+  });
+
+  updateStats();
+}
+
+function next() {
+  idx++;
+  if (idx >= ROUND_SIZE) {
+    endRound();
+    return;
+  }
+  showEmail();
+}
+
+function endRound() {
+  decisionRow.style.display = 'none';
+  emailCard.style.display = 'none';
+  reveal.classList.remove('visible');
+
+  finalScore.textContent = score;
+  const accuracy = Math.round((correct / ROUND_SIZE) * 100);
+
+  let grade;
+  if (accuracy === 100) grade = 'Perfect - SOC analyst material';
+  else if (accuracy >= 87) grade = 'Excellent - hard to phish';
+  else if (accuracy >= 75) grade = 'Solid - some sharpening needed';
+  else if (accuracy >= 50) grade = 'Risky - the attackers like you';
+  else grade = 'Concerning - bookmark this game';
+
+  finalGrade.textContent = grade;
+  finalStats.innerHTML = `<span>${correct} / ${ROUND_SIZE} correct</span><span>${accuracy}% accuracy</span><span>Best streak: ${bestStreak}</span>`;
+  gameOver.classList.add('visible');
+  progressBar.style.width = '100%';
+}
+
+let bestStreak = 0;
+function updateStats() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('streak').textContent = streak;
+  if (streak > bestStreak) bestStreak = streak;
+  const acc = answered === 0 ? '--' : Math.round((correct / answered) * 100) + '%';
+  document.getElementById('accuracy').textContent = acc;
+}
+
+btnPhish.addEventListener('click', () => decide(true));
+btnLegit.addEventListener('click', () => decide(false));
+nextBtn.addEventListener('click', next);
+playAgain.addEventListener('click', newRound);
+
+// Keyboard shortcuts: P for phish, L for legit, Enter for next
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (locked && (e.key === 'Enter' || e.key === ' ') && reveal.classList.contains('visible')) {
+    e.preventDefault();
+    next();
+    return;
+  }
+  if (!locked) {
+    if (e.key === 'p' || e.key === 'P') decide(true);
+    else if (e.key === 'l' || e.key === 'L') decide(false);
+  }
+});
+
+newRound();
+</script>
+</body>
+</html>
