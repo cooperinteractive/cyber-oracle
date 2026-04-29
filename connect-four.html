@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyber Connect Four | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh; min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a1020 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 30% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent);
+    background-size: 200% 200%;
+    opacity: 0.2; z-index: 0; pointer-events: none;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+
+  .back-link {
+    color: #66aaff; text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid rgba(102, 170, 255, 0.4);
+    border-radius: 20px; transition: all 0.2s;
+  }
+  .back-link:hover, .back-link:focus-visible { background: rgba(102, 170, 255, 0.1); color: #fff; outline: none; }
+
+  header { text-align: center; margin-bottom: 14px; }
+  h1 {
+    font-size: clamp(1.4rem, 4.5vw, 2.1rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff4488, #66aaff, #ff4488);
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueShift 5s linear infinite;
+  }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+
+  /* Score banner */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: stretch;
+  }
+
+  .team {
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid;
+    border-radius: 12px;
+    padding: 10px 14px;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
+  }
+
+  .team.red { border-color: rgba(255, 80, 100, 0.4); }
+  .team.blue { border-color: rgba(100, 170, 255, 0.4); }
+
+  .team.active {
+    box-shadow: 0 0 25px currentColor;
+  }
+
+  .team.red.active { border-color: rgba(255, 80, 100, 1); box-shadow: 0 0 25px rgba(255, 80, 100, 0.5); }
+  .team.blue.active { border-color: rgba(100, 170, 255, 1); box-shadow: 0 0 25px rgba(100, 170, 255, 0.5); }
+
+  .team-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .team.red .team-icon { background: radial-gradient(circle at 35% 30%, #ff77aa, #aa0044); box-shadow: 0 0 12px rgba(255, 80, 100, 0.5); }
+  .team.blue .team-icon { background: radial-gradient(circle at 35% 30%, #88ccff, #0066aa); box-shadow: 0 0 12px rgba(100, 170, 255, 0.5); }
+
+  .team-info { min-width: 0; flex: 1; }
+
+  .team-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .team.red .team-name { color: #ff8aa8; text-shadow: 0 0 8px rgba(255, 80, 100, 0.5); }
+  .team.blue .team-name { color: #99ccff; text-shadow: 0 0 8px rgba(100, 170, 255, 0.5); }
+
+  .team-role {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: #c8d8ff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 12px rgba(255, 0, 200, 0.6);
+    letter-spacing: 2px;
+    padding: 0 8px;
+  }
+
+  /* Turn indicator + piece staging */
+  .stage {
+    position: relative;
+    height: 84px;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .turn-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #c8d8ff;
+    text-align: center;
+  }
+
+  .turn-text strong { font-weight: 700; }
+  .turn-text strong.red { color: #ff8aa8; text-shadow: 0 0 8px rgba(255, 80, 100, 0.5); }
+  .turn-text strong.blue { color: #99ccff; text-shadow: 0 0 8px rgba(100, 170, 255, 0.5); }
+
+  /* The draggable piece */
+  .piece-staging {
+    position: relative;
+    width: 100%;
+    height: 56px;
+  }
+
+  .piece {
+    position: absolute;
+    top: 4px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    border: 3px solid;
+    transition: left 0.15s ease-out, box-shadow 0.2s, transform 0.15s;
+    touch-action: none;
+    z-index: 5;
+  }
+
+  .piece.red {
+    background: radial-gradient(circle at 35% 30%, #ff77aa, #aa0033);
+    border-color: #ff99bb;
+    box-shadow: 0 0 18px rgba(255, 80, 100, 0.7), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
+    color: #fff;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  }
+
+  .piece.blue {
+    background: radial-gradient(circle at 35% 30%, #88ccff, #0055aa);
+    border-color: #aaddff;
+    box-shadow: 0 0 18px rgba(100, 170, 255, 0.7), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
+    color: #fff;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  }
+
+  .piece:active, .piece.dragging {
+    cursor: grabbing;
+    transform: scale(1.1);
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+
+  .piece.dragging {
+    transition: none;
+  }
+
+  .piece.locked {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* Game board */
+  .board-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 7 / 6.4;
+    margin-bottom: 14px;
+  }
+
+  .board {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #0a1428, #050a18);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.6),
+      inset 0 0 60px rgba(0, 0, 0, 0.4),
+      0 0 30px rgba(0, 255, 255, 0.08);
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 4px;
+  }
+
+  .cell {
+    background: radial-gradient(circle at 35% 30%, #0a1828, #02050d 70%);
+    border-radius: 50%;
+    box-shadow:
+      inset 0 4px 8px rgba(0, 0, 0, 0.8),
+      inset 0 -2px 4px rgba(255, 255, 255, 0.04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Column hover overlay */
+  .column-hint {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    width: calc((100% - 20px) / 7 - 4px);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    pointer-events: none;
+    transition: background 0.15s;
+    z-index: 1;
+  }
+
+  .column-hint.active.red { background: rgba(255, 80, 100, 0.12); border: 1px dashed rgba(255, 80, 100, 0.4); }
+  .column-hint.active.blue { background: rgba(100, 170, 255, 0.12); border: 1px dashed rgba(100, 170, 255, 0.4); }
+  .column-hint.full { background: rgba(255, 100, 100, 0.05); border: 1px dashed rgba(255, 100, 100, 0.3); }
+
+  /* Dropped pieces */
+  .drop {
+    position: absolute;
+    width: calc((100% - 20px - 24px) / 7);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 3px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    z-index: 2;
+    color: #fff;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  }
+
+  .drop.red {
+    background: radial-gradient(circle at 35% 30%, #ff77aa, #aa0033);
+    border-color: #ff99bb;
+    box-shadow: 0 0 16px rgba(255, 80, 100, 0.6), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
+  }
+  .drop.blue {
+    background: radial-gradient(circle at 35% 30%, #88ccff, #0055aa);
+    border-color: #aaddff;
+    box-shadow: 0 0 16px rgba(100, 170, 255, 0.6), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .drop.win {
+    animation: winFlash 0.6s ease-in-out infinite alternate;
+  }
+
+  @keyframes winFlash {
+    0% { box-shadow: 0 0 16px currentColor, inset 0 -6px 12px rgba(0, 0, 0, 0.4); }
+    100% { box-shadow: 0 0 40px gold, 0 0 60px gold, inset 0 -6px 12px rgba(0, 0, 0, 0.4); }
+  }
+
+  /* Drop animation: piece flies down */
+  @keyframes dropDown {
+    0% { transform: translateY(var(--from)) scale(1); }
+    80% { transform: translateY(0) scale(1.05, 0.95); }
+    90% { transform: translateY(-6px) scale(0.97, 1.03); }
+    100% { transform: translateY(0) scale(1); }
+  }
+
+  .drop.dropping {
+    animation: dropDown 0.55s cubic-bezier(0.5, 0, 0.5, 1);
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    background: rgba(0, 0, 30, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    color: #00ffff;
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover, .btn:focus-visible { background: rgba(0, 255, 255, 0.12); color: #fff; outline: none; }
+
+  .btn.primary {
+    background: linear-gradient(90deg, rgba(255, 80, 100, 0.2), rgba(100, 170, 255, 0.2));
+    border-color: rgba(255, 0, 200, 0.5);
+    color: #fff;
+    font-weight: 700;
+  }
+  .btn.primary:hover, .btn.primary:focus-visible {
+    background: linear-gradient(90deg, rgba(255, 80, 100, 0.35), rgba(100, 170, 255, 0.35));
+    box-shadow: 0 0 25px rgba(255, 0, 200, 0.3);
+  }
+
+  .instructions {
+    text-align: center;
+    color: #8aa0c0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    margin-bottom: 12px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* Last-piece reveal */
+  .reveal {
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(8px);
+    font-size: 0.78rem;
+    color: #c8d8ff;
+    text-align: center;
+    line-height: 1.45;
+    min-height: 32px;
+    transition: opacity 0.3s;
+  }
+
+  .reveal strong { color: #fff; }
+  .reveal .red-text { color: #ff8aa8; }
+  .reveal .blue-text { color: #99ccff; }
+
+  /* Game over */
+  .game-over {
+    text-align: center;
+    padding: 26px 22px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+
+  @keyframes revealIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .game-over.red-win { background: linear-gradient(135deg, rgba(60, 0, 30, 0.8), rgba(30, 0, 0, 0.8)); border: 1px solid rgba(255, 80, 100, 0.6); }
+  .game-over.blue-win { background: linear-gradient(135deg, rgba(0, 30, 60, 0.8), rgba(0, 0, 40, 0.8)); border: 1px solid rgba(100, 170, 255, 0.6); }
+  .game-over.draw { background: linear-gradient(135deg, rgba(40, 40, 40, 0.8), rgba(20, 20, 20, 0.8)); border: 1px solid rgba(255, 170, 0, 0.5); }
+
+  .game-over h2 {
+    font-size: 1.5rem;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .game-over.red-win h2 { color: #ff6b88; text-shadow: 0 0 18px rgba(255, 80, 100, 0.6); }
+  .game-over.blue-win h2 { color: #66aaff; text-shadow: 0 0 18px rgba(100, 170, 255, 0.6); }
+  .game-over.draw h2 { color: #ffcc66; text-shadow: 0 0 18px rgba(255, 170, 0, 0.6); }
+
+  .game-over p {
+    color: #d8e8ff;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    margin-bottom: 18px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 540px) {
+    .scoreboard { grid-template-columns: 1fr 1fr; }
+    .vs { grid-column: 1 / -1; order: -1; padding: 4px; font-size: 0.85rem; }
+    .team-name { font-size: 0.78rem; }
+    .team-role { font-size: 0.6rem; }
+    .piece { width: 42px; height: 42px; font-size: 1.2rem; }
+    .stage { height: 76px; }
+  }
+
+  @media (max-width: 380px) {
+    .piece { width: 36px; height: 36px; font-size: 1rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    h1, .drop.win { animation: none !important; }
+    .drop.dropping { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 215, 0, 0.4); color: gold; cursor: default;">2 players &middot; local</span>
+  </div>
+
+  <header>
+    <h1>Cyber Connect Four</h1>
+    <div class="subtitle">Red Team vs. Blue Team</div>
+  </header>
+
+  <div class="scoreboard">
+    <div class="team red active" id="teamRed">
+      <div class="team-icon" aria-hidden="true">&#9889;</div>
+      <div class="team-info">
+        <div class="team-name">Red Team</div>
+        <div class="team-role">Wins: <span id="redWins">0</span></div>
+      </div>
+    </div>
+    <div class="vs" aria-hidden="true">VS</div>
+    <div class="team blue" id="teamBlue">
+      <div class="team-icon" aria-hidden="true">&#128737;</div>
+      <div class="team-info">
+        <div class="team-name">Blue Team</div>
+        <div class="team-role">Wins: <span id="blueWins">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="instructions">
+    Drag your piece over a column. Drop to play.<br>
+    Four in a row (any direction) wins the round.
+  </p>
+
+  <div class="stage">
+    <div class="turn-text" id="turnText"><strong class="red">Red Team</strong>'s turn</div>
+    <div class="piece-staging" id="staging">
+      <div class="piece red" id="piece" tabindex="0" role="button" aria-label="Drag piece to a column">&#9889;</div>
+    </div>
+  </div>
+
+  <div class="reveal" id="reveal" aria-live="polite">Drop your first piece...</div>
+
+  <main>
+    <div class="board-wrap" id="boardWrap">
+      <div class="board" id="board" role="grid" aria-label="Connect Four board"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn primary" id="newGameBtn" type="button">New game</button>
+      <button class="btn" id="resetScoreBtn" type="button">Reset score</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2 id="ggTitle"></h2>
+      <p id="ggMsg"></p>
+      <button class="btn primary" id="rematchBtn" type="button">Rematch</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const COLS = 7;
+const ROWS = 6;
+
+// Cosmetic piece labels - swapped each turn so each piece has a different cyber identity
+const RED_PIECES = [
+  { icon: '\u{1F41B}', name: 'Malware' },
+  { icon: '\u{1F41F}', name: 'Phishing' },
+  { icon: '\u{1F480}', name: 'Zero-day' },
+  { icon: '\u{1F528}', name: 'Brute Force' },
+  { icon: '\u{1F4A3}', name: 'Ransomware' },
+  { icon: '\u{1F575}', name: 'Insider' },
+  { icon: '\u{1F30A}', name: 'DDoS' }
+];
+
+const BLUE_PIECES = [
+  { icon: '\u{1F525}', name: 'Firewall' },
+  { icon: '\u{1F510}', name: 'MFA' },
+  { icon: '\u{1F300}', name: 'Encryption' },
+  { icon: '\u{1F50D}', name: 'EDR' },
+  { icon: '\u{1F3AF}', name: 'Honeypot' },
+  { icon: '\u{1F4DC}', name: 'Audit Log' },
+  { icon: '\u{1F50C}', name: 'Patch' }
+];
+
+const FLAVOR = {
+  RR: ['flanks', 'reinforces', 'amplifies'],
+  RB: ['attacks', 'breaches against', 'targets'],
+  BR: ['blocks', 'mitigates', 'defends against'],
+  BB: ['stacks with', 'reinforces', 'integrates with']
+};
+
+const board = document.getElementById('board');
+const boardWrap = document.getElementById('boardWrap');
+const piece = document.getElementById('piece');
+const staging = document.getElementById('staging');
+const turnText = document.getElementById('turnText');
+const reveal = document.getElementById('reveal');
+const teamRed = document.getElementById('teamRed');
+const teamBlue = document.getElementById('teamBlue');
+const newGameBtn = document.getElementById('newGameBtn');
+const resetScoreBtn = document.getElementById('resetScoreBtn');
+const gameOver = document.getElementById('gameOver');
+const ggTitle = document.getElementById('ggTitle');
+const ggMsg = document.getElementById('ggMsg');
+const rematchBtn = document.getElementById('rematchBtn');
+const redWinsEl = document.getElementById('redWins');
+const blueWinsEl = document.getElementById('blueWins');
+
+// Game state
+let grid = [];   // grid[row][col] = 'red' | 'blue' | null
+let cells = [];  // 2D array of cell DOM elements
+let turn = 'red';
+let busy = false;
+let lastPieceName = null;
+let redWins = 0;
+let blueWins = 0;
+let gameDone = false;
+
+// Build the board grid
+function buildBoard() {
+  board.innerHTML = '';
+  grid = [];
+  cells = [];
+  for (let r = 0; r < ROWS; r++) {
+    grid.push(new Array(COLS).fill(null));
+    cells.push([]);
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.setAttribute('role', 'gridcell');
+      cell.setAttribute('aria-label', `Row ${r + 1}, column ${c + 1}, empty`);
+      board.appendChild(cell);
+      cells[r].push(cell);
+    }
+  }
+}
+buildBoard();
+
+// Resize / reposition piece
+function getColumnX(col) {
+  // returns X position centered above column relative to staging
+  const stageRect = staging.getBoundingClientRect();
+  const boardRect = board.getBoundingClientRect();
+  const padding = 10; // board padding
+  const gap = 4;
+  const innerWidth = boardRect.width - 2 * padding;
+  const cellW = (innerWidth - gap * (COLS - 1)) / COLS;
+  const cellCenter = boardRect.left + padding + cellW * col + cellW * 0.5 + gap * col;
+  const pieceWidth = piece.offsetWidth;
+  return cellCenter - stageRect.left - pieceWidth / 2;
+}
+
+let currentColumn = 3; // start over middle column
+
+function snapToColumn(col, animate) {
+  currentColumn = Math.max(0, Math.min(COLS - 1, col));
+  const x = getColumnX(currentColumn);
+  if (!animate) piece.style.transition = 'none';
+  piece.style.left = x + 'px';
+  if (!animate) {
+    void piece.offsetWidth;
+    piece.style.transition = '';
+  }
+  updateColumnHints(currentColumn);
+}
+
+function updateColumnHints(activeCol) {
+  // Highlight column overlay - drawn dynamically as a pseudo-overlay using cell highlights
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = cells[r][c];
+      cell.style.boxShadow = '';
+    }
+  }
+  if (activeCol == null || gameDone) return;
+  const isFull = grid[0][activeCol] !== null;
+  for (let r = 0; r < ROWS; r++) {
+    const cell = cells[r][activeCol];
+    if (isFull) {
+      cell.style.boxShadow = 'inset 0 0 0 2px rgba(255, 100, 100, 0.4), inset 0 4px 8px rgba(0, 0, 0, 0.8)';
+    } else {
+      const color = turn === 'red' ? 'rgba(255, 80, 100, 0.4)' : 'rgba(100, 170, 255, 0.4)';
+      cell.style.boxShadow = `inset 0 0 0 2px ${color}, inset 0 4px 8px rgba(0, 0, 0, 0.8)`;
+    }
+  }
+}
+
+// Determine which column the piece is over
+function columnFromX(clientX) {
+  const boardRect = board.getBoundingClientRect();
+  const padding = 10;
+  const gap = 4;
+  const innerWidth = boardRect.width - 2 * padding;
+  const cellW = (innerWidth - gap * (COLS - 1)) / COLS;
+  const x = clientX - boardRect.left - padding;
+  const colF = x / (cellW + gap);
+  return Math.max(0, Math.min(COLS - 1, Math.floor(colF)));
+}
+
+// Drag handling via pointer events (mouse + touch)
+let dragging = false;
+let dragOffset = 0;
+let pointerStartX = 0;
+
+piece.addEventListener('pointerdown', (e) => {
+  if (busy || gameDone) return;
+  dragging = true;
+  piece.classList.add('dragging');
+  piece.setPointerCapture(e.pointerId);
+  pointerStartX = e.clientX;
+  const stageRect = staging.getBoundingClientRect();
+  const pieceRect = piece.getBoundingClientRect();
+  dragOffset = e.clientX - pieceRect.left;
+  e.preventDefault();
+});
+
+piece.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  const stageRect = staging.getBoundingClientRect();
+  const x = e.clientX - dragOffset - stageRect.left;
+  piece.style.transition = 'none';
+  piece.style.left = x + 'px';
+  // Update column hint based on piece center
+  const pieceCenter = e.clientX - dragOffset + piece.offsetWidth / 2;
+  const col = columnFromX(pieceCenter);
+  if (col !== currentColumn) {
+    currentColumn = col;
+    updateColumnHints(col);
+  }
+});
+
+piece.addEventListener('pointerup', (e) => {
+  if (!dragging) return;
+  dragging = false;
+  piece.classList.remove('dragging');
+  piece.style.transition = '';
+  // Drop into current column if valid
+  const pieceCenter = piece.getBoundingClientRect().left + piece.offsetWidth / 2;
+  const col = columnFromX(pieceCenter);
+  attemptDrop(col);
+});
+
+piece.addEventListener('pointercancel', () => {
+  if (!dragging) return;
+  dragging = false;
+  piece.classList.remove('dragging');
+  piece.style.transition = '';
+  snapToColumn(currentColumn, true);
+});
+
+// Click-to-drop on columns as alternate input
+boardWrap.addEventListener('click', (e) => {
+  if (busy || gameDone || dragging) return;
+  if (e.target === piece) return;
+  const col = columnFromX(e.clientX);
+  attemptDrop(col);
+});
+
+// Keyboard support
+piece.addEventListener('keydown', (e) => {
+  if (busy || gameDone) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); snapToColumn(currentColumn - 1, true); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); snapToColumn(currentColumn + 1, true); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); attemptDrop(currentColumn); }
+});
+
+// Find the lowest empty row in a column
+function lowestRow(col) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (grid[r][col] === null) return r;
+  }
+  return -1;
+}
+
+function attemptDrop(col) {
+  if (busy || gameDone) return;
+  const row = lowestRow(col);
+  if (row < 0) {
+    // Column full - shake piece, sound
+    if (window.CyberSounds) CyberSounds.wrong();
+    const orig = piece.style.transform;
+    piece.style.transition = 'transform 0.05s';
+    piece.style.transform = 'translateX(-6px)';
+    setTimeout(() => { piece.style.transform = 'translateX(6px)'; }, 60);
+    setTimeout(() => { piece.style.transform = ''; piece.style.transition = ''; }, 120);
+    return;
+  }
+  doDrop(col, row);
+}
+
+function doDrop(col, row) {
+  busy = true;
+  piece.classList.add('locked');
+
+  // Pick a piece identity
+  const pool = turn === 'red' ? RED_PIECES : BLUE_PIECES;
+  const identity = pool[Math.floor(Math.random() * pool.length)];
+
+  // Snap piece visually to column center
+  snapToColumn(col, true);
+
+  // Create the dropped piece DOM element. We position it absolutely over the cell.
+  const drop = document.createElement('div');
+  drop.className = 'drop ' + turn + ' dropping';
+  drop.textContent = identity.icon;
+  drop.title = identity.name;
+  drop.dataset.row = row;
+  drop.dataset.col = col;
+
+  // Place it at the target cell position
+  const cell = cells[row][col];
+  const cellRect = cell.getBoundingClientRect();
+  const wrapRect = boardWrap.getBoundingClientRect();
+  drop.style.left = (cellRect.left - wrapRect.left) + 'px';
+  drop.style.top = (cellRect.top - wrapRect.top) + 'px';
+  drop.style.width = cellRect.width + 'px';
+
+  // Compute the from offset (negative means starts above, then animates to 0)
+  const stageRect = staging.getBoundingClientRect();
+  const fromY = stageRect.top - cellRect.top;
+  drop.style.setProperty('--from', fromY + 'px');
+
+  boardWrap.appendChild(drop);
+
+  if (window.CyberSounds) CyberSounds.pop();
+
+  setTimeout(() => {
+    if (window.CyberSounds) CyberSounds.whack();
+  }, 380);
+
+  // Update logical grid after the visual animation
+  setTimeout(() => {
+    grid[row][col] = turn;
+    cells[row][col].setAttribute('aria-label', `Row ${row + 1}, column ${col + 1}, ${turn} team`);
+
+    // Reveal flavor text
+    showFlavor(turn, identity, col, row);
+
+    // Check for win
+    const winLine = checkWin(row, col, turn);
+    if (winLine) {
+      announceWin(turn, winLine);
+      busy = false;
+      return;
+    }
+
+    // Check for draw
+    if (isFull()) {
+      announceDraw();
+      busy = false;
+      return;
+    }
+
+    // Switch turn
+    turn = (turn === 'red') ? 'blue' : 'red';
+    nextTurn();
+    busy = false;
+  }, 580);
+}
+
+function showFlavor(team, identity, col, row) {
+  // Find the piece below the new one (if any) for combat narrative
+  let belowTeam = null, belowName = null;
+  if (row + 1 < ROWS && grid[row + 1][col]) {
+    belowTeam = grid[row + 1][col];
+    // We don't track names per piece; use a generic descriptor
+    belowName = belowTeam === 'red' ? 'a Red Team piece' : 'a Blue Team piece';
+  }
+
+  let html;
+  const teamLabel = team === 'red' ? '<span class="red-text">Red Team</span>' : '<span class="blue-text">Blue Team</span>';
+  const verbKey = team === 'red' ? (belowTeam === 'blue' ? 'RB' : 'RR') : (belowTeam === 'red' ? 'BR' : 'BB');
+  const verb = belowTeam ? FLAVOR[verbKey][Math.floor(Math.random() * FLAVOR[verbKey].length)] : 'deploys';
+
+  if (belowTeam) {
+    html = `${teamLabel} drops <strong>${identity.name}</strong> ${identity.icon}, which ${verb} ${belowName} in column ${col + 1}.`;
+  } else {
+    html = `${teamLabel} ${verb} <strong>${identity.name}</strong> ${identity.icon} into column ${col + 1}.`;
+  }
+  reveal.innerHTML = html;
+}
+
+function nextTurn() {
+  // Update active team highlights
+  teamRed.classList.toggle('active', turn === 'red');
+  teamBlue.classList.toggle('active', turn === 'blue');
+
+  // Update turn text + piece appearance
+  const className = turn === 'red' ? 'red' : 'blue';
+  turnText.innerHTML = turn === 'red'
+    ? '<strong class="red">Red Team</strong>\'s turn'
+    : '<strong class="blue">Blue Team</strong>\'s turn';
+
+  const pool = turn === 'red' ? RED_PIECES : BLUE_PIECES;
+  const identity = pool[Math.floor(Math.random() * pool.length)];
+  lastPieceName = identity.name;
+  piece.className = 'piece ' + className;
+  piece.textContent = identity.icon;
+  piece.title = identity.name + ' (' + (turn === 'red' ? 'Red' : 'Blue') + ' Team)';
+  piece.setAttribute('aria-label', `${identity.name} - ${turn} team. Drag to a column to drop.`);
+
+  piece.classList.remove('locked');
+  snapToColumn(currentColumn, true);
+  updateColumnHints(currentColumn);
+}
+
+function isFull() {
+  return grid[0].every(c => c !== null);
+}
+
+// Win check: returns array of [row, col] for the winning line, or null
+function checkWin(row, col, team) {
+  const dirs = [
+    [0, 1],   // horizontal
+    [1, 0],   // vertical
+    [1, 1],   // diag down-right
+    [1, -1]   // diag down-left
+  ];
+  for (const [dr, dc] of dirs) {
+    const line = [[row, col]];
+    // Forward
+    let r = row + dr, c = col + dc;
+    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c] === team) {
+      line.push([r, c]); r += dr; c += dc;
+    }
+    // Backward
+    r = row - dr; c = col - dc;
+    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c] === team) {
+      line.unshift([r, c]); r -= dr; c -= dc;
+    }
+    if (line.length >= 4) return line.slice(0, 4); // any contiguous 4 wins
+  }
+  return null;
+}
+
+function announceWin(team, line) {
+  gameDone = true;
+  // Mark winning pieces
+  const drops = boardWrap.querySelectorAll('.drop');
+  line.forEach(([r, c]) => {
+    drops.forEach(d => {
+      if (parseInt(d.dataset.row, 10) === r && parseInt(d.dataset.col, 10) === c) {
+        d.classList.add('win');
+      }
+    });
+  });
+
+  // Update win counts
+  if (team === 'red') { redWins++; redWinsEl.textContent = redWins; }
+  else { blueWins++; blueWinsEl.textContent = blueWins; }
+
+  // Hide piece
+  piece.classList.add('locked');
+  piece.style.opacity = '0.3';
+
+  // Clear column hints
+  updateColumnHints(null);
+
+  // Show game over
+  setTimeout(() => {
+    gameOver.className = 'game-over visible ' + team + '-win';
+    if (team === 'red') {
+      ggTitle.textContent = 'Perimeter Breached';
+      ggMsg.innerHTML = 'Red Team got four in a row. The attackers found a path through the defenses.';
+    } else {
+      ggTitle.textContent = 'Defenses Held';
+      ggMsg.innerHTML = 'Blue Team got four in a row. The perimeter held the line.';
+    }
+    if (window.CyberSounds) CyberSounds.win();
+  }, 700);
+}
+
+function announceDraw() {
+  gameDone = true;
+  piece.classList.add('locked');
+  piece.style.opacity = '0.3';
+  updateColumnHints(null);
+  setTimeout(() => {
+    gameOver.className = 'game-over visible draw';
+    ggTitle.textContent = 'Stalemate';
+    ggMsg.innerHTML = 'The board is full. Neither side broke through. In real-world security, that\'s usually a win for the defenders.';
+    if (window.CyberSounds) CyberSounds.tick();
+  }, 400);
+}
+
+function newGame() {
+  // Clear dropped pieces
+  boardWrap.querySelectorAll('.drop').forEach(d => d.remove());
+  buildBoard();
+  turn = 'red';
+  busy = false;
+  gameDone = false;
+  piece.style.opacity = '';
+  piece.classList.remove('locked');
+  gameOver.classList.remove('visible');
+  reveal.innerHTML = 'Drop your first piece...';
+  nextTurn();
+  // Reposition piece
+  setTimeout(() => snapToColumn(3, false), 50);
+  if (window.CyberSounds) CyberSounds.click();
+}
+
+newGameBtn.addEventListener('click', newGame);
+rematchBtn.addEventListener('click', newGame);
+resetScoreBtn.addEventListener('click', () => {
+  redWins = 0; blueWins = 0;
+  redWinsEl.textContent = '0'; blueWinsEl.textContent = '0';
+  newGame();
+});
+
+// Reposition piece on resize
+window.addEventListener('resize', () => snapToColumn(currentColumn, false));
+
+// Initial setup
+nextTurn();
+setTimeout(() => snapToColumn(3, false), 100);
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>
