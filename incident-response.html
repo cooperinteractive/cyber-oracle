@@ -693,7 +693,7 @@ const cases = [
         lesson: 'BEC (Business Email Compromise) is the most expensive cybercrime category in the world. Speed matters. A 5-minute call to the real CFO would have prevented it.'
       },
       { text: 'Verify with the CFO via known phone number, not the email thread.', kind: 'good',
-        outcome: 'You call the CFO directly. He says "I never sent that." You discover his email was compromised via phishing 3 days ago. You contain the breach, change MFA on his account, and the wire never goes out.',
+        outcome: 'You call the CFO directly. He says "I never sent that." You discover his email was compromised via phishing 3 days ago. You contain the breach, reset MFA on his account, and the wire never goes out.',
         impact: { score: 280, uptime: 0, regret: 0 },
         lesson: 'Out-of-band verification is the single most effective defense against BEC. Always use a phone number you ALREADY HAVE, not one from the email itself.'
       },
@@ -772,7 +772,7 @@ const cases = [
     time: '06:11',
     title: 'Customer reports their data on a leak site',
     meta: 'EMAIL: support@company.com &middot; FROM: customer@bigclient.com',
-    body: 'A customer just emailed: "Your data is on a Russian forum, including my SSN and 3,000 of your other customers." They attached a screenshot. Sunrise is in 30 minutes and so is your CEO.',
+    body: 'A customer just emailed: "Your data is on a Russian forum, including my SSN and 3,000 of your other customers." They attached a screenshot. Sunrise is in 30 minutes. So is your CEO's first call.',
     options: [
       { text: 'Verify the leak is real before doing anything else.', kind: 'good',
         outcome: 'You confirm the leak, identify the breach window, and have a draft incident report by 7 a.m. when the CEO calls. The board is upset but trusts the response. Regulatory disclosure happens within the 72-hour window.',

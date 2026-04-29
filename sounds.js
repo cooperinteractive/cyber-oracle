@@ -81,7 +81,7 @@
       setTimeout(() => tone({ freq: 220, duration: 0.18, type: 'square', volume: 0.07 }), 90);
     },
     place: () => tone({ freq: 380, freqEnd: 540, duration: 0.08, type: 'triangle', volume: 0.06 }),
-    catch: () => {
+    caught: () => {
       tone({ freq: 660, duration: 0.07, type: 'square', volume: 0.06 });
       setTimeout(() => tone({ freq: 990, duration: 0.1, type: 'square', volume: 0.05 }), 50);
     },

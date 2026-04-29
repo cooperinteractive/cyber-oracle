@@ -744,6 +744,8 @@ function spawnAttacker() {
 
 function update() {
   if (!running) { rafId = null; return; }
+  // Pause computation when tab is hidden to avoid wasted cycles
+  if (document.hidden) { rafId = requestAnimationFrame(update); return; }
   const rect = arena.getBoundingClientRect();
   const cx = rect.width / 2;
   const cy = rect.height / 2;
@@ -794,7 +796,7 @@ function update() {
       const intelGain = 12 + Math.floor(Math.random() * 18);
       intel += intelGain;
       logEvent(`Caught ${a.type.name}: ${a.type.ttp} (+${intelGain} intel)`, a.type.cls);
-      if (window.CyberSounds) CyberSounds.catch();
+      if (window.CyberSounds) CyberSounds.caught();
       a.el.classList.add('caught');
       setTimeout(() => { a.el.classList.add('fading'); }, 600);
       setTimeout(() => a.el.remove(), 1100);

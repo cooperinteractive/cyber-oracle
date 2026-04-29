@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIA Triad Tower Defense | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    min-height: 100vh; min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a1820 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0; overflow-x: hidden; padding: 16px 16px 60px;
+  }
+  body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(1px 1px at 50% 50%, #fff, transparent); background-size: 200% 200%; opacity: 0.18; z-index: 0; pointer-events: none; }
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link { color: #00ffff; text-decoration: none; font-family: 'Courier New', monospace; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border: 1px solid rgba(0, 255, 255, 0.4); border-radius: 20px; transition: all 0.2s; }
+  .back-link:hover, .back-link:focus-visible { background: rgba(0, 255, 255, 0.1); color: #fff; outline: none; }
+  header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: clamp(1.4rem, 4.5vw, 2.1rem); font-weight: 200; letter-spacing: 4px; text-transform: uppercase; background: linear-gradient(90deg, #66aaff, #00ff88, #ffaa00, #66aaff); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: hueShift 6s linear infinite; }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+
+  .hud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .hud-cell { background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 255, 255, 0.25); border-radius: 10px; padding: 10px; text-align: center; backdrop-filter: blur(8px); }
+  .hud-label { font-family: 'Courier New', monospace; font-size: 0.6rem; letter-spacing: 1.5px; color: #8aa0c0; text-transform: uppercase; margin-bottom: 4px; }
+  .hud-value { font-size: 1.3rem; font-weight: 700; color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); font-family: 'Courier New', monospace; }
+  .hud-value.wave { color: #ff66cc; text-shadow: 0 0 10px rgba(255, 0, 200, 0.5); }
+  .hud-value.score { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+
+  .instructions { text-align: center; color: #8aa0c0; font-size: 0.78rem; line-height: 1.55; margin-bottom: 14px; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+
+  /* Triad layout */
+  .triad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+
+  .pillar {
+    background: linear-gradient(180deg, rgba(0, 30, 50, 0.7), rgba(0, 5, 15, 0.95));
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pillar:hover, .pillar:focus-visible { transform: translateY(-2px); outline: none; }
+  .pillar.fortified {
+    border-color: rgba(0, 255, 136, 0.7);
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    background: linear-gradient(180deg, rgba(0, 60, 30, 0.7), rgba(0, 30, 60, 0.7));
+  }
+  .pillar.fortified::before {
+    content: '\2713';
+    position: absolute;
+    top: 6px; right: 8px;
+    color: #00ff88;
+    font-weight: bold;
+    font-size: 1rem;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+  }
+
+  .pillar-icon { font-size: 2rem; margin-bottom: 6px; line-height: 1; }
+  .pillar-name { font-size: 0.95rem; font-weight: 700; color: #fff; letter-spacing: 1px; margin-bottom: 4px; }
+  .pillar-meaning { font-family: 'Courier New', monospace; font-size: 0.65rem; color: #8aa0c0; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+
+  .pillar-hp { height: 8px; background: rgba(0, 0, 0, 0.5); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .pillar-hp-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00ffff); transition: width 0.3s; }
+  .pillar-hp-fill.low { background: linear-gradient(90deg, #ffaa00, #ffcc00); }
+  .pillar-hp-fill.crit { background: linear-gradient(90deg, #ff4444, #ff6666); }
+
+  .pillar-stat { font-family: 'Courier New', monospace; font-size: 0.7rem; color: #c8d8ff; }
+
+  /* Threat queue */
+  .threat-feed {
+    background: rgba(0, 20, 30, 0.7);
+    border: 1px solid rgba(255, 0, 200, 0.3);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(8px);
+  }
+
+  .feed-title {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #ff66cc;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-shadow: 0 0 8px rgba(255, 0, 200, 0.5);
+  }
+
+  .threat-incoming {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(90deg, rgba(255, 0, 200, 0.1), rgba(255, 100, 100, 0.05));
+    border-left: 3px solid #ff66cc;
+    border-radius: 6px;
+    animation: incomingPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes incomingPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 0, 200, 0.4); }
+    50% { box-shadow: 0 0 20px rgba(255, 0, 200, 0.4); }
+  }
+
+  .threat-icon { font-size: 1.6rem; flex-shrink: 0; }
+  .threat-info { flex: 1; min-width: 0; }
+  .threat-name { font-size: 0.95rem; color: #fff; font-weight: 600; margin-bottom: 2px; }
+  .threat-target { font-family: 'Courier New', monospace; font-size: 0.7rem; color: #ffaa00; letter-spacing: 1px; text-transform: uppercase; }
+  .threat-target.confidentiality { color: #66aaff; }
+  .threat-target.integrity { color: #00ff88; }
+  .threat-target.availability { color: #ffaa00; }
+  .threat-countdown { font-family: 'Courier New', monospace; font-size: 1.2rem; font-weight: 700; color: #ff4444; text-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+
+  .controls { text-align: center; margin-bottom: 14px; }
+  .btn { background: linear-gradient(90deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 136, 0.2)); border: 1px solid rgba(0, 255, 255, 0.6); color: #00ffff; padding: 14px 32px; border-radius: 30px; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; font-weight: 700; cursor: pointer; transition: all 0.25s; }
+  .btn:hover, .btn:focus-visible { background: linear-gradient(90deg, rgba(0, 255, 255, 0.35), rgba(0, 255, 136, 0.35)); color: #fff; box-shadow: 0 0 25px rgba(0, 255, 255, 0.4); outline: none; }
+
+  .lesson { background: rgba(0, 30, 50, 0.6); border-left: 3px solid #ffcc66; border-radius: 6px; padding: 12px 14px; font-size: 0.85rem; line-height: 1.55; color: #fff5dd; margin-bottom: 14px; display: none; }
+  .lesson.visible { display: block; animation: revealIn 0.3s ease; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .lesson-tag { font-family: 'Courier New', monospace; font-size: 0.65rem; letter-spacing: 2px; color: #ffcc66; text-transform: uppercase; margin-bottom: 4px; }
+
+  .game-over { text-align: center; padding: 28px 22px; border-radius: 16px; backdrop-filter: blur(10px); display: none; }
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+  .game-over.win { background: linear-gradient(135deg, rgba(0, 60, 30, 0.7), rgba(0, 30, 60, 0.7)); border: 1px solid rgba(0, 255, 136, 0.5); }
+  .game-over.lose { background: linear-gradient(135deg, rgba(60, 0, 0, 0.8), rgba(30, 0, 30, 0.8)); border: 1px solid rgba(255, 80, 100, 0.6); }
+  .game-over h2 { font-size: 1.4rem; color: #fff; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; }
+  .game-over.win h2 { color: #00ff88; text-shadow: 0 0 15px rgba(0, 255, 136, 0.6); }
+  .game-over.lose h2 { color: #ff6b88; text-shadow: 0 0 15px rgba(255, 80, 100, 0.6); }
+  .gg-stats { font-family: 'Courier New', monospace; font-size: 0.85rem; color: #c8d8ff; margin-bottom: 18px; line-height: 1.6; }
+
+  @media (max-width: 480px) {
+    .triad { grid-template-columns: 1fr; }
+    .hud { grid-template-columns: 1fr 1fr; }
+    .hud-cell:last-child { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 0, 200, 0.4); color: #ff66cc; cursor: default;">10 waves &middot; pick 2 of 3</span>
+  </div>
+
+  <header>
+    <h1>CIA Triad Defense</h1>
+    <div class="subtitle">You can only fortify two. Choose wisely.</div>
+  </header>
+
+  <div class="hud">
+    <div class="hud-cell"><div class="hud-label">Wave</div><div class="hud-value wave" id="wave">1 / 10</div></div>
+    <div class="hud-cell"><div class="hud-label">Score</div><div class="hud-value score" id="score">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Defenses left</div><div class="hud-value" id="rerolls">3</div></div>
+  </div>
+
+  <p class="instructions">
+    Click two pillars to fortify them. The unfortified pillar takes the hit.<br>
+    You can switch fortifications between waves up to 3 times. Save them.
+  </p>
+
+  <main>
+    <div class="triad" id="triad">
+      <div class="pillar" data-pillar="confidentiality" tabindex="0" role="button">
+        <div class="pillar-icon">&#128274;</div>
+        <div class="pillar-name">Confidentiality</div>
+        <div class="pillar-meaning">Keep secrets secret</div>
+        <div class="pillar-hp"><div class="pillar-hp-fill" id="hp-confidentiality" style="width:100%"></div></div>
+        <div class="pillar-stat" id="stat-confidentiality">100 / 100</div>
+      </div>
+      <div class="pillar" data-pillar="integrity" tabindex="0" role="button">
+        <div class="pillar-icon">&#9878;</div>
+        <div class="pillar-name">Integrity</div>
+        <div class="pillar-meaning">Data isn't tampered with</div>
+        <div class="pillar-hp"><div class="pillar-hp-fill" id="hp-integrity" style="width:100%"></div></div>
+        <div class="pillar-stat" id="stat-integrity">100 / 100</div>
+      </div>
+      <div class="pillar" data-pillar="availability" tabindex="0" role="button">
+        <div class="pillar-icon">&#9889;</div>
+        <div class="pillar-name">Availability</div>
+        <div class="pillar-meaning">Service stays up</div>
+        <div class="pillar-hp"><div class="pillar-hp-fill" id="hp-availability" style="width:100%"></div></div>
+        <div class="pillar-stat" id="stat-availability">100 / 100</div>
+      </div>
+    </div>
+
+    <div class="threat-feed">
+      <div class="feed-title">Incoming threat</div>
+      <div class="threat-incoming" id="threatIncoming" style="display:none;">
+        <div class="threat-icon" id="tIcon">--</div>
+        <div class="threat-info">
+          <div class="threat-name" id="tName">Awaiting threat...</div>
+          <div class="threat-target" id="tTarget">--</div>
+        </div>
+        <div class="threat-countdown" id="tCountdown">--</div>
+      </div>
+    </div>
+
+    <div class="lesson" id="lesson" role="status" aria-live="polite">
+      <div class="lesson-tag">Lesson</div>
+      <div id="lessonText"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn" type="button">Start wave 1</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2 id="ggTitle"></h2>
+      <div class="gg-stats" id="ggStats"></div>
+      <button class="btn" id="restartBtn" type="button">Play again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const THREATS = [
+  { name: 'Data breach', icon: '\u{1F4C1}', target: 'confidentiality', dmg: 35, lesson: 'Confidentiality fails when secrets leak. Encryption at rest and access controls are how you fortify it.' },
+  { name: 'Eavesdropper', icon: '\u{1F441}', target: 'confidentiality', dmg: 25, lesson: 'Network sniffing attacks confidentiality. TLS everywhere is the standard fortification.' },
+  { name: 'Insider data theft', icon: '\u{1F575}', target: 'confidentiality', dmg: 30, lesson: 'Insiders attack confidentiality. DLP and least-privilege access are your defenses.' },
+  { name: 'Cloud bucket leak', icon: '\u{1FAA3}', target: 'confidentiality', dmg: 40, lesson: 'Public S3 buckets leak confidential data. Default-deny ACLs and continuous scanning prevent it.' },
+
+  { name: 'Database tamper', icon: '\u{1F5C3}', target: 'integrity', dmg: 35, lesson: 'When attackers modify records, integrity fails. Cryptographic signing and audit logs are the fix.' },
+  { name: 'Supply-chain poison', icon: '\u{1F489}', target: 'integrity', dmg: 40, lesson: 'Tampered dependencies attack integrity. Sigstore, SLSA attestations, and SBOM verification protect it.' },
+  { name: 'Forged transaction', icon: '\u{1F4DD}', target: 'integrity', dmg: 30, lesson: 'Without integrity, transactions can be faked. Digital signatures are the foundation of trust.' },
+  { name: 'Code injection', icon: '\u{1F4BC}', target: 'integrity', dmg: 25, lesson: 'SQL injection breaks data integrity. Parameterized queries are the universal fix.' },
+
+  { name: 'DDoS flood', icon: '\u{1F30A}', target: 'availability', dmg: 35, lesson: 'DDoS targets availability. Rate limiting, CDNs, and auto-scaling are how you stay up under attack.' },
+  { name: 'Ransomware', icon: '\u{1F4A3}', target: 'availability', dmg: 50, lesson: 'Ransomware kills availability. Offline backups and segmented networks limit blast radius.' },
+  { name: 'Power outage', icon: '\u{26A1}', target: 'availability', dmg: 20, lesson: 'Availability includes infrastructure failures, not just attacks. Multi-region deployments and tested DR plans matter.' },
+  { name: 'Zero-day exhaustion', icon: '\u{1F480}', target: 'availability', dmg: 45, lesson: 'Resource-exhaustion zero-days kill availability. Defense in depth and emergency throttles are the response.' }
+];
+
+let pillars = {
+  confidentiality: { hp: 100, max: 100 },
+  integrity: { hp: 100, max: 100 },
+  availability: { hp: 100, max: 100 }
+};
+
+let fortified = new Set();
+let currentThreat = null;
+let countdown = null;
+let countdownLeft = 0;
+let waveIdx = 0;
+let score = 0;
+let rerolls = 3;
+let savedRerolls = 0;
+let running = false;
+const TOTAL_WAVES = 10;
+
+const triadEl = document.getElementById('triad');
+const pillarEls = Array.from(document.querySelectorAll('.pillar'));
+const startBtn = document.getElementById('startBtn');
+const tIcon = document.getElementById('tIcon');
+const tName = document.getElementById('tName');
+const tTarget = document.getElementById('tTarget');
+const tCountdown = document.getElementById('tCountdown');
+const threatIncoming = document.getElementById('threatIncoming');
+const lesson = document.getElementById('lesson');
+const lessonText = document.getElementById('lessonText');
+const gameOver = document.getElementById('gameOver');
+const ggTitle = document.getElementById('ggTitle');
+const ggStats = document.getElementById('ggStats');
+const restartBtn = document.getElementById('restartBtn');
+const waveEl = document.getElementById('wave');
+const scoreEl = document.getElementById('score');
+const rerollsEl = document.getElementById('rerolls');
+
+function updateUI() {
+  Object.keys(pillars).forEach(p => {
+    const fill = document.getElementById('hp-' + p);
+    const stat = document.getElementById('stat-' + p);
+    const pct = (pillars[p].hp / pillars[p].max) * 100;
+    fill.style.width = Math.max(0, pct) + '%';
+    fill.classList.remove('low', 'crit');
+    if (pct < 30) fill.classList.add('crit');
+    else if (pct < 60) fill.classList.add('low');
+    stat.textContent = Math.max(0, pillars[p].hp) + ' / ' + pillars[p].max;
+  });
+
+  pillarEls.forEach(el => {
+    if (fortified.has(el.dataset.pillar)) el.classList.add('fortified');
+    else el.classList.remove('fortified');
+  });
+
+  waveEl.textContent = waveIdx + ' / ' + TOTAL_WAVES;
+  scoreEl.textContent = score;
+  rerollsEl.textContent = rerolls;
+}
+
+function togglePillar(name) {
+  // During a wave countdown, you can change fortifications but it costs a reroll
+  // when fortified set is non-empty and you change it.
+  if (running && countdown) {
+    // Mid-wave swap costs a reroll
+    if (rerolls <= 0) return;
+  }
+
+  if (fortified.has(name)) {
+    fortified.delete(name);
+  } else {
+    if (fortified.size >= 2) {
+      // Replace oldest? simpler: remove all, add this. Or block.
+      // We'll force them to deselect first if 2 are picked.
+      return;
+    }
+    fortified.add(name);
+  }
+
+  if (running && countdown && fortified.size === 2) {
+    rerolls--;
+  }
+
+  if (window.CyberSounds) CyberSounds.click();
+  updateUI();
+}
+
+pillarEls.forEach(el => {
+  el.addEventListener('click', () => togglePillar(el.dataset.pillar));
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePillar(el.dataset.pillar); }
+  });
+});
+
+function startWave() {
+  if (waveIdx >= TOTAL_WAVES) return endGame();
+  waveIdx++;
+  startBtn.style.display = 'none';
+  running = true;
+  lesson.classList.remove('visible');
+
+  // Pick a threat. Skew distribution so all 3 targets appear over a game.
+  currentThreat = THREATS[Math.floor(Math.random() * THREATS.length)];
+  tIcon.textContent = currentThreat.icon;
+  tName.textContent = currentThreat.name;
+  tTarget.textContent = 'Targets: ' + currentThreat.target;
+  tTarget.className = 'threat-target ' + currentThreat.target;
+  threatIncoming.style.display = 'flex';
+
+  countdownLeft = 7;
+  tCountdown.textContent = countdownLeft;
+  if (window.CyberSounds) CyberSounds.alert ? CyberSounds.alert() : CyberSounds.timeWarn();
+
+  countdown = setInterval(() => {
+    countdownLeft--;
+    tCountdown.textContent = countdownLeft;
+    if (window.CyberSounds && countdownLeft > 0) CyberSounds.tick();
+    if (countdownLeft <= 0) {
+      clearInterval(countdown);
+      countdown = null;
+      resolveWave();
+    }
+  }, 1000);
+  updateUI();
+}
+
+function resolveWave() {
+  const t = currentThreat;
+  threatIncoming.style.display = 'none';
+
+  let dmg = t.dmg;
+  if (fortified.has(t.target)) {
+    dmg = Math.round(dmg * 0.2); // fortified = 80% mitigation
+    score += 100;
+    if (window.CyberSounds) CyberSounds.correct();
+  } else {
+    score += 20;
+    if (window.CyberSounds) CyberSounds.wrong();
+  }
+
+  pillars[t.target].hp -= dmg;
+  lessonText.innerHTML = `<strong style="color:#fff;">${t.name}</strong> hit <strong style="color:${t.target === 'confidentiality' ? '#66aaff' : t.target === 'integrity' ? '#66ff99' : '#ffcc66'};">${t.target}</strong>. ${fortified.has(t.target) ? '<strong style="color:#00ff88;">Fortified.</strong> Damage reduced to ' + dmg + '.' : '<strong style="color:#ff6b88;">Unfortified.</strong> Took ' + dmg + ' damage.'}<br>${t.lesson}`;
+  lesson.classList.add('visible');
+
+  updateUI();
+
+  if (pillars[t.target].hp <= 0) return endGame();
+  if (waveIdx >= TOTAL_WAVES) return endGame();
+
+  running = false;
+  // Allow free re-fortification between waves
+  startBtn.textContent = 'Start wave ' + (waveIdx + 1);
+  startBtn.style.display = '';
+}
+
+function endGame() {
+  running = false;
+  if (countdown) clearInterval(countdown);
+  threatIncoming.style.display = 'none';
+  startBtn.style.display = 'none';
+
+  const totalHp = pillars.confidentiality.hp + pillars.integrity.hp + pillars.availability.hp;
+  const won = totalHp > 0 && Object.values(pillars).every(p => p.hp > 0) && waveIdx >= TOTAL_WAVES;
+  gameOver.className = 'game-over visible ' + (won ? 'win' : 'lose');
+  if (won) {
+    ggTitle.textContent = 'Triad held';
+    ggStats.innerHTML = `Score: <strong style="color:#fff">${score}</strong><br>C: ${pillars.confidentiality.hp} &middot; I: ${pillars.integrity.hp} &middot; A: ${pillars.availability.hp}<br>You learned the tradeoff every CISO lives with.`;
+    if (window.CyberSounds) CyberSounds.win();
+  } else {
+    const fallen = Object.entries(pillars).filter(([k, v]) => v.hp <= 0).map(([k]) => k.toUpperCase()).join(', ');
+    ggTitle.textContent = 'Pillar collapsed';
+    ggStats.innerHTML = `Survived ${waveIdx} of ${TOTAL_WAVES} waves<br>${fallen ? 'Lost: ' + fallen : 'Score: ' + score}<br>Picking 2 of 3 means leaving 1 exposed. That is the lesson.`;
+    if (window.CyberSounds) CyberSounds.lose();
+  }
+}
+
+startBtn.addEventListener('click', startWave);
+restartBtn.addEventListener('click', () => {
+  pillars = { confidentiality: { hp: 100, max: 100 }, integrity: { hp: 100, max: 100 }, availability: { hp: 100, max: 100 } };
+  fortified.clear();
+  waveIdx = 0; score = 0; rerolls = 3;
+  gameOver.classList.remove('visible');
+  startBtn.textContent = 'Start wave 1';
+  startBtn.style.display = '';
+  lesson.classList.remove('visible');
+  updateUI();
+});
+
+updateUI();
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>

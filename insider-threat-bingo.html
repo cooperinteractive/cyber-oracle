@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insider Threat Bingo | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { min-height: 100vh; min-height: 100dvh; background: radial-gradient(ellipse at top, #0a1820 0%, #02000a 80%); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #e0e0e0; overflow-x: hidden; padding: 16px 16px 60px; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(1px 1px at 50% 50%, #fff, transparent); background-size: 200% 200%; opacity: 0.18; z-index: 0; pointer-events: none; }
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link { color: #ff66cc; text-decoration: none; font-family: 'Courier New', monospace; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border: 1px solid rgba(255, 102, 204, 0.4); border-radius: 20px; transition: all 0.2s; }
+  .back-link:hover, .back-link:focus-visible { background: rgba(255, 102, 204, 0.1); color: #fff; outline: none; }
+  header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: clamp(1.4rem, 4.5vw, 2.1rem); font-weight: 200; letter-spacing: 4px; text-transform: uppercase; background: linear-gradient(90deg, #ff66cc, #ffcc66, #66aaff, #ff66cc); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: hueShift 6s linear infinite; }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+
+  .hud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .hud-cell { background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(255, 102, 204, 0.25); border-radius: 10px; padding: 10px; text-align: center; backdrop-filter: blur(8px); }
+  .hud-label { font-family: 'Courier New', monospace; font-size: 0.6rem; letter-spacing: 1.5px; color: #8aa0c0; text-transform: uppercase; margin-bottom: 4px; }
+  .hud-value { font-size: 1.3rem; font-weight: 700; color: #ff66cc; text-shadow: 0 0 10px rgba(255, 102, 204, 0.5); font-family: 'Courier New', monospace; }
+  .hud-value.score { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+  .hud-value.lines { color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+
+  .instructions { text-align: center; color: #8aa0c0; font-size: 0.78rem; line-height: 1.5; margin-bottom: 14px; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+
+  /* Employee profile card */
+  .profile { background: rgba(0, 10, 25, 0.7); border: 1px solid rgba(255, 102, 204, 0.3); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; backdrop-filter: blur(8px); }
+  .profile-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); }
+  .avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #ff66cc, #66aaff); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; font-weight: bold; flex-shrink: 0; }
+  .profile-name { font-size: 1rem; color: #fff; font-weight: 700; margin-bottom: 2px; }
+  .profile-role { font-family: 'Courier New', monospace; font-size: 0.7rem; color: #c8d8ff; letter-spacing: 1px; }
+  .profile-narrative { font-size: 0.88rem; color: #d8e8ff; line-height: 1.65; }
+  .profile-narrative .signal { background: rgba(255, 100, 100, 0.15); color: #ffaaaa; padding: 1px 6px; border-radius: 4px; font-weight: 600; cursor: help; border-bottom: 1px dotted rgba(255, 100, 100, 0.4); }
+
+  /* Bingo card */
+  .bingo {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    background: rgba(0, 10, 25, 0.6);
+    border: 1px solid rgba(255, 102, 204, 0.3);
+    border-radius: 14px;
+    padding: 10px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(8px);
+  }
+
+  .square {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #2a1a3a, #1a0a2a);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.62rem;
+    line-height: 1.15;
+    color: #c8d8ff;
+    font-weight: 500;
+    -webkit-tap-highlight-color: transparent;
+    word-break: break-word;
+    overflow: hidden;
+  }
+
+  .square:hover, .square:focus-visible {
+    border-color: rgba(255, 102, 204, 0.6);
+    background: linear-gradient(135deg, #3a2a4a, #2a1a3a);
+    transform: scale(1.05);
+    z-index: 2;
+    outline: none;
+  }
+
+  .square.marked {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 255, 255, 0.2));
+    border-color: rgba(0, 255, 136, 0.7);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(0, 255, 136, 0.4);
+  }
+
+  .square.free {
+    background: linear-gradient(135deg, #ffcc66, #ff8800);
+    color: #1a0a2a;
+    font-weight: 800;
+    border-color: #ffeebb;
+  }
+
+  .square.miss-flash {
+    animation: flashRed 0.4s ease;
+  }
+
+  .square.match-flash {
+    animation: flashGreen 0.5s ease;
+  }
+
+  @keyframes flashRed {
+    0%, 100% { background: linear-gradient(135deg, #2a1a3a, #1a0a2a); }
+    50% { background: linear-gradient(135deg, rgba(255, 80, 100, 0.4), rgba(150, 0, 30, 0.5)); }
+  }
+
+  @keyframes flashGreen {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); }
+    100% { transform: scale(1); }
+  }
+
+  .square.line-win {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    border-color: gold;
+    animation: lineWin 1s ease;
+  }
+
+  @keyframes lineWin {
+    0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+    50% { box-shadow: 0 0 35px rgba(255, 215, 0, 1); }
+  }
+
+  .controls { text-align: center; margin-bottom: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn { background: linear-gradient(90deg, rgba(255, 102, 204, 0.2), rgba(255, 204, 102, 0.2)); border: 1px solid rgba(255, 102, 204, 0.6); color: #ff66cc; padding: 12px 24px; border-radius: 30px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; font-family: inherit; font-weight: 700; cursor: pointer; transition: all 0.25s; }
+  .btn:hover, .btn:focus-visible { background: linear-gradient(90deg, rgba(255, 102, 204, 0.35), rgba(255, 204, 102, 0.35)); color: #fff; box-shadow: 0 0 25px rgba(255, 102, 204, 0.4); outline: none; }
+  .btn.secondary { background: rgba(0, 0, 30, 0.5); border-color: rgba(0, 255, 255, 0.4); color: #00ffff; }
+  .btn.secondary:hover, .btn.secondary:focus-visible { background: rgba(0, 255, 255, 0.15); }
+
+  .game-over { text-align: center; padding: 26px 22px; background: linear-gradient(135deg, rgba(60, 0, 60, 0.8), rgba(0, 30, 60, 0.8)); border: 2px solid gold; border-radius: 16px; backdrop-filter: blur(10px); display: none; box-shadow: 0 0 40px rgba(255, 215, 0, 0.3); }
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .game-over h2 { font-size: 1.5rem; color: gold; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 12px; text-shadow: 0 0 18px rgba(255, 215, 0, 0.6); }
+  .gg-stats { color: #c8d8ff; font-size: 0.9rem; line-height: 1.6; margin-bottom: 18px; }
+
+  @media (max-width: 520px) {
+    .square { font-size: 0.6rem; padding: 3px; }
+    .hud { grid-template-columns: 1fr 1fr; }
+    .hud-cell:last-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 380px) {
+    .bingo { gap: 4px; padding: 8px; }
+    .square { font-size: 0.55rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .square.miss-flash, .square.match-flash, .square.line-win, h1 { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 215, 0, 0.4); color: gold; cursor: default;">5 in a row to win</span>
+  </div>
+
+  <header>
+    <h1>Insider Threat Bingo</h1>
+    <div class="subtitle">Mark the red flags. Get five in a row.</div>
+  </header>
+
+  <div class="hud">
+    <div class="hud-cell"><div class="hud-label">Profile</div><div class="hud-value" id="profileNum">1 / 8</div></div>
+    <div class="hud-cell"><div class="hud-label">Lines</div><div class="hud-value lines" id="lines">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Score</div><div class="hud-value score" id="score">0</div></div>
+  </div>
+
+  <p class="instructions">
+    Read each employee profile. Click the bingo squares matching the red flags you spot.<br>
+    Five marked squares in a row (any direction) wins the round.
+  </p>
+
+  <main>
+    <div class="profile">
+      <div class="profile-header">
+        <div class="avatar" id="avatar">?</div>
+        <div>
+          <div class="profile-name" id="profileName">Loading...</div>
+          <div class="profile-role" id="profileRole">--</div>
+        </div>
+      </div>
+      <div class="profile-narrative" id="profileNarrative">--</div>
+    </div>
+
+    <div class="bingo" id="bingo"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="nextBtn" type="button">Next profile</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2>BINGO!</h2>
+      <div class="gg-stats" id="ggStats"></div>
+      <button class="btn" id="restartBtn" type="button">New card</button>
+    </div>
+  </main>
+</div>
+
+<script>
+// 24 red-flag indicators (free space in middle = 25 total)
+const INDICATORS = [
+  { id: 'odd_hours', text: 'Off-hours access', synonyms: ['working at 3am', 'late-night logins', 'weekend remote', 'odd hours', 'after midnight'] },
+  { id: 'usb', text: 'USB drive use', synonyms: ['usb drive', 'thumb drive', 'external drive', 'flash drive'] },
+  { id: 'big_download', text: 'Mass file downloads', synonyms: ['downloaded gigabytes', 'mass export', 'bulk download', 'thousands of files', 'sharepoint dump'] },
+  { id: 'declined_vacation', text: 'Refuses vacation', synonyms: ['declined vacation', 'no vacation', 'never takes time off', 'cancelled pto', 'refused to take leave'] },
+  { id: 'declined_promo', text: 'Refuses promotion', synonyms: ['turned down promotion', 'declined raise', 'rejected new role'] },
+  { id: 'recruiter_msgs', text: 'Recruiter messages', synonyms: ['recruiter activity', 'linkedin recruiter', 'job interview', 'interviewing elsewhere'] },
+  { id: 'finance_stress', text: 'Sudden financial stress', synonyms: ['gambling', 'divorce', 'legal trouble', 'sudden bills', 'financial pressure', 'creditor', 'in debt'] },
+  { id: 'access_creep', text: 'Excess permissions', synonyms: ['admin access', 'over-privileged', 'access creep', 'never offboarded permissions', 'too many groups'] },
+  { id: 'personal_email', text: 'Sends to personal email', synonyms: ['personal gmail', 'forwarded to personal', 'auto-forward rule', 'sent to himself'] },
+  { id: 'cloud_sync', text: 'Personal cloud sync', synonyms: ['personal dropbox', 'icloud', 'box account', 'unauthorized cloud', 'syncing to personal'] },
+  { id: 'print_jobs', text: 'Excessive printing', synonyms: ['print queue', 'thousands of pages', 'unusual printing', 'mass print job'] },
+  { id: 'screen_blur', text: 'Hides screen', synonyms: ['flips monitor', 'angles screen away', 'hides display', 'closes laptop when approached'] },
+  { id: 'two_weeks', text: 'Recently gave notice', synonyms: ['two weeks notice', 'resigned', 'leaving in two weeks', 'last two weeks', 'about to leave'] },
+  { id: 'badge_anomaly', text: 'Badge access anomaly', synonyms: ['badged into server room', 'access logs spike', 'tailgated', 'unusual room access'] },
+  { id: 'after_hours_print', text: 'Prints at night', synonyms: ['printed after hours', 'overnight print', 'late printing'] },
+  { id: 'data_classification', text: 'Touches sensitive data', synonyms: ['accessed customer database', 'pulled HR records', 'queried payroll', 'opened legal'] },
+  { id: 'social_complaints', text: 'Disgruntled comments', synonyms: ['complaints on slack', 'angry messages', 'venting in chat', 'public complaining', 'badmouthing manager'] },
+  { id: 'security_bypass', text: 'Bypasses security', synonyms: ['disabled antivirus', 'turned off DLP', 'unblocked URL', 'bypassed mfa'] },
+  { id: 'remote_tool', text: 'Unauthorized remote tool', synonyms: ['installed teamviewer', 'anydesk install', 'unauthorized remote'] },
+  { id: 'github_export', text: 'Code/IP exfil', synonyms: ['cloned all repos', 'pushed to personal github', 'exported source code', 'stolen IP'] },
+  { id: 'travel_anomaly', text: 'Travel mismatch', synonyms: ['vpn from another country', 'login from russia', 'impossible travel', 'geographic anomaly'] },
+  { id: 'declined_audit', text: 'Avoids audits', synonyms: ['skipped security audit', 'declined access review', 'rescheduled audit', 'avoiding compliance'] },
+  { id: 'shared_creds', text: 'Shared credentials', synonyms: ['shared password', 'gave login to coworker', 'team sharing creds'] },
+  { id: 'screenshot_burst', text: 'Bulk screenshots', synonyms: ['screenshot tool', 'screen capture script', 'bulk screenshots'] }
+];
+
+const PROFILES = [
+  {
+    name: 'Marcus Reyes', role: 'Senior Developer, 7 years tenure',
+    narrative: 'Marcus has been <span class="signal" data-i="odd_hours">working until 3 a.m.</span> almost every weeknight for the past two weeks. He <span class="signal" data-i="declined_vacation">declined his scheduled PTO</span> for the third time this year. Last Friday, security saw him <span class="signal" data-i="github_export">cloning every internal repo</span> to a personal laptop. He says he is "behind on a side project."'
+  },
+  {
+    name: 'Diana Kim', role: 'Sales Manager, 3 years tenure',
+    narrative: 'Diana <span class="signal" data-i="two_weeks">submitted her resignation</span> last Monday. Since then she has <span class="signal" data-i="big_download">exported every customer record</span> she could touch. Her manager noticed she has been <span class="signal" data-i="personal_email">forwarding emails to her personal Gmail</span>. She told her team she is "moving to a non-competing industry."'
+  },
+  {
+    name: 'Trevor Walsh', role: 'Systems Admin, 11 years tenure',
+    narrative: 'Trevor has <span class="signal" data-i="access_creep">domain-admin permissions</span> that should have been revoked when he changed teams 4 years ago. He has been <span class="signal" data-i="security_bypass">disabling EDR on his own machine</span> "for testing" and <span class="signal" data-i="usb">attaching unapproved USB drives</span>. He recently mentioned a <span class="signal" data-i="finance_stress">divorce</span> in passing.'
+  },
+  {
+    name: 'Priya Anand', role: 'Junior Analyst, 4 months tenure',
+    narrative: 'Priya is brand new but has been <span class="signal" data-i="data_classification">querying the payroll database</span> outside her job duties. Her manager noticed she <span class="signal" data-i="screen_blur">closes her laptop fast</span> whenever someone walks by. She has been getting <span class="signal" data-i="recruiter_msgs">aggressive recruiter messages on LinkedIn</span> from a competitor.'
+  },
+  {
+    name: 'Henry Castellanos', role: 'CFO, 2 years tenure',
+    narrative: 'Henry has been getting <span class="signal" data-i="travel_anomaly">VPN logins from Eastern Europe</span> at 4 a.m. while his calendar says he is in Boston. He <span class="signal" data-i="declined_audit">cancelled his quarterly access audit</span> twice. The CEO mentioned Henry is <span class="signal" data-i="finance_stress">going through a tough financial situation</span> after a real-estate deal soured.'
+  },
+  {
+    name: 'Riley Foster', role: 'Customer Support Lead, 5 years tenure',
+    narrative: 'Riley <span class="signal" data-i="social_complaints">has been venting publicly on Slack</span> about being passed over for promotion. They <span class="signal" data-i="declined_promo">declined a different lateral move</span> last week. Audit logs show Riley <span class="signal" data-i="cloud_sync">syncing customer ticket data to a personal Dropbox account</span>.'
+  },
+  {
+    name: 'Chen Wei', role: 'Engineering Manager, 9 years tenure',
+    narrative: 'Chen has been <span class="signal" data-i="odd_hours">in the office at strange hours</span>, including weekends she never used to work. <span class="signal" data-i="badge_anomaly">Badge logs show her entering the secure server room</span> twice last week, which is not in her job duties. She has been <span class="signal" data-i="screenshot_burst">taking bulk screenshots of dashboards</span>.'
+  },
+  {
+    name: 'Jessica Tran', role: 'New Hire, IT, 6 weeks tenure',
+    narrative: 'Jessica seems great. New to the company, eager to help. But she <span class="signal" data-i="remote_tool">installed AnyDesk on three production servers</span> "to make her job easier." She <span class="signal" data-i="shared_creds">shares her admin password with two coworkers</span> "so they don\'t have to bug her." She has been <span class="signal" data-i="after_hours_print">printing technical docs after midnight</span>.'
+  }
+];
+
+const profileNumEl = document.getElementById('profileNum');
+const linesEl = document.getElementById('lines');
+const scoreEl = document.getElementById('score');
+const profileNameEl = document.getElementById('profileName');
+const profileRoleEl = document.getElementById('profileRole');
+const profileNarrativeEl = document.getElementById('profileNarrative');
+const avatarEl = document.getElementById('avatar');
+const bingoEl = document.getElementById('bingo');
+const nextBtn = document.getElementById('nextBtn');
+const gameOver = document.getElementById('gameOver');
+const ggStats = document.getElementById('ggStats');
+const restartBtn = document.getElementById('restartBtn');
+
+let card = []; // 25-cell array of indicator objects (or 'FREE')
+let marked = new Set([12]); // free space in middle
+let lines = 0;
+let score = 0;
+let profileIdx = 0;
+let activeIndicators = new Set();
+let currentProfile = null;
+
+function shuffle(a) {
+  const out = [...a];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function buildCard() {
+  card = [];
+  marked = new Set([12]);
+  const picks = shuffle(INDICATORS).slice(0, 24);
+  for (let i = 0; i < 25; i++) {
+    if (i === 12) card.push({ id: 'FREE', text: 'FREE', isFree: true });
+    else card.push(picks.shift());
+  }
+  renderCard();
+}
+
+function renderCard() {
+  bingoEl.innerHTML = '';
+  card.forEach((cell, i) => {
+    const sq = document.createElement('button');
+    sq.type = 'button';
+    sq.className = 'square';
+    if (cell.isFree) sq.classList.add('free');
+    if (marked.has(i)) sq.classList.add('marked');
+    sq.textContent = cell.text;
+    sq.dataset.idx = i;
+    sq.dataset.id = cell.id;
+    sq.addEventListener('click', () => clickSquare(i, sq));
+    bingoEl.appendChild(sq);
+  });
+  updateLines();
+}
+
+function clickSquare(i, el) {
+  if (card[i].isFree) return;
+  if (marked.has(i)) return;
+  // Check if this indicator is in the current profile's red flags
+  if (activeIndicators.has(card[i].id)) {
+    marked.add(i);
+    el.classList.add('marked', 'match-flash');
+    score += 50;
+    if (window.CyberSounds) CyberSounds.correct();
+    setTimeout(() => el.classList.remove('match-flash'), 500);
+    updateLines();
+    checkBingo();
+  } else {
+    score = Math.max(0, score - 10);
+    el.classList.add('miss-flash');
+    if (window.CyberSounds) CyberSounds.wrong();
+    setTimeout(() => el.classList.remove('miss-flash'), 400);
+  }
+  scoreEl.textContent = score;
+}
+
+function getLines() {
+  // Returns array of winning lines (each is array of indices)
+  const found = [];
+  // Rows
+  for (let r = 0; r < 5; r++) {
+    const row = [r * 5, r * 5 + 1, r * 5 + 2, r * 5 + 3, r * 5 + 4];
+    if (row.every(i => marked.has(i))) found.push(row);
+  }
+  // Columns
+  for (let c = 0; c < 5; c++) {
+    const col = [c, c + 5, c + 10, c + 15, c + 20];
+    if (col.every(i => marked.has(i))) found.push(col);
+  }
+  // Diagonals
+  const d1 = [0, 6, 12, 18, 24];
+  const d2 = [4, 8, 12, 16, 20];
+  if (d1.every(i => marked.has(i))) found.push(d1);
+  if (d2.every(i => marked.has(i))) found.push(d2);
+  return found;
+}
+
+function updateLines() {
+  const won = getLines();
+  lines = won.length;
+  linesEl.textContent = lines;
+}
+
+function checkBingo() {
+  const won = getLines();
+  if (won.length > 0) {
+    won[0].forEach(i => {
+      const sq = bingoEl.children[i];
+      if (sq) sq.classList.add('line-win');
+    });
+    setTimeout(() => endRound(), 700);
+    if (window.CyberSounds) CyberSounds.win();
+  }
+}
+
+function loadProfile() {
+  if (profileIdx >= PROFILES.length) {
+    return endGame(false);
+  }
+  currentProfile = PROFILES[profileIdx];
+  profileIdx++;
+  profileNumEl.textContent = profileIdx + ' / ' + PROFILES.length;
+  profileNameEl.textContent = currentProfile.name;
+  profileRoleEl.textContent = currentProfile.role;
+  profileNarrativeEl.innerHTML = currentProfile.narrative;
+  avatarEl.textContent = currentProfile.name.split(' ').map(s => s[0]).join('');
+
+  // Extract active indicators
+  activeIndicators = new Set();
+  const matches = currentProfile.narrative.match(/data-i="([^"]+)"/g) || [];
+  matches.forEach(m => {
+    const id = m.match(/data-i="([^"]+)"/)[1];
+    activeIndicators.add(id);
+  });
+}
+
+function endRound() {
+  // Win: scored bingo
+  ggStats.innerHTML = `Score: <strong style="color:#fff">${score}</strong> &middot; Lines: <strong style="color:#fff">${lines}</strong> &middot; Profile ${profileIdx} of ${PROFILES.length}<br>You spotted enough red flags to call it.`;
+  gameOver.classList.add('visible');
+}
+
+function endGame(allProfilesUsed) {
+  ggStats.innerHTML = `Score: <strong style="color:#fff">${score}</strong> &middot; Lines: <strong style="color:#fff">${lines}</strong><br>Card complete. Real insider threats accumulate signal slowly. Catching them is about pattern recognition over time.`;
+  gameOver.classList.add('visible');
+}
+
+nextBtn.addEventListener('click', () => {
+  if (window.CyberSounds) CyberSounds.click();
+  loadProfile();
+});
+
+restartBtn.addEventListener('click', () => {
+  profileIdx = 0; score = 0; lines = 0;
+  scoreEl.textContent = 0; linesEl.textContent = 0;
+  buildCard();
+  loadProfile();
+  gameOver.classList.remove('visible');
+});
+
+buildCard();
+loadProfile();
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>

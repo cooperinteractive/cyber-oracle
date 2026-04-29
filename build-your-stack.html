@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Stack | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    min-height: 100vh; min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0; overflow-x: hidden; padding: 16px 16px 60px;
+  }
+  body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(1px 1px at 50% 50%, #fff, transparent); background-size: 200% 200%; opacity: 0.18; z-index: 0; pointer-events: none; }
+  .container { max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link { color: #00ff88; text-decoration: none; font-family: 'Courier New', monospace; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; padding: 6px 12px; border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 20px; transition: all 0.2s; }
+  .back-link:hover, .back-link:focus-visible { background: rgba(0, 255, 136, 0.1); color: #fff; outline: none; }
+  header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: clamp(1.5rem, 4.5vw, 2.2rem); font-weight: 200; letter-spacing: 4px; text-transform: uppercase; background: linear-gradient(90deg, #00ff88, #66aaff, #00ff88); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: hueShift 5s linear infinite; }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+
+  .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .hud-cell { background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 255, 136, 0.25); border-radius: 10px; padding: 10px 8px; text-align: center; backdrop-filter: blur(8px); }
+  .hud-label { font-family: 'Courier New', monospace; font-size: 0.6rem; letter-spacing: 1.5px; color: #8aa0c0; text-transform: uppercase; margin-bottom: 4px; }
+  .hud-value { font-size: 1.3rem; font-weight: 700; color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); font-family: 'Courier New', monospace; }
+  .hud-value.budget { color: #ffcc66; text-shadow: 0 0 10px rgba(255, 204, 102, 0.5); }
+  .hud-value.health { color: #00ffff; }
+  .hud-value.health.low { color: #ffaa00; }
+  .hud-value.health.crit { color: #ff4444; animation: pulse 0.5s infinite; }
+  .hud-value.wave { color: #ff66cc; text-shadow: 0 0 10px rgba(255, 0, 200, 0.5); }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+  .layout { display: grid; grid-template-columns: 1fr 240px; gap: 14px; margin-bottom: 14px; }
+
+  .arena {
+    position: relative;
+    aspect-ratio: 1.4;
+    background: linear-gradient(180deg, rgba(0, 20, 30, 0.6), rgba(0, 5, 15, 0.9));
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .lane {
+    position: absolute;
+    left: 0; right: 0;
+    height: 33.33%;
+    border-bottom: 1px dashed rgba(0, 255, 136, 0.1);
+    display: flex;
+    align-items: center;
+  }
+  .lane:last-child { border-bottom: none; }
+  .lane:nth-child(1) { top: 0; }
+  .lane:nth-child(2) { top: 33.33%; }
+  .lane:nth-child(3) { top: 66.66%; }
+
+  .lane-tag {
+    position: absolute;
+    left: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.55rem;
+    color: rgba(0, 255, 136, 0.5);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .crown {
+    position: absolute;
+    right: 0;
+    top: 0; bottom: 0;
+    width: 60px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.15), rgba(0, 255, 255, 0.3));
+    border-left: 2px solid rgba(0, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .crown-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    color: #00ffff;
+    text-transform: uppercase;
+    transform: rotate(-90deg);
+    white-space: nowrap;
+  }
+
+  .threat {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    background: radial-gradient(circle at 35% 35%, #ff6688, #aa0044);
+    box-shadow: 0 0 15px #ff4488;
+    z-index: 3;
+    transition: opacity 0.3s;
+  }
+
+  .threat.malware { background: radial-gradient(circle at 35% 35%, #ff77aa, #aa0055); }
+  .threat.phish { background: radial-gradient(circle at 35% 35%, #ffaa66, #aa5500); box-shadow: 0 0 15px #ffaa44; }
+  .threat.brute { background: radial-gradient(circle at 35% 35%, #ff6666, #aa0000); box-shadow: 0 0 15px #ff4444; }
+  .threat.zero-day { background: radial-gradient(circle at 35% 35%, #cc66ff, #6600aa); box-shadow: 0 0 18px #cc66ff; }
+  .threat.insider { background: radial-gradient(circle at 35% 35%, #ffcc66, #aa6600); box-shadow: 0 0 15px #ffcc44; }
+
+  .threat-hp {
+    position: absolute;
+    bottom: -10px;
+    left: 0; right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .threat-hp-fill { height: 100%; background: #ff4444; transition: width 0.2s; }
+
+  .defense {
+    position: absolute;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    z-index: 4;
+    pointer-events: none;
+    border: 2px solid;
+  }
+
+  .defense.firewall { background: rgba(255, 80, 80, 0.25); border-color: #ff6666; color: #ff8888; }
+  .defense.edr { background: rgba(0, 200, 255, 0.25); border-color: #66aaff; color: #99ccff; }
+  .defense.mfa { background: rgba(0, 255, 136, 0.25); border-color: #66ff99; color: #99ffbb; }
+  .defense.siem { background: rgba(180, 80, 255, 0.25); border-color: #cc66ff; color: #dd99ff; }
+  .defense.training { background: rgba(255, 200, 0, 0.25); border-color: #ffcc66; color: #ffdd88; }
+
+  .laser {
+    position: absolute;
+    height: 2px;
+    transform-origin: left center;
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 1px;
+    animation: laserPulse 0.2s ease-out forwards;
+  }
+  @keyframes laserPulse {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .laser.firewall { background: linear-gradient(90deg, #ff6666, transparent); box-shadow: 0 0 10px #ff6666; }
+  .laser.edr { background: linear-gradient(90deg, #66aaff, transparent); box-shadow: 0 0 10px #66aaff; }
+  .laser.mfa { background: linear-gradient(90deg, #66ff99, transparent); box-shadow: 0 0 10px #66ff99; }
+  .laser.siem { background: linear-gradient(90deg, #cc66ff, transparent); box-shadow: 0 0 10px #cc66ff; }
+  .laser.training { background: linear-gradient(90deg, #ffcc66, transparent); box-shadow: 0 0 10px #ffcc66; }
+
+  .palette { background: rgba(0, 20, 30, 0.7); border: 1px solid rgba(0, 255, 136, 0.25); border-radius: 14px; padding: 14px; backdrop-filter: blur(8px); }
+  .palette-title { font-family: 'Courier New', monospace; font-size: 0.65rem; letter-spacing: 2px; color: #66ff99; text-transform: uppercase; margin-bottom: 10px; text-align: center; text-shadow: 0 0 8px rgba(0, 255, 136, 0.4); }
+
+  .def-option { display: flex; align-items: center; gap: 8px; padding: 10px; margin-bottom: 6px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+  .def-option:hover, .def-option.active { border-color: rgba(0, 255, 136, 0.6); background: rgba(0, 255, 136, 0.1); }
+  .def-option.active { box-shadow: 0 0 18px rgba(0, 255, 136, 0.3); }
+  .def-option.unaffordable { opacity: 0.4; cursor: not-allowed; }
+  .def-icon { font-size: 1.1rem; width: 30px; text-align: center; flex-shrink: 0; }
+  .def-info { flex: 1; min-width: 0; }
+  .def-name { font-size: 0.75rem; font-weight: 600; color: #fff; }
+  .def-cost { font-family: 'Courier New', monospace; font-size: 0.6rem; color: #ffcc66; }
+  .def-stats { font-family: 'Courier New', monospace; font-size: 0.55rem; color: #8aa0c0; }
+
+  .controls { text-align: center; margin-bottom: 14px; }
+  .btn { background: linear-gradient(90deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 255, 0.2)); border: 1px solid rgba(0, 255, 136, 0.6); color: #00ff88; padding: 14px 32px; border-radius: 30px; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; font-weight: 700; cursor: pointer; transition: all 0.25s; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+  .btn:hover, .btn:focus-visible { background: linear-gradient(90deg, rgba(0, 255, 136, 0.35), rgba(0, 255, 255, 0.35)); color: #fff; box-shadow: 0 0 25px rgba(0, 255, 136, 0.4); outline: none; }
+
+  .game-over { text-align: center; padding: 28px 22px; border-radius: 16px; backdrop-filter: blur(10px); display: none; }
+  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .game-over.win { background: linear-gradient(135deg, rgba(0, 60, 30, 0.7), rgba(0, 30, 60, 0.7)); border: 1px solid rgba(0, 255, 136, 0.5); }
+  .game-over.lose { background: linear-gradient(135deg, rgba(60, 0, 0, 0.8), rgba(30, 0, 30, 0.8)); border: 1px solid rgba(255, 80, 100, 0.6); }
+  .game-over h2 { font-size: 1.4rem; color: #fff; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; }
+  .game-over.win h2 { color: #00ff88; text-shadow: 0 0 15px rgba(0, 255, 136, 0.6); }
+  .game-over.lose h2 { color: #ff6b88; text-shadow: 0 0 15px rgba(255, 80, 100, 0.6); }
+  .gg-stats { font-family: 'Courier New', monospace; font-size: 0.85rem; color: #c8d8ff; margin-bottom: 18px; }
+
+  .instructions { text-align: center; color: #8aa0c0; font-size: 0.78rem; line-height: 1.5; margin-bottom: 14px; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .palette { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+    .palette-title { grid-column: 1 / -1; }
+    .def-option { padding: 8px; }
+  }
+  @media (max-width: 480px) { .hud { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;">5 waves &middot; defense-in-depth</span>
+  </div>
+
+  <header>
+    <h1>Build Your Stack</h1>
+    <div class="subtitle">Defense in depth, on a budget</div>
+  </header>
+
+  <div class="hud">
+    <div class="hud-cell"><div class="hud-label">Budget</div><div class="hud-value budget" id="budget">$500</div></div>
+    <div class="hud-cell"><div class="hud-label">Health</div><div class="hud-value health" id="health">100</div></div>
+    <div class="hud-cell"><div class="hud-label">Wave</div><div class="hud-value wave" id="wave">0 / 5</div></div>
+    <div class="hud-cell"><div class="hud-label">Score</div><div class="hud-value" id="score">0</div></div>
+  </div>
+
+  <p class="instructions">
+    Pick a defense, click in the lane to deploy. Different threats are vulnerable to different defenses.<br>
+    Survive 5 waves with health above 0.
+  </p>
+
+  <main>
+    <div class="layout">
+      <div class="arena" id="arena">
+        <div class="lane"><span class="lane-tag">Network</span></div>
+        <div class="lane"><span class="lane-tag">Endpoint</span></div>
+        <div class="lane"><span class="lane-tag">Identity</span></div>
+        <div class="crown"><span class="crown-label">Crown jewels</span></div>
+      </div>
+
+      <aside class="palette">
+        <div class="palette-title">Defenses</div>
+        <button class="def-option" type="button" data-type="firewall" data-cost="80">
+          <span class="def-icon">&#128737;</span>
+          <span class="def-info"><span class="def-name">Firewall</span><span class="def-cost">$80</span><span class="def-stats">Network: strong</span></span>
+        </button>
+        <button class="def-option" type="button" data-type="edr" data-cost="120">
+          <span class="def-icon">&#128300;</span>
+          <span class="def-info"><span class="def-name">EDR</span><span class="def-cost">$120</span><span class="def-stats">Endpoint: strong</span></span>
+        </button>
+        <button class="def-option" type="button" data-type="mfa" data-cost="60">
+          <span class="def-icon">&#128274;</span>
+          <span class="def-info"><span class="def-name">MFA</span><span class="def-cost">$60</span><span class="def-stats">Identity: strong</span></span>
+        </button>
+        <button class="def-option" type="button" data-type="siem" data-cost="150">
+          <span class="def-icon">&#128202;</span>
+          <span class="def-info"><span class="def-name">SIEM</span><span class="def-cost">$150</span><span class="def-stats">All lanes: medium</span></span>
+        </button>
+        <button class="def-option" type="button" data-type="training" data-cost="40">
+          <span class="def-icon">&#128218;</span>
+          <span class="def-info"><span class="def-name">Training</span><span class="def-cost">$40</span><span class="def-stats">Phishing: strong</span></span>
+        </button>
+      </aside>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn" type="button">Start wave 1</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2 id="ggTitle"></h2>
+      <div class="gg-stats" id="ggStats"></div>
+      <button class="btn" id="restartBtn" type="button">Play again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const arena = document.getElementById('arena');
+const lanes = arena.querySelectorAll('.lane');
+const budgetEl = document.getElementById('budget');
+const healthEl = document.getElementById('health');
+const waveEl = document.getElementById('wave');
+const scoreEl = document.getElementById('score');
+const startBtn = document.getElementById('startBtn');
+const gameOver = document.getElementById('gameOver');
+const ggTitle = document.getElementById('ggTitle');
+const ggStats = document.getElementById('ggStats');
+const restartBtn = document.getElementById('restartBtn');
+const defOptions = Array.from(document.querySelectorAll('.def-option'));
+
+// Defense -> lane effectiveness map. Higher = more damage per shot.
+const EFFECTIVENESS = {
+  firewall:  { network: 12, endpoint: 2, identity: 2 },
+  edr:       { network: 3, endpoint: 14, identity: 3 },
+  mfa:       { network: 2, endpoint: 4, identity: 16 },
+  siem:      { network: 6, endpoint: 6, identity: 6 },
+  training:  { network: 4, endpoint: 8, identity: 8 } // training disproportionately stops phishing/insider on identity
+};
+
+const RANGE = 220; // px
+const COOLDOWN = { firewall: 700, edr: 600, mfa: 500, siem: 800, training: 900 };
+
+const THREATS = [
+  { name: 'malware', icon: '\u{1F41B}', hp: 30, lane: 'endpoint', speed: 0.7, reward: 50, cls: 'malware' },
+  { name: 'phishing', icon: '\u{1F41F}', hp: 22, lane: 'identity', speed: 0.9, reward: 40, cls: 'phish' },
+  { name: 'brute force', icon: '\u{1F528}', hp: 28, lane: 'identity', speed: 0.8, reward: 45, cls: 'brute' },
+  { name: 'DDoS', icon: '\u{1F30A}', hp: 25, lane: 'network', speed: 1.0, reward: 40, cls: 'malware' },
+  { name: 'zero-day', icon: '\u{1F480}', hp: 60, lane: 'endpoint', speed: 0.6, reward: 100, cls: 'zero-day' },
+  { name: 'insider', icon: '\u{1F575}', hp: 40, lane: 'identity', speed: 0.7, reward: 70, cls: 'insider' }
+];
+
+const WAVES = [
+  { count: 6, types: ['malware', 'phishing', 'DDoS'], delay: 1300 },
+  { count: 8, types: ['malware', 'phishing', 'brute force', 'DDoS'], delay: 1100 },
+  { count: 10, types: ['malware', 'phishing', 'brute force', 'DDoS', 'insider'], delay: 950 },
+  { count: 12, types: ['phishing', 'brute force', 'DDoS', 'zero-day', 'insider'], delay: 850 },
+  { count: 14, types: ['malware', 'phishing', 'brute force', 'zero-day', 'insider'], delay: 750 }
+];
+
+let budget = 500;
+let health = 100;
+let waveIdx = 0;
+let score = 0;
+let running = false;
+let selectedDef = null;
+let defenses = [];
+let threats = [];
+let spawnTimer = null;
+let rafId = null;
+let waveSpawned = 0;
+
+function fmtBudget(n) { return '$' + n; }
+
+function updateHud() {
+  budgetEl.textContent = fmtBudget(budget);
+  healthEl.textContent = health;
+  healthEl.classList.remove('low', 'crit');
+  if (health < 30) healthEl.classList.add('crit');
+  else if (health < 60) healthEl.classList.add('low');
+  scoreEl.textContent = score;
+  waveEl.textContent = waveIdx + ' / ' + WAVES.length;
+
+  defOptions.forEach(opt => {
+    const cost = parseInt(opt.dataset.cost, 10);
+    if (budget < cost) opt.classList.add('unaffordable');
+    else opt.classList.remove('unaffordable');
+  });
+}
+
+function selectDef(opt) {
+  const cost = parseInt(opt.dataset.cost, 10);
+  if (budget < cost) return;
+  defOptions.forEach(o => o.classList.remove('active'));
+  if (selectedDef && selectedDef.type === opt.dataset.type) {
+    selectedDef = null;
+    arena.style.cursor = 'default';
+  } else {
+    opt.classList.add('active');
+    selectedDef = { type: opt.dataset.type, cost };
+    arena.style.cursor = 'copy';
+  }
+}
+
+defOptions.forEach(opt => opt.addEventListener('click', () => selectDef(opt)));
+
+arena.addEventListener('click', (e) => {
+  if (!selectedDef) return;
+  const rect = arena.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Don't allow placement in the crown zone (right 60px)
+  if (x > rect.width - 70) return;
+
+  budget -= selectedDef.cost;
+  if (window.CyberSounds) CyberSounds.place();
+
+  defenses.push({
+    type: selectedDef.type,
+    x, y,
+    lastShot: 0,
+    cooldown: COOLDOWN[selectedDef.type]
+  });
+
+  const el = document.createElement('div');
+  el.className = 'defense ' + selectedDef.type;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  const icons = { firewall: '\u{1F6E1}', edr: '\u{1F52C}', mfa: '\u{1F510}', siem: '\u{1F4CA}', training: '\u{1F4D6}' };
+  el.textContent = icons[selectedDef.type];
+  arena.appendChild(el);
+  defenses[defenses.length - 1].el = el;
+
+  selectedDef = null;
+  defOptions.forEach(o => o.classList.remove('active'));
+  arena.style.cursor = 'default';
+  updateHud();
+});
+
+function laneIndex(yPx, arenaH) {
+  const pct = yPx / arenaH;
+  if (pct < 0.333) return 0;
+  if (pct < 0.667) return 1;
+  return 2;
+}
+
+function laneName(i) { return ['network', 'endpoint', 'identity'][i]; }
+
+function laneCenterY(i, arenaH) { return (i + 0.5) * (arenaH / 3); }
+
+function spawnThreat(typeName) {
+  const proto = THREATS.find(t => t.name === typeName);
+  const rect = arena.getBoundingClientRect();
+  const laneIdx = ['network', 'endpoint', 'identity'].indexOf(proto.lane);
+  const y = laneCenterY(laneIdx, rect.height);
+
+  const el = document.createElement('div');
+  el.className = 'threat ' + proto.cls;
+  el.style.left = '0px';
+  el.style.top = y + 'px';
+  el.textContent = proto.icon;
+  const hpBar = document.createElement('div');
+  hpBar.className = 'threat-hp';
+  hpBar.innerHTML = '<div class="threat-hp-fill" style="width:100%"></div>';
+  el.appendChild(hpBar);
+  arena.appendChild(el);
+
+  threats.push({
+    el, hpBarFill: el.querySelector('.threat-hp-fill'),
+    x: 0, y,
+    laneIdx,
+    hp: proto.hp, maxHp: proto.hp,
+    speed: proto.speed,
+    name: proto.name,
+    reward: proto.reward
+  });
+}
+
+function shootLaser(fromX, fromY, toX, toY, type) {
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const dist = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const laser = document.createElement('div');
+  laser.className = 'laser ' + type;
+  laser.style.left = fromX + 'px';
+  laser.style.top = fromY + 'px';
+  laser.style.width = dist + 'px';
+  laser.style.transform = 'rotate(' + angle + 'deg)';
+  arena.appendChild(laser);
+  setTimeout(() => laser.remove(), 200);
+}
+
+function update() {
+  if (!running) { rafId = null; return; }
+  if (document.hidden) { rafId = requestAnimationFrame(update); return; }
+  const rect = arena.getBoundingClientRect();
+  const now = performance.now();
+
+  // Move threats
+  for (let i = threats.length - 1; i >= 0; i--) {
+    const t = threats[i];
+    t.x += t.speed;
+    t.el.style.left = t.x + 'px';
+    if (t.x >= rect.width - 60) {
+      // Reached crown
+      health = Math.max(0, health - 12);
+      t.el.style.opacity = '0';
+      if (window.CyberSounds) CyberSounds.breach();
+      setTimeout(() => t.el.remove(), 300);
+      threats.splice(i, 1);
+      updateHud();
+      if (health <= 0) { return endGame(false); }
+    }
+  }
+
+  // Defenses fire at nearest threat in range
+  defenses.forEach(d => {
+    if (now - d.lastShot < d.cooldown) return;
+    let nearest = null, nearestDist = Infinity;
+    threats.forEach(t => {
+      const dx = t.x - d.x;
+      const dy = t.y - d.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < RANGE && dist < nearestDist) {
+        nearest = t; nearestDist = dist;
+      }
+    });
+    if (nearest) {
+      d.lastShot = now;
+      shootLaser(d.x, d.y, nearest.x + 16, nearest.y, d.type);
+      const dmg = EFFECTIVENESS[d.type][laneName(nearest.laneIdx)];
+      nearest.hp -= dmg;
+      nearest.hpBarFill.style.width = Math.max(0, (nearest.hp / nearest.maxHp) * 100) + '%';
+      if (nearest.hp <= 0 && nearest.el.parentNode) {
+        score += nearest.reward;
+        budget += Math.round(nearest.reward * 0.6);
+        if (window.CyberSounds) CyberSounds.caught();
+        nearest.el.style.opacity = '0';
+        setTimeout(() => nearest.el.remove(), 300);
+        const idx = threats.indexOf(nearest);
+        if (idx >= 0) threats.splice(idx, 1);
+        updateHud();
+      }
+    }
+  });
+
+  rafId = requestAnimationFrame(update);
+}
+
+function startWave() {
+  if (waveIdx >= WAVES.length) return endGame(true);
+  waveIdx++;
+  const wave = WAVES[waveIdx - 1];
+  waveSpawned = 0;
+  startBtn.style.display = 'none';
+  running = true;
+  if (!rafId) rafId = requestAnimationFrame(update);
+  updateHud();
+
+  function spawnNext() {
+    if (waveSpawned >= wave.count) {
+      // Wait for arena to clear
+      const checkClear = setInterval(() => {
+        if (threats.length === 0) {
+          clearInterval(checkClear);
+          if (waveIdx >= WAVES.length) endGame(true);
+          else {
+            startBtn.textContent = 'Start wave ' + (waveIdx + 1);
+            startBtn.style.display = '';
+            running = (health > 0);
+            if (window.CyberSounds && health > 0) CyberSounds.levelUp();
+          }
+        }
+      }, 200);
+      return;
+    }
+    const type = wave.types[Math.floor(Math.random() * wave.types.length)];
+    spawnThreat(type);
+    waveSpawned++;
+    spawnTimer = setTimeout(spawnNext, wave.delay + (Math.random() - 0.5) * 300);
+  }
+  spawnNext();
+}
+
+function endGame(won) {
+  running = false;
+  if (spawnTimer) clearTimeout(spawnTimer);
+  threats.forEach(t => t.el.remove());
+  threats = [];
+  startBtn.style.display = 'none';
+  gameOver.className = 'game-over visible ' + (won ? 'win' : 'lose');
+  if (won) {
+    ggTitle.textContent = 'Stack survived';
+    ggStats.innerHTML = `Final score: ${score} &middot; Budget left: ${fmtBudget(budget)} &middot; Health: ${health}%<br>Defense in depth pays off.`;
+    if (window.CyberSounds) CyberSounds.win();
+  } else {
+    ggTitle.textContent = 'Crown jewels stolen';
+    ggStats.innerHTML = `Wave ${waveIdx} of ${WAVES.length} &middot; Final score: ${score}<br>The attackers found the gap.`;
+    if (window.CyberSounds) CyberSounds.lose();
+  }
+}
+
+function reset() {
+  defenses.forEach(d => d.el.remove());
+  defenses = [];
+  threats.forEach(t => t.el.remove());
+  threats = [];
+  budget = 500; health = 100; waveIdx = 0; score = 0;
+  gameOver.classList.remove('visible');
+  startBtn.style.display = '';
+  startBtn.textContent = 'Start wave 1';
+  updateHud();
+}
+
+startBtn.addEventListener('click', startWave);
+restartBtn.addEventListener('click', () => { reset(); startWave(); });
+
+updateHud();
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>

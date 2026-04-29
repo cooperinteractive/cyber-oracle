@@ -613,7 +613,6 @@ const emails = [
     from: 'DocuSign <dse@docusign.net>',
     subject: 'Please DocuSign: Q4_Contract_FINAL.pdf',
     body: 'You have received a document to review and sign.\n\nFROM: Mark Rivera (Acme Corp)\nDOCUMENT: Q4_Contract_FINAL.pdf\n\nREVIEW DOCUMENT: https://na3.docusign.net/Signing/Mtredirect.aspx?ti=89234jfk',
-    isPhish: 'maybe',
     isPhish: true,
     flags: [
       'Even legitimate-looking DocuSign emails are heavily abused',
@@ -830,7 +829,7 @@ function endRound() {
   const accuracy = Math.round((correct / ROUND_SIZE) * 100);
 
   let grade;
-  if (accuracy === 100) grade = 'Perfect - SOC analyst material';
+  if (accuracy === 100) grade = 'Perfect - phishing instincts on lock';
   else if (accuracy >= 87) grade = 'Excellent - hard to phish';
   else if (accuracy >= 75) grade = 'Solid - some sharpening needed';
   else if (accuracy >= 50) grade = 'Risky - the attackers like you';
