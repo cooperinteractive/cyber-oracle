@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Response: The Pager | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #1a0a0a 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 30% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent);
+    background-size: 200% 200%;
+    opacity: 0.18;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .back-link {
+    color: #ff6b6b;
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+
+  .back-link:hover, .back-link:focus-visible {
+    background: rgba(255, 107, 107, 0.1);
+    color: #fff;
+    outline: none;
+  }
+
+  header { text-align: center; margin-bottom: 18px; }
+
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+    font-weight: 200;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff4444, #ffaa00, #ff4444);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 4s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .stat {
+    background: rgba(20, 0, 0, 0.7);
+    border: 1px solid rgba(255, 107, 107, 0.25);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+
+  .stat-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: #c8a0a0;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+  }
+
+  .stat-value.score { color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+  .stat-value.uptime { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+  .stat-value.uptime.low { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+  .stat-value.uptime.critical { color: #ff4444; text-shadow: 0 0 10px rgba(255, 68, 68, 0.6); animation: pulse 0.5s infinite; }
+  .stat-value.regret { color: #ff6b88; text-shadow: 0 0 10px rgba(255, 100, 130, 0.5); }
+  .stat-value.case { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* The pager device */
+  .pager {
+    background: linear-gradient(180deg, #1a1f28, #0d1118);
+    border: 2px solid #2a3038;
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pager.alerting {
+    animation: pagerShake 0.4s linear infinite;
+    border-color: #ff4444;
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.6),
+      0 0 30px rgba(255, 68, 68, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  @keyframes pagerShake {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-2px) rotate(-0.4deg); }
+    75% { transform: translateX(2px) rotate(0.4deg); }
+  }
+
+  .pager-screen {
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(0, 50, 30, 0.4), rgba(0, 10, 0, 0.9));
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    border-radius: 8px;
+    padding: 14px 16px;
+    min-height: 220px;
+    font-family: 'Courier New', monospace;
+    color: #66ff99;
+    text-shadow: 0 0 6px rgba(102, 255, 153, 0.4);
+    position: relative;
+  }
+
+  .pager-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    border-radius: 8px;
+  }
+
+  .alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed rgba(102, 255, 153, 0.3);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  .alert-severity {
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid currentColor;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+
+  .alert-severity.crit { color: #ff4444; }
+  .alert-severity.high { color: #ffaa00; }
+  .alert-severity.med { color: #66ccff; }
+
+  .alert-title {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+    position: relative;
+  }
+
+  .alert-meta {
+    font-size: 0.75rem;
+    color: #99cc99;
+    line-height: 1.6;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .alert-meta strong { color: #66ff99; }
+
+  .alert-body {
+    font-size: 0.85rem;
+    color: #c8e8d0;
+    line-height: 1.55;
+    white-space: pre-line;
+    position: relative;
+  }
+
+  .pager-time {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #ff4444;
+    letter-spacing: 2px;
+    z-index: 5;
+  }
+
+  /* Idle state when no alert */
+  .pager-idle {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(102, 255, 153, 0.5);
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .pager-idle::before {
+    content: '\25C6';
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 14px;
+    color: rgba(102, 255, 153, 0.3);
+    animation: idlePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes idlePulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Decision options */
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .option {
+    padding: 14px 16px;
+    background: rgba(20, 20, 30, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #d8e0e8;
+    font-family: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.4;
+    backdrop-filter: blur(6px);
+    position: relative;
+  }
+
+  .option:hover, .option:focus-visible {
+    background: rgba(40, 40, 60, 0.7);
+    border-color: rgba(0, 255, 255, 0.5);
+    color: #fff;
+    transform: translateY(-2px);
+    outline: none;
+  }
+
+  .option:disabled { opacity: 0.5; cursor: wait; transform: none; }
+
+  .option-label {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    background: rgba(0, 255, 255, 0.15);
+    color: #00ffff;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 22px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  /* Outcome card */
+  .outcome {
+    background: rgba(0, 10, 25, 0.7);
+    border-radius: 14px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .outcome.visible { display: block; animation: outcomeIn 0.4s ease; }
+
+  @keyframes outcomeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .outcome.good { border: 1px solid rgba(0, 255, 136, 0.5); }
+  .outcome.bad { border: 1px solid rgba(255, 80, 100, 0.5); }
+  .outcome.meh { border: 1px solid rgba(255, 170, 0, 0.5); }
+
+  .outcome-tag {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+
+  .outcome.good .outcome-tag { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+  .outcome.bad .outcome-tag { color: #ff6b88; text-shadow: 0 0 10px rgba(255, 80, 100, 0.5); }
+  .outcome.meh .outcome-tag { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+
+  .outcome-text {
+    color: #d8e8ff;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .outcome-impact {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+
+  .impact-pill {
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: rgba(0, 0, 30, 0.4);
+  }
+
+  .impact-pill.gain { color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.4); }
+  .impact-pill.loss { color: #ff6b88; border: 1px solid rgba(255, 80, 100, 0.4); }
+
+  .lesson {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(0, 30, 60, 0.5);
+    border-left: 3px solid #00ffff;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: #c8e0ff;
+  }
+
+  .lesson-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #00ffff;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  }
+
+  .next-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.2), rgba(255, 170, 0, 0.2));
+    border: 1px solid rgba(255, 170, 0, 0.6);
+    color: #fff;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+  }
+
+  .next-btn:hover, .next-btn:focus-visible {
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.35), rgba(255, 170, 0, 0.35));
+    box-shadow: 0 0 25px rgba(255, 170, 0, 0.4);
+    outline: none;
+  }
+
+  /* Game over */
+  .game-over {
+    text-align: center;
+    padding: 28px 22px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+
+  .game-over.visible { display: block; animation: outcomeIn 0.5s ease; }
+
+  .game-over.win {
+    background: linear-gradient(135deg, rgba(0, 60, 30, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(0, 255, 136, 0.5);
+  }
+
+  .game-over.lose {
+    background: linear-gradient(135deg, rgba(60, 0, 0, 0.8), rgba(30, 0, 30, 0.8));
+    border: 1px solid rgba(255, 80, 100, 0.6);
+  }
+
+  .game-over h2 {
+    font-size: 1.4rem;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .game-over.win h2 { text-shadow: 0 0 18px rgba(0, 255, 136, 0.6); }
+  .game-over.lose h2 { color: #ff6b88; text-shadow: 0 0 18px rgba(255, 80, 100, 0.6); }
+
+  .gg-score {
+    font-size: 2.6rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 8px;
+  }
+
+  .game-over.win .gg-score { color: #00ff88; text-shadow: 0 0 25px rgba(0, 255, 136, 0.5); }
+  .game-over.lose .gg-score { color: #ff4444; text-shadow: 0 0 25px rgba(255, 68, 68, 0.5); }
+
+  .gg-grade {
+    font-size: 0.95rem;
+    color: #c8d8ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .gg-summary {
+    font-size: 0.85rem;
+    color: #d8e8ff;
+    line-height: 1.7;
+    max-width: 500px;
+    margin: 0 auto 20px;
+  }
+
+  .play-again-btn {
+    padding: 14px 28px;
+    background: rgba(0, 255, 255, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .play-again-btn:hover, .play-again-btn:focus-visible {
+    background: rgba(0, 255, 255, 0.3);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+    outline: none;
+  }
+
+  .start-screen {
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+  }
+
+  .start-screen p {
+    color: #c8d8ff;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin-bottom: 14px;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .start-btn {
+    padding: 14px 32px;
+    background: linear-gradient(90deg, rgba(255, 170, 0, 0.25), rgba(255, 68, 68, 0.25));
+    border: 1px solid rgba(255, 170, 0, 0.7);
+    color: #ffcc66;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+    margin-top: 8px;
+  }
+
+  .start-btn:hover, .start-btn:focus-visible {
+    background: linear-gradient(90deg, rgba(255, 170, 0, 0.4), rgba(255, 68, 68, 0.4));
+    color: #fff;
+    box-shadow: 0 0 30px rgba(255, 170, 0, 0.4);
+    outline: none;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .options { grid-template-columns: 1fr; }
+    .alert-title { font-size: 0.92rem; }
+    .alert-body { font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;" id="caseTag">Case 1 of 6</span>
+  </div>
+
+  <header>
+    <h1>Incident Response: The Pager</h1>
+    <div class="subtitle">3 a.m., and the on-call is you</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Score</div><div class="stat-value score" id="score">0</div></div>
+    <div class="stat"><div class="stat-label">Uptime</div><div class="stat-value uptime" id="uptime">100%</div></div>
+    <div class="stat"><div class="stat-label">Regrets</div><div class="stat-value regret" id="regrets">0</div></div>
+    <div class="stat"><div class="stat-label">Case</div><div class="stat-value case" id="caseNum">1</div></div>
+  </div>
+
+  <main>
+    <div class="start-screen" id="startScreen">
+      <p>You are the on-call security engineer. Six pages in one shift. Each one is a real, multi-stage incident. Your decisions affect uptime, your reputation, and whether the company makes the morning news.</p>
+      <p style="font-style:italic;color:#ffcc66;">Hint: there are no perfect answers. Pick the response that minimizes blast radius and preserves evidence. The right call now may look slow. The wrong call now ends careers.</p>
+      <button class="start-btn" id="startBtn" type="button">Take the page</button>
+    </div>
+
+    <div class="pager" id="pager" style="display:none;">
+      <div class="pager-screen" id="pagerScreen"></div>
+    </div>
+
+    <div class="options" id="options" style="display:none;"></div>
+
+    <div class="outcome" id="outcome" role="status" aria-live="polite">
+      <div class="outcome-tag" id="outcomeTag"></div>
+      <div class="outcome-text" id="outcomeText"></div>
+      <div class="outcome-impact" id="outcomeImpact"></div>
+      <div class="lesson">
+        <div class="lesson-label">Real-world lesson</div>
+        <div id="lessonText"></div>
+      </div>
+      <button class="next-btn" id="nextBtn" type="button">Next page</button>
+    </div>
+
+    <div class="game-over" id="gameOver" role="status">
+      <h2 id="ggTitle">Shift Complete</h2>
+      <div class="gg-score" id="ggScore">0</div>
+      <div class="gg-grade" id="ggGrade"></div>
+      <div class="gg-summary" id="ggSummary"></div>
+      <button class="play-again-btn" id="playAgain" type="button">Take another shift</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const cases = [
+  {
+    severity: 'crit', sevLabel: 'P1',
+    time: '02:47',
+    title: 'Mass account lockouts in Active Directory',
+    meta: 'SIEM &middot; SOURCE: ad-controller-01 &middot; ALERT: 247 users locked out in 8 minutes',
+    body: 'Customer support chat is filling with "I can\'t log in" messages. The lockouts are spreading. Some are admin accounts.',
+    options: [
+      { text: 'Reset every locked account immediately. Customers are screaming.', kind: 'bad',
+        outcome: 'You restored access. You also re-enabled the attacker, who was using a brute-force bot from a compromised VPN cert. They pivoted to file servers within 12 minutes.',
+        impact: { score: -150, uptime: -25, regret: 1 },
+        lesson: 'Do not undo a defensive lockout without first understanding why it triggered. Mass lockouts are often a SIGN of an attack, not a bug. Identify the source IP first.'
+      },
+      { text: 'Pull AD authentication logs and check the source of the failed logins.', kind: 'good',
+        outcome: 'Logs show all attempts originating from a single VPN IP belonging to a former contractor. You revoke the VPN cert. Lockouts stop. Customers wait 40 minutes but the breach is contained.',
+        impact: { score: 200, uptime: -5, regret: 0 },
+        lesson: 'Containment first, restoration second. The 5 minutes you spend reading logs saves the 5 hours you would spend investigating a breach later.'
+      },
+      { text: 'Disable account lockout policy temporarily so customers can log in.', kind: 'bad',
+        outcome: 'Lockouts stop. So does every defense against the brute-force attack still in progress. The attacker compromises 14 admin accounts in 10 minutes and your domain controller is ransomed.',
+        impact: { score: -300, uptime: -60, regret: 3 },
+        lesson: 'Never disable security controls under pressure without understanding what they are protecting. Lockout policy exists for exactly this scenario.'
+      },
+      { text: 'Wake the CISO and your IR vendor immediately.', kind: 'meh',
+        outcome: 'You escalate. They take 25 minutes to dial in. By then, you could have already pulled the logs. Time matters in IR.',
+        impact: { score: 30, uptime: -15, regret: 0 },
+        lesson: 'Escalation is correct, but it is not a substitute for immediate action. Investigate AND escalate in parallel during a P1.'
+      }
+    ]
+  },
+  {
+    severity: 'crit', sevLabel: 'P1',
+    time: '03:14',
+    title: 'EDR alert: lsass.exe memory dump on dev workstation',
+    meta: 'SIEM &middot; HOST: dev-jenny-01 &middot; SIGNATURE: T1003.001 OS Credential Dumping',
+    body: 'Endpoint detection flagged an attempt to dump LSASS memory on a dev\'s laptop. The dev was last active 6 hours ago. The dump is in progress.',
+    options: [
+      { text: 'Call the dev and ask if they\'re running anything unusual.', kind: 'meh',
+        outcome: 'No answer. They are asleep. You wait 15 minutes for a callback. The dump completes. Credentials are exfiltrated.',
+        impact: { score: -100, uptime: -10, regret: 1 },
+        lesson: 'Confirming with the user is wise but not when it costs you the containment window. EDR alerts of this signature are almost never false positives.'
+      },
+      { text: 'Isolate the host from the network via EDR. Then call the dev.', kind: 'good',
+        outcome: 'You kill the network connection in 30 seconds. The credential dump becomes useless. The dev confirms in the morning that they were victim of a phishing email earlier that day. You investigate cleanly.',
+        impact: { score: 250, uptime: -2, regret: 0 },
+        lesson: 'Network isolation is the single most powerful first action in endpoint compromise. Most modern EDRs do this in one click. Use it.'
+      },
+      { text: 'Reboot the machine remotely to interrupt the process.', kind: 'bad',
+        outcome: 'Reboot wipes volatile memory. You destroy the forensic evidence you needed to figure out the attack path. The attacker had already exfiltrated. You are now investigating blind.',
+        impact: { score: -200, uptime: -5, regret: 2 },
+        lesson: 'Volatile memory is gold for forensics. Never reboot a compromised machine. Isolate, then snapshot memory before any other action.'
+      },
+      { text: 'Add the LSASS-dump signature to your allowlist (it might be legit).', kind: 'bad',
+        outcome: 'You silence the alert. The attacker continues uninterrupted. They dump credentials from 4 more machines using the same technique before sunrise.',
+        impact: { score: -400, uptime: -50, regret: 3 },
+        lesson: 'Silencing a high-fidelity alert during an active investigation is one of the deadliest mistakes in IR. T1003.001 is rarely benign.'
+      }
+    ]
+  },
+  {
+    severity: 'high', sevLabel: 'P2',
+    time: '03:42',
+    title: 'CFO emailed your CEO asking about a wire transfer',
+    meta: 'EMAIL: it@company.com &middot; FROM: CEO assistant phone',
+    body: 'CEO\'s assistant called: she got an email from "the CFO" asking the CEO to approve a $2.4M wire to a new vendor. The CEO is on a flight. She wants to know if it\'s real before she replies.',
+    options: [
+      { text: 'Forward the email to the security team Slack and continue with other tickets.', kind: 'bad',
+        outcome: 'Slack discussion takes 90 minutes. The assistant, frustrated, replies "ok will check with CEO when he lands." The attacker, watching the inbox, replies as the CFO with bank details. The wire goes out the next morning.',
+        impact: { score: -250, uptime: -40, regret: 2 },
+        lesson: 'BEC (Business Email Compromise) is the most expensive cybercrime category in the world. Speed matters. A 5-minute call to the real CFO would have prevented it.'
+      },
+      { text: 'Verify with the CFO via known phone number, not the email thread.', kind: 'good',
+        outcome: 'You call the CFO directly. He says "I never sent that." You discover his email was compromised via phishing 3 days ago. You contain the breach, change MFA on his account, and the wire never goes out.',
+        impact: { score: 280, uptime: 0, regret: 0 },
+        lesson: 'Out-of-band verification is the single most effective defense against BEC. Always use a phone number you ALREADY HAVE, not one from the email itself.'
+      },
+      { text: 'Reply to the email asking the CFO to confirm.', kind: 'bad',
+        outcome: 'The attacker, still in the CFO\'s inbox, replies "yes please proceed urgent." The wire goes out at 9 a.m. Recovery is 40% at best.',
+        impact: { score: -500, uptime: -30, regret: 3 },
+        lesson: 'NEVER verify a suspicious email by replying to that email. The attacker controls the reply path. This is BEC 101.'
+      },
+      { text: 'Quickly check email headers and authentication results.', kind: 'meh',
+        outcome: 'Headers show DKIM-pass and SPF-pass because the CFO\'s real account is sending it. Technical analysis cannot detect a compromised legitimate inbox. You waste 20 minutes before realizing.',
+        impact: { score: 30, uptime: -10, regret: 0 },
+        lesson: 'Header analysis is great against spoofing. It is useless against account takeover. Always go out-of-band when money is on the line.'
+      }
+    ]
+  },
+  {
+    severity: 'crit', sevLabel: 'P1',
+    time: '04:18',
+    title: 'Prod database I/O dropped to zero. CPU at 100%.',
+    meta: 'CLOUDWATCH &middot; HOST: rds-primary-prod &middot; ALERT: I/O zero, CPU 100% for 4 min',
+    body: 'Database is responsive but writes are blocked. App is failing customer checkouts. A junior engineer is asking permission to restart the database. Your gut says this looks like ransomware encryption activity.',
+    options: [
+      { text: 'Approve the restart. Customers are losing money every minute.', kind: 'bad',
+        outcome: 'Restart fails. The DB volume is being encrypted in real-time by ransomware running with stolen creds. Your forced reboot triggers the ransom note to display. You are now in the news.',
+        impact: { score: -400, uptime: -90, regret: 3 },
+        lesson: 'Database that suddenly maxes CPU + zero I/O during off-hours is a classic ransomware fingerprint. NEVER restart a suspected ransomware target. Snapshot first.'
+      },
+      { text: 'Snapshot the volume, then isolate the host from the network.', kind: 'good',
+        outcome: 'Snapshot succeeds before encryption finishes. You isolate the host. Forensics confirms ransomware via stolen IAM credentials. You restore from snapshot, kill the bad creds. Outage: 4 hours. Damage: zero data loss.',
+        impact: { score: 320, uptime: -25, regret: 0 },
+        lesson: 'Volume snapshots are the single best ransomware countermeasure on cloud infra. Take the snapshot first, ALWAYS, even if you think it is just a perf issue.'
+      },
+      { text: 'Call the cloud provider to escalate.', kind: 'meh',
+        outcome: 'You wait on hold for 18 minutes. By then the encryption is 80% complete. The provider tells you what you already know.',
+        impact: { score: -50, uptime: -50, regret: 1 },
+        lesson: 'Cloud providers help but they cannot save you from a malicious actor with valid credentials. You own the response.'
+      },
+      { text: 'Run a query to see what process is consuming I/O.', kind: 'meh',
+        outcome: 'The query returns slowly because the disk is locked. You learn it is encryption. By then 7 more minutes have passed.',
+        impact: { score: 80, uptime: -40, regret: 0 },
+        lesson: 'Investigation is not the same as response. When the signal already screams "ransomware", containment beats diagnosis.'
+      }
+    ]
+  },
+  {
+    severity: 'med', sevLabel: 'P3',
+    time: '05:02',
+    title: 'New PR opened on your public repo with cryptominer code',
+    meta: 'GITHUB &middot; REPO: company/marketing-site &middot; AUTHOR: random-dev-99',
+    body: 'A "first-time contributor" submitted a PR that adds an "analytics helper" library. On reading it, the script fetches and executes a binary from an external CDN. The PR description is well-written.',
+    options: [
+      { text: 'Close the PR with no comment.', kind: 'meh',
+        outcome: 'The attacker tries again on 3 other public repos. One of them gets merged the next day by a different reviewer.',
+        impact: { score: 60, uptime: 0, regret: 1 },
+        lesson: 'Closing one bad PR fixes one PR. You also need to flag the user, alert the org, and document the IOC so other reviewers learn the pattern.'
+      },
+      { text: 'Close the PR, ban the user, share the malicious commit hash with the team and a public IOC feed.', kind: 'good',
+        outcome: 'You document the attack pattern. The user is banned. Your IOC publication helps 3 other companies catch the same campaign that week.',
+        impact: { score: 220, uptime: 0, regret: 0 },
+        lesson: 'Open-source attacks are a one-to-many problem. Sharing IOCs publicly is one of the highest-leverage things you can do as a defender.'
+      },
+      { text: 'Merge it to study what it does in production.', kind: 'bad',
+        outcome: 'You ship a cryptominer to production. Customers notice 100% CPU on the marketing site. You are now in a different kind of news.',
+        impact: { score: -350, uptime: -40, regret: 3 },
+        lesson: 'Studying malware in production is never the right answer. Use a sandbox. The first rule of malware analysis: assume it does what the worst-case interpretation says it does.'
+      },
+      { text: 'Reply asking the contributor to explain their changes.', kind: 'bad',
+        outcome: 'They reply with a sob story about needing the contribution for college credit. Your team softens. The PR almost gets merged the next day before another reviewer flags it.',
+        impact: { score: -100, uptime: 0, regret: 1 },
+        lesson: 'Social engineering through "helpful contributor" pressure is a known supply chain attack technique. Treat first-time PRs that fetch external binaries as malicious by default.'
+      }
+    ]
+  },
+  {
+    severity: 'crit', sevLabel: 'P1',
+    time: '06:11',
+    title: 'Customer reports their data on a leak site',
+    meta: 'EMAIL: support@company.com &middot; FROM: customer@bigclient.com',
+    body: 'A customer just emailed: "Your data is on a Russian forum, including my SSN and 3,000 of your other customers." They attached a screenshot. Sunrise is in 30 minutes and so is your CEO.',
+    options: [
+      { text: 'Verify the leak is real before doing anything else.', kind: 'good',
+        outcome: 'You confirm the leak, identify the breach window, and have a draft incident report by 7 a.m. when the CEO calls. The board is upset but trusts the response. Regulatory disclosure happens within the 72-hour window.',
+        impact: { score: 300, uptime: -10, regret: 0 },
+        lesson: 'Verification is step zero of any breach response. A false alarm causes its own damage. A confirmed leak triggers a clock for legal and regulatory obligations.'
+      },
+      { text: 'Tweet that you are investigating reports of unauthorized access.', kind: 'bad',
+        outcome: 'You disclosed before you confirmed. The stock drops 8% before market open. The leak turns out to be partly real, partly inflated. Your statement is now permanently wrong.',
+        impact: { score: -300, uptime: -20, regret: 2 },
+        lesson: 'Public disclosure must be precise. "We are investigating" is fine to share INTERNALLY. Externally, every word matters. Confirm scope before you announce.'
+      },
+      { text: 'Do nothing until business hours. The customer might be wrong.', kind: 'bad',
+        outcome: 'A journalist scrapes the same forum at 7 a.m. and contacts your press team. You are now reactive in a story you could have led.',
+        impact: { score: -250, uptime: -30, regret: 3 },
+        lesson: 'Information asymmetry favors whoever moves first. If a customer found it, a journalist will too. Use the early hours to control the narrative.'
+      },
+      { text: 'Wake legal, comms, and the CISO. Form a war room. Verify in parallel.', kind: 'good',
+        outcome: 'By 7:30 a.m. you have a parallel response: legal handles disclosure, comms drafts a statement, security verifies the leak. CEO arrives to a coordinated team. Crisis becomes manageable.',
+        impact: { score: 350, uptime: -8, regret: 0 },
+        lesson: 'Major breaches are not security problems. They are cross-functional crises. The earliest, most important call is to assemble the team that will own each lane.'
+      }
+    ]
+  }
+];
+
+let caseIdx = 0;
+let score = 0;
+let uptime = 100;
+let regrets = 0;
+let answered = false;
+
+const startScreen = document.getElementById('startScreen');
+const startBtn = document.getElementById('startBtn');
+const pager = document.getElementById('pager');
+const pagerScreen = document.getElementById('pagerScreen');
+const optionsEl = document.getElementById('options');
+const outcome = document.getElementById('outcome');
+const outcomeTag = document.getElementById('outcomeTag');
+const outcomeText = document.getElementById('outcomeText');
+const outcomeImpact = document.getElementById('outcomeImpact');
+const lessonText = document.getElementById('lessonText');
+const nextBtn = document.getElementById('nextBtn');
+const gameOver = document.getElementById('gameOver');
+const ggScore = document.getElementById('ggScore');
+const ggGrade = document.getElementById('ggGrade');
+const ggSummary = document.getElementById('ggSummary');
+const ggTitle = document.getElementById('ggTitle');
+const playAgain = document.getElementById('playAgain');
+const scoreEl = document.getElementById('score');
+const uptimeEl = document.getElementById('uptime');
+const regretsEl = document.getElementById('regrets');
+const caseNumEl = document.getElementById('caseNum');
+const caseTag = document.getElementById('caseTag');
+
+function startGame() {
+  caseIdx = 0;
+  score = 0;
+  uptime = 100;
+  regrets = 0;
+  startScreen.style.display = 'none';
+  gameOver.classList.remove('visible');
+  showCase();
+}
+
+function showCase() {
+  const c = cases[caseIdx];
+  answered = false;
+  outcome.classList.remove('visible');
+  pager.style.display = 'block';
+  optionsEl.style.display = 'grid';
+  caseNumEl.textContent = (caseIdx + 1);
+  caseTag.textContent = `Case ${caseIdx + 1} of ${cases.length}`;
+
+  pager.classList.add('alerting');
+  if (window.CyberSounds) CyberSounds.breach();
+  setTimeout(() => pager.classList.remove('alerting'), 2400);
+
+  pagerScreen.innerHTML = `
+    <div class="pager-time">${c.time}</div>
+    <div class="alert-header">
+      <span>INCIDENT ALERT</span>
+      <span class="alert-severity ${c.severity}">${c.sevLabel}</span>
+    </div>
+    <div class="alert-title">${c.title}</div>
+    <div class="alert-meta">${c.meta}</div>
+    <div class="alert-body">${c.body}</div>
+  `;
+
+  // Shuffle options so users cannot rely on position
+  const shuffled = [...c.options];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  optionsEl.innerHTML = '';
+  shuffled.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'option';
+    const labels = ['A', 'B', 'C', 'D'];
+    btn.innerHTML = `<span class="option-label">${labels[i]}</span>${opt.text}`;
+    btn.addEventListener('click', () => decide(opt, btn));
+    optionsEl.appendChild(btn);
+  });
+
+  updateStats();
+}
+
+function decide(opt, btnEl) {
+  if (answered) return;
+  answered = true;
+  Array.from(optionsEl.children).forEach(b => b.disabled = true);
+  if (window.CyberSounds) CyberSounds.click();
+
+  score = Math.max(0, score + opt.impact.score);
+  uptime = Math.max(0, uptime + (opt.impact.uptime || 0));
+  regrets += (opt.impact.regret || 0);
+
+  outcome.className = 'outcome visible ' + opt.kind;
+  const tagText = opt.kind === 'good' ? 'Right call' : opt.kind === 'meh' ? 'Mixed result' : 'Wrong call';
+  outcomeTag.textContent = tagText;
+  outcomeText.textContent = opt.outcome;
+  lessonText.textContent = opt.lesson;
+
+  outcomeImpact.innerHTML = '';
+  function pill(text, cls) {
+    const p = document.createElement('span');
+    p.className = 'impact-pill ' + cls;
+    p.textContent = text;
+    outcomeImpact.appendChild(p);
+  }
+  if (opt.impact.score) pill((opt.impact.score > 0 ? '+' : '') + opt.impact.score + ' score', opt.impact.score > 0 ? 'gain' : 'loss');
+  if (opt.impact.uptime) pill((opt.impact.uptime > 0 ? '+' : '') + opt.impact.uptime + '% uptime', opt.impact.uptime > 0 ? 'gain' : 'loss');
+  if (opt.impact.regret) pill('+' + opt.impact.regret + ' regret', 'loss');
+
+  if (window.CyberSounds) {
+    if (opt.kind === 'good') CyberSounds.correct();
+    else if (opt.kind === 'meh') CyberSounds.timeWarn();
+    else CyberSounds.wrong();
+  }
+
+  updateStats();
+}
+
+function updateStats() {
+  scoreEl.textContent = score;
+  uptimeEl.textContent = uptime + '%';
+  uptimeEl.classList.remove('low', 'critical');
+  if (uptime < 30) uptimeEl.classList.add('critical');
+  else if (uptime < 70) uptimeEl.classList.add('low');
+  regretsEl.textContent = regrets;
+}
+
+nextBtn.addEventListener('click', () => {
+  if (window.CyberSounds) CyberSounds.click();
+  caseIdx++;
+  if (caseIdx >= cases.length) endShift();
+  else showCase();
+});
+
+function endShift() {
+  pager.style.display = 'none';
+  optionsEl.style.display = 'none';
+  outcome.classList.remove('visible');
+
+  const survived = uptime > 30 && regrets < 5;
+  ggScore.textContent = score;
+  ggSummary.innerHTML = `Final uptime: ${uptime}% &middot; Regrets: ${regrets} of 18 possible &middot; ${cases.length} incidents handled`;
+
+  let title, grade;
+  if (regrets === 0 && score >= 1400) {
+    title = 'Shift hero'; grade = 'You should be running the SOC.';
+  } else if (survived && score >= 800) {
+    title = 'Steady hand'; grade = 'Net positive shift. The team trusts you.';
+  } else if (survived) {
+    title = 'You survived'; grade = 'Some bruises but the company is intact.';
+  } else {
+    title = 'Bad shift'; grade = 'You will be in tomorrow\'s post-mortem.';
+  }
+
+  ggTitle.textContent = title;
+  ggGrade.textContent = grade;
+  gameOver.className = 'game-over visible ' + (survived && regrets < 3 ? 'win' : 'lose');
+
+  if (window.CyberSounds) {
+    if (survived && regrets < 3) CyberSounds.win();
+    else CyberSounds.lose();
+  }
+}
+
+startBtn.addEventListener('click', startGame);
+playAgain.addEventListener('click', startGame);
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>

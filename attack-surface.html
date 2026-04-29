@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attack Surface Visualizer | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh; min-height: 100dvh;
+    background: radial-gradient(ellipse at center, #0a0820 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0; overflow-x: hidden; padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent);
+    background-size: 200% 200%; opacity: 0.2; z-index: 0; pointer-events: none;
+  }
+
+  .container { max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link {
+    color: #00ffff; text-decoration: none; font-family: 'Courier New', monospace;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 12px; border: 1px solid rgba(0, 255, 255, 0.4); border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .back-link:hover, .back-link:focus-visible { background: rgba(0, 255, 255, 0.1); color: #fff; outline: none; }
+
+  header { text-align: center; margin-bottom: 18px; }
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem); font-weight: 200;
+    letter-spacing: 4px; text-transform: uppercase;
+    background: linear-gradient(90deg, #00ffff, #ff00cc, #ffaa00, #00ffff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+
+  /* Search input */
+  .search {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 12px 18px;
+    background: rgba(0, 0, 30, 0.6);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 30px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .search-input:focus {
+    border-color: rgba(0, 255, 255, 0.7);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+  }
+
+  .search-input::placeholder { color: #6a8aa0; font-style: italic; }
+
+  .search-btn {
+    padding: 12px 22px;
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 200, 0.2));
+    border: 1px solid rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+    border-radius: 30px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .search-btn:hover, .search-btn:focus-visible {
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.35), rgba(255, 0, 200, 0.35));
+    color: #fff; outline: none;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+  }
+
+  /* Layout: visualizer + asset list */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  /* Visualizer */
+  .arena {
+    position: relative;
+    aspect-ratio: 1;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0, 30, 50, 0.5), rgba(0, 5, 15, 0.95) 80%);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.6), 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .center-target {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 80px; height: 80px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #00ffff, #0066aa 60%, #003355);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    text-align: center;
+    letter-spacing: 1px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6), inset 0 -8px 20px rgba(0, 0, 0, 0.4);
+    z-index: 5;
+    padding: 8px;
+  }
+
+  .center-target::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 255, 255, 0.5), transparent 70%);
+    z-index: -1;
+    animation: targetPulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes targetPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  .target-name {
+    font-weight: bold;
+    font-size: 0.7rem;
+    color: #fff;
+  }
+
+  .target-label {
+    font-size: 0.55rem;
+    color: #88ddff;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* Concentric rings */
+  .ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 255, 255, 0.15);
+    pointer-events: none;
+  }
+
+  /* Asset nodes positioned absolutely */
+  .asset-node {
+    position: absolute;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+    z-index: 4;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .asset-node.appeared { transform: translate(-50%, -50%) scale(1); }
+
+  .asset-node.severity-low {
+    background: radial-gradient(circle, #66ccff, #0066aa);
+    box-shadow: 0 0 12px rgba(102, 204, 255, 0.6);
+  }
+  .asset-node.severity-medium {
+    background: radial-gradient(circle, #ffcc66, #aa6600);
+    box-shadow: 0 0 12px rgba(255, 204, 102, 0.6);
+  }
+  .asset-node.severity-high {
+    background: radial-gradient(circle, #ff66aa, #aa0044);
+    box-shadow: 0 0 16px rgba(255, 100, 170, 0.7);
+    animation: highPulse 1.6s ease-in-out infinite;
+  }
+  .asset-node.severity-critical {
+    background: radial-gradient(circle, #ff4444, #880022);
+    box-shadow: 0 0 18px rgba(255, 68, 68, 0.9);
+    animation: criticalPulse 0.9s ease-in-out infinite;
+  }
+
+  @keyframes highPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(255, 100, 170, 0.6); }
+    50% { box-shadow: 0 0 22px rgba(255, 100, 170, 1); }
+  }
+
+  @keyframes criticalPulse {
+    0%, 100% { box-shadow: 0 0 14px rgba(255, 68, 68, 0.7); }
+    50% { box-shadow: 0 0 26px rgba(255, 68, 68, 1), 0 0 40px rgba(255, 68, 68, 0.5); }
+  }
+
+  .asset-node:hover, .asset-node:focus-visible {
+    z-index: 6;
+    transform: translate(-50%, -50%) scale(1.4) !important;
+    outline: none;
+  }
+
+  /* Connection lines (drawn by SVG) */
+  .connections {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Sidebar with asset list */
+  .sidebar {
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 14px;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-title {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #00ffff;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  }
+
+  .severity-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .sev-cell {
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+  }
+
+  .sev-cell.low { background: rgba(102, 204, 255, 0.1); border: 1px solid rgba(102, 204, 255, 0.4); color: #66ccff; }
+  .sev-cell.medium { background: rgba(255, 204, 102, 0.1); border: 1px solid rgba(255, 204, 102, 0.4); color: #ffcc66; }
+  .sev-cell.high { background: rgba(255, 100, 170, 0.1); border: 1px solid rgba(255, 100, 170, 0.4); color: #ff66aa; }
+  .sev-cell.critical { background: rgba(255, 68, 68, 0.1); border: 1px solid rgba(255, 68, 68, 0.5); color: #ff6666; }
+
+  .sev-num { font-size: 1.4rem; font-weight: 700; line-height: 1.1; }
+  .sev-label { font-size: 0.55rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.85; }
+
+  .asset-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 360px;
+    margin-right: -8px;
+    padding-right: 8px;
+  }
+
+  .asset-item {
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: #c8d8ff;
+    border-left: 3px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .asset-item:hover {
+    background: rgba(0, 50, 80, 0.4);
+    transform: translateX(2px);
+  }
+
+  .asset-item.low { border-left-color: #66ccff; }
+  .asset-item.medium { border-left-color: #ffcc66; }
+  .asset-item.high { border-left-color: #ff66aa; }
+  .asset-item.critical { border-left-color: #ff4444; }
+
+  .asset-name { color: #fff; font-weight: 600; margin-bottom: 2px; }
+
+  /* Detail tooltip */
+  .tooltip {
+    position: fixed;
+    background: rgba(0, 10, 25, 0.95);
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    border-radius: 10px;
+    padding: 12px 14px;
+    max-width: 280px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    pointer-events: none;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #d8e8ff;
+    display: none;
+  }
+
+  .tooltip.visible { display: block; animation: ttIn 0.2s ease; }
+  @keyframes ttIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .tooltip-name {
+    color: #fff; font-weight: 700; margin-bottom: 4px; font-size: 0.88rem;
+  }
+
+  .tooltip-sev {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .tooltip-sev.low { color: #66ccff; }
+  .tooltip-sev.medium { color: #ffcc66; }
+  .tooltip-sev.high { color: #ff66aa; }
+  .tooltip-sev.critical { color: #ff6666; }
+
+  .tooltip-desc {
+    color: #c8d8ff;
+    font-size: 0.78rem;
+  }
+
+  /* Scan progress */
+  .scan-progress {
+    text-align: center;
+    color: #66ccff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px;
+    background: rgba(0, 30, 50, 0.4);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .scan-progress.visible { display: block; animation: scanFlash 1.4s ease-in-out infinite; }
+  @keyframes scanFlash { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+  .demo-buttons {
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .demo-btn {
+    padding: 6px 12px;
+    background: rgba(0, 0, 30, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    border-radius: 14px;
+    cursor: pointer;
+    margin: 0 3px;
+    transition: all 0.2s;
+  }
+  .demo-btn:hover, .demo-btn:focus-visible { background: rgba(0, 255, 255, 0.15); color: #fff; outline: none; }
+
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { max-height: 320px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 0, 200, 0.4); color: #ff66cc; cursor: default;" id="searchTag">Awaiting target</span>
+  </div>
+
+  <header>
+    <h1>Attack Surface Visualizer</h1>
+    <div class="subtitle">Type a company. See what an attacker sees.</div>
+  </header>
+
+  <main>
+    <div class="search">
+      <input type="text" class="search-input" id="searchInput" placeholder="Type a company name (any will do)..." autocomplete="off" value="acmecorp">
+      <button class="search-btn" id="searchBtn" type="button">Scan</button>
+    </div>
+
+    <div class="demo-buttons">
+      <button class="demo-btn" type="button" data-demo="acmecorp">acmecorp</button>
+      <button class="demo-btn" type="button" data-demo="globalbank">globalbank</button>
+      <button class="demo-btn" type="button" data-demo="hospitalchain">hospitalchain</button>
+      <button class="demo-btn" type="button" data-demo="techstartup">techstartup</button>
+    </div>
+
+    <div class="scan-progress" id="scanProgress">Scanning public infrastructure...</div>
+
+    <div class="layout">
+      <div class="arena" id="arena">
+        <div class="ring" style="width:30%;height:30%;"></div>
+        <div class="ring" style="width:55%;height:55%;"></div>
+        <div class="ring" style="width:80%;height:80%;"></div>
+        <svg class="connections" id="connections"></svg>
+        <div class="center-target" id="centerTarget">
+          <div class="target-name" id="centerName">--</div>
+          <div class="target-label">Target</div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="sidebar-title">Surface summary</div>
+        <div class="severity-summary">
+          <div class="sev-cell low">
+            <div class="sev-num" id="sumLow">0</div>
+            <div class="sev-label">Low</div>
+          </div>
+          <div class="sev-cell medium">
+            <div class="sev-num" id="sumMed">0</div>
+            <div class="sev-label">Medium</div>
+          </div>
+          <div class="sev-cell high">
+            <div class="sev-num" id="sumHigh">0</div>
+            <div class="sev-label">High</div>
+          </div>
+          <div class="sev-cell critical">
+            <div class="sev-num" id="sumCrit">0</div>
+            <div class="sev-label">Critical</div>
+          </div>
+        </div>
+        <div class="sidebar-title">Discovered assets</div>
+        <div class="asset-list" id="assetList"></div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-name" id="ttName"></div>
+  <div class="tooltip-sev" id="ttSev"></div>
+  <div class="tooltip-desc" id="ttDesc"></div>
+</div>
+
+<script>
+const ASSET_TEMPLATES = [
+  { type: 'subdomain', icon: '\u{1F310}', sev: 'low', desc: 'Public-facing subdomain. Standard exposure. Verify TLS config and headers.' },
+  { type: 'subdomain', icon: '\u{1F310}', sev: 'medium', desc: 'Subdomain with no rate limiting on login. Easy target for credential stuffing.' },
+  { type: 'subdomain', icon: '\u{1F310}', sev: 'high', desc: 'Forgotten subdomain pointing to a deprovisioned server. Subdomain takeover risk.' },
+  { type: 's3-bucket', icon: '\u{1FAA3}', sev: 'critical', desc: 'Open S3 bucket. Public list permissions. Customer PII visible. URGENT.' },
+  { type: 's3-bucket', icon: '\u{1FAA3}', sev: 'high', desc: 'S3 bucket with overly permissive ACL. World-writable.' },
+  { type: 'dev-server', icon: '\u{1F527}', sev: 'high', desc: 'Staging server exposed on public IP. Default credentials in admin panel.' },
+  { type: 'dev-server', icon: '\u{1F527}', sev: 'medium', desc: 'Dev environment running outdated framework. Multiple known CVEs.' },
+  { type: 'github-leak', icon: '\u{1F419}', sev: 'critical', desc: 'AWS access key found in commit history of public repo. 6 weeks old.' },
+  { type: 'github-leak', icon: '\u{1F419}', sev: 'high', desc: 'API token in a Dockerfile. Unrotated since 2023.' },
+  { type: 'paste-leak', icon: '\u{1F4CB}', sev: 'critical', desc: 'Employee credentials posted to Pastebin. Confirmed valid via OSINT.' },
+  { type: 'paste-leak', icon: '\u{1F4CB}', sev: 'high', desc: 'Database schema leaked on a hacker forum. Includes table names.' },
+  { type: 'cert', icon: '\u{1F4DC}', sev: 'medium', desc: 'TLS certificate expires in 7 days. Outage incoming.' },
+  { type: 'cert', icon: '\u{1F4DC}', sev: 'high', desc: 'Wildcard cert exposed in CT logs reveals 12 hidden subdomains.' },
+  { type: 'rdp', icon: '\u{1F5A5}', sev: 'critical', desc: 'RDP exposed on the public internet. No MFA. Brute force in progress.' },
+  { type: 'rdp', icon: '\u{1F5A5}', sev: 'high', desc: 'RDP behind weak password policy. 4-attempt lockout but no MFA.' },
+  { type: 'email-employee', icon: '\u{1F4E7}', sev: 'medium', desc: 'Employee email enumerated via LinkedIn. Spear-phishing target.' },
+  { type: 'email-employee', icon: '\u{1F4E7}', sev: 'low', desc: 'Generic info@ inbox. Already gets phishing daily.' },
+  { type: 'breach-data', icon: '\u{1F480}', sev: 'high', desc: 'Employee credentials in HaveIBeenPwned from 2021 LinkedIn breach. Likely reused elsewhere.' },
+  { type: 'open-port', icon: '\u{1F50C}', sev: 'medium', desc: 'Port 8080 open. Returns server banner showing version.' },
+  { type: 'open-port', icon: '\u{1F50C}', sev: 'low', desc: 'Standard port 443. TLS healthy.' },
+  { type: 'wildcard', icon: '\u{1F578}', sev: 'medium', desc: 'CDN edge node misconfigured. Cache poisoning possible.' },
+  { type: 'shadow-saas', icon: '\u{1F3AD}', sev: 'medium', desc: 'Employee using personal Dropbox for client files. Shadow IT.' },
+  { type: 'shadow-saas', icon: '\u{1F3AD}', sev: 'high', desc: 'Forgotten dev SaaS subscription with admin keys still active.' }
+];
+
+const arena = document.getElementById('arena');
+const connections = document.getElementById('connections');
+const centerTarget = document.getElementById('centerTarget');
+const centerName = document.getElementById('centerName');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const searchTag = document.getElementById('searchTag');
+const scanProgress = document.getElementById('scanProgress');
+const assetList = document.getElementById('assetList');
+const tooltip = document.getElementById('tooltip');
+const ttName = document.getElementById('ttName');
+const ttSev = document.getElementById('ttSev');
+const ttDesc = document.getElementById('ttDesc');
+
+const sumLow = document.getElementById('sumLow');
+const sumMed = document.getElementById('sumMed');
+const sumHigh = document.getElementById('sumHigh');
+const sumCrit = document.getElementById('sumCrit');
+
+let currentAssets = [];
+let scanning = false;
+
+// Hash function for deterministic-but-pseudo-random results from a name
+function hashStr(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function rngFromSeed(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0x100000000;
+  };
+}
+
+function generateAssets(name) {
+  const seed = hashStr(name.toLowerCase().trim() || 'default');
+  const rnd = rngFromSeed(seed);
+  const count = 14 + Math.floor(rnd() * 8); // 14-22 assets
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const tpl = ASSET_TEMPLATES[Math.floor(rnd() * ASSET_TEMPLATES.length)];
+    out.push({
+      ...tpl,
+      name: assetName(tpl, rnd, name),
+      angle: rnd() * Math.PI * 2,
+      ringPct: 0.2 + rnd() * 0.6
+    });
+  }
+  return out;
+}
+
+function assetName(tpl, rnd, target) {
+  const safe = target.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const subs = ['mail', 'api', 'admin', 'dev', 'staging', 'beta', 'old', 'legacy', 'vpn', 'ftp', 'shop', 'support', 'web', 'cdn', 'auth'];
+  const ports = ['22', '80', '443', '3389', '8080', '5432', '6379', '27017'];
+  const branches = ['main', 'develop', 'feature/auth', 'old-config', 'release-v2'];
+  switch (tpl.type) {
+    case 'subdomain': return subs[Math.floor(rnd() * subs.length)] + '.' + safe + '.com';
+    case 's3-bucket': return safe + '-' + ['backups', 'public', 'reports', 'archive', 'temp'][Math.floor(rnd() * 5)];
+    case 'dev-server': return 'dev-' + Math.floor(rnd() * 99) + '.' + safe + '.com';
+    case 'github-leak': return 'github.com/' + safe + '/' + ['infra', 'config', 'tools', 'mobile', 'web'][Math.floor(rnd() * 5)] + ' @' + branches[Math.floor(rnd() * branches.length)];
+    case 'paste-leak': return 'pastebin.com/' + Array.from({length: 8}, () => 'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(rnd() * 30)]).join('');
+    case 'cert': return '*.' + safe + '.com';
+    case 'rdp': return safe + '-rdp-' + Math.floor(10 + rnd() * 200) + '.public-ip';
+    case 'email-employee': return ['j.smith', 'alex.chen', 'm.rodriguez', 'priya.k', 'taylor.lee'][Math.floor(rnd() * 5)] + '@' + safe + '.com';
+    case 'breach-data': return safe + '.com / breach: ' + [2019, 2020, 2021, 2022, 2023][Math.floor(rnd() * 5)];
+    case 'open-port': return ports[Math.floor(rnd() * ports.length)] + '/tcp on ' + safe + '.com';
+    case 'wildcard': return 'cdn-' + safe + '.fastly.net';
+    case 'shadow-saas': return ['notion.so/' + safe, 'dropbox/' + safe + '-personal', 'figma.com/team-' + safe, 'airtable/' + safe + '-leads'][Math.floor(rnd() * 4)];
+    default: return safe + '.com';
+  }
+}
+
+function placeAsset(asset, idx) {
+  const rect = arena.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const minR = Math.min(rect.width, rect.height) * 0.18;
+  const maxR = Math.min(rect.width, rect.height) * 0.46;
+  const r = minR + (maxR - minR) * asset.ringPct;
+  const x = cx + Math.cos(asset.angle) * r;
+  const y = cy + Math.sin(asset.angle) * r;
+
+  const node = document.createElement('div');
+  node.className = 'asset-node severity-' + asset.sev;
+  node.style.left = x + 'px';
+  node.style.top = y + 'px';
+  node.textContent = asset.icon;
+  node.dataset.idx = idx;
+  node.tabIndex = 0;
+  node.setAttribute('role', 'button');
+  node.setAttribute('aria-label', asset.name + ' - ' + asset.sev + ' severity');
+  arena.appendChild(node);
+
+  // Connection line
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', cx);
+  line.setAttribute('y1', cy);
+  line.setAttribute('x2', x);
+  line.setAttribute('y2', y);
+  const colors = { low: '#3a6a8a', medium: '#aa7a30', high: '#aa3060', critical: '#cc2244' };
+  line.setAttribute('stroke', colors[asset.sev]);
+  line.setAttribute('stroke-width', asset.sev === 'critical' ? '1.5' : '0.6');
+  line.setAttribute('opacity', '0.5');
+  line.setAttribute('stroke-dasharray', '3 4');
+  connections.appendChild(line);
+
+  setTimeout(() => node.classList.add('appeared'), 50 + idx * 70);
+
+  function showTooltip(e) {
+    const t = e.touches ? e.touches[0] : e;
+    ttName.textContent = asset.name;
+    ttSev.textContent = asset.sev + ' severity';
+    ttSev.className = 'tooltip-sev ' + asset.sev;
+    ttDesc.textContent = asset.desc;
+    tooltip.style.left = Math.min(window.innerWidth - 300, t.clientX + 12) + 'px';
+    tooltip.style.top = (t.clientY + 12) + 'px';
+    tooltip.classList.add('visible');
+  }
+  function hideTooltip() { tooltip.classList.remove('visible'); }
+
+  node.addEventListener('mouseenter', showTooltip);
+  node.addEventListener('mousemove', showTooltip);
+  node.addEventListener('mouseleave', hideTooltip);
+  node.addEventListener('click', showTooltip);
+  node.addEventListener('focus', () => {
+    const r = node.getBoundingClientRect();
+    showTooltip({ clientX: r.left + r.width / 2, clientY: r.top });
+  });
+  node.addEventListener('blur', hideTooltip);
+}
+
+function clearArena() {
+  Array.from(arena.querySelectorAll('.asset-node')).forEach(n => n.remove());
+  connections.innerHTML = '';
+}
+
+function renderSidebar(assets) {
+  assetList.innerHTML = '';
+  // Sort by severity
+  const order = { critical: 0, high: 1, medium: 2, low: 3 };
+  const sorted = [...assets].sort((a, b) => order[a.sev] - order[b.sev]);
+  sorted.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'asset-item ' + a.sev;
+    el.innerHTML = `<div class="asset-name">${a.icon} ${a.name}</div><div>${a.sev} &middot; ${a.type}</div>`;
+    assetList.appendChild(el);
+  });
+
+  const counts = { low: 0, medium: 0, high: 0, critical: 0 };
+  assets.forEach(a => counts[a.sev]++);
+  sumLow.textContent = counts.low;
+  sumMed.textContent = counts.medium;
+  sumHigh.textContent = counts.high;
+  sumCrit.textContent = counts.critical;
+}
+
+function scan(name) {
+  if (scanning) return;
+  scanning = true;
+  searchTag.textContent = 'Scanning ' + name;
+  scanProgress.classList.add('visible');
+  clearArena();
+  centerName.textContent = name.toUpperCase().slice(0, 12);
+  if (window.CyberSounds) CyberSounds.click();
+
+  const assets = generateAssets(name);
+  currentAssets = assets;
+
+  // Wait a beat for dramatic effect, then place assets one by one
+  setTimeout(() => {
+    scanProgress.classList.remove('visible');
+    assets.forEach((a, i) => {
+      setTimeout(() => {
+        placeAsset(a, i);
+        if (window.CyberSounds) {
+          if (a.sev === 'critical') CyberSounds.breach();
+          else if (a.sev === 'high') CyberSounds.timeWarn();
+          else CyberSounds.tick();
+        }
+      }, i * 110);
+    });
+
+    setTimeout(() => {
+      renderSidebar(assets);
+      scanning = false;
+      searchTag.textContent = assets.length + ' assets exposed';
+    }, assets.length * 110 + 300);
+  }, 700);
+}
+
+searchBtn.addEventListener('click', () => scan(searchInput.value || 'mystery'));
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); scan(searchInput.value || 'mystery'); }
+});
+
+document.querySelectorAll('.demo-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    searchInput.value = btn.dataset.demo;
+    scan(btn.dataset.demo);
+  });
+});
+
+// Initial scan
+scan('acmecorp');
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>

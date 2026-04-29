@@ -751,6 +751,7 @@ function newRound() {
 function showEmail() {
   reveal.classList.remove('visible');
   emailCard.classList.remove('swipe-left', 'swipe-right');
+  emailCard.style.boxShadow = '';
   const e = deck[idx];
   emailFrom.textContent = e.from;
   emailSubject.textContent = e.subject;
@@ -772,8 +773,9 @@ function decide(userSaysPhish) {
   const right = (userSaysPhish && e.isPhish) || (!userSaysPhish && !e.isPhish);
   answered++;
 
-  // Swipe out
-  emailCard.classList.add(userSaysPhish ? 'swipe-left' : 'swipe-right');
+  // Email stays visible so user can study it alongside the reveal.
+  // Add a subtle indicator border instead of swiping it off-screen.
+  emailCard.classList.remove('swipe-left', 'swipe-right');
 
   if (right) {
     correct++;
@@ -782,11 +784,15 @@ function decide(userSaysPhish) {
     score += 100 + bonus;
     verdict.textContent = streak > 1 ? `Correct - streak x${streak}` : 'Correct';
     reveal.className = 'reveal correct visible';
+    emailCard.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(0, 255, 136, 0.5)';
+    if (window.CyberSounds) CyberSounds.correct();
   } else {
     streak = 0;
     score = Math.max(0, score - 50);
     verdict.textContent = 'Wrong';
     reveal.className = 'reveal wrong visible';
+    emailCard.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(255, 80, 100, 0.5)';
+    if (window.CyberSounds) CyberSounds.wrong();
   }
 
   truth.innerHTML = e.isPhish
@@ -834,6 +840,9 @@ function endRound() {
   finalStats.innerHTML = `<span>${correct} / ${ROUND_SIZE} correct</span><span>${accuracy}% accuracy</span><span>Best streak: ${bestStreak}</span>`;
   gameOver.classList.add('visible');
   progressBar.style.width = '100%';
+  if (window.CyberSounds) {
+    if (accuracy >= 75) CyberSounds.win(); else CyberSounds.lose();
+  }
 }
 
 let bestStreak = 0;
@@ -847,7 +856,7 @@ function updateStats() {
 
 btnPhish.addEventListener('click', () => decide(true));
 btnLegit.addEventListener('click', () => decide(false));
-nextBtn.addEventListener('click', next);
+nextBtn.addEventListener('click', () => { if (window.CyberSounds) CyberSounds.click(); next(); });
 playAgain.addEventListener('click', newRound);
 
 // Keyboard shortcuts: P for phish, L for legit, Enter for next
@@ -866,5 +875,6 @@ document.addEventListener('keydown', (e) => {
 
 newRound();
 </script>
+<script src="sounds.js"></script>
 </body>
 </html>

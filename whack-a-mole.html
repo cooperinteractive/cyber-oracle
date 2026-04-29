@@ -371,7 +371,7 @@
 <div class="container">
   <div class="top-bar">
     <a href="games.html" class="back-link">&#8592; Cyber Games</a>
-    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;">60s round</span>
+    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;">30s round</span>
   </div>
 
   <header>
@@ -386,7 +386,10 @@
     <div class="hud-cell"><div class="hud-label">Time</div><div class="hud-value time" id="timer">60</div></div>
   </div>
 
-  <p class="instructions">Click each CVE to patch it. Critical bugs are worth more. Missed patches breach your network.</p>
+  <p class="instructions">
+    Click each CVE to patch it. Critical bugs are worth more.<br>
+    Missed patches breach your network.
+  </p>
 
   <main>
     <div class="game-board" id="board">
@@ -434,7 +437,7 @@ const cves = [
   { name: 'Sudo Baron', cve: 'CVE-2021-3156', severity: 'high', value: 170 }
 ];
 
-const ROUND_LENGTH = 60;
+const ROUND_LENGTH = 30;
 const board = document.getElementById('board');
 const holes = Array.from(board.querySelectorAll('.hole'));
 const scoreEl = document.getElementById('score');
@@ -477,6 +480,7 @@ function popMole() {
   // Force reflow then animate
   void mole.offsetWidth;
   mole.classList.add('up');
+  if (window.CyberSounds) CyberSounds.pop();
 
   const lifetime = Math.max(900, 1800 - (ROUND_LENGTH - timeLeft) * 14);
   const timeoutId = setTimeout(() => {
@@ -486,6 +490,7 @@ function popMole() {
     missesEl.textContent = misses;
     spawnPopup(hole, '-1 BREACH', 'bad');
     combo = 1; comboEl.textContent = 'x1';
+    if (window.CyberSounds) CyberSounds.miss();
     activeMoles.delete(i);
     mole.classList.remove('up');
     setTimeout(() => mole.remove(), 250);
@@ -502,6 +507,10 @@ function popMole() {
     spawnPopup(hole, '+' + earned, 'good');
     combo = Math.min(5, combo + 0.5);
     comboEl.textContent = 'x' + combo.toFixed(1);
+    if (window.CyberSounds) {
+      CyberSounds.whack();
+      if (combo >= 2) setTimeout(() => CyberSounds.combo(combo), 60);
+    }
     if (comboTimer) clearTimeout(comboTimer);
     comboTimer = setTimeout(() => { combo = 1; comboEl.textContent = 'x1'; }, 2000);
     activeMoles.delete(i);
@@ -543,7 +552,10 @@ function start() {
   countdown = setInterval(() => {
     timeLeft--;
     timerEl.textContent = timeLeft;
-    if (timeLeft <= 10) timerEl.classList.add('low');
+    if (timeLeft <= 10) {
+      timerEl.classList.add('low');
+      if (window.CyberSounds && timeLeft > 0) CyberSounds.timeWarn();
+    }
     if (timeLeft <= 0) end();
   }, 1000);
 }
@@ -567,8 +579,12 @@ function end() {
   else if (score >= 1000) grade = 'Risky - the attackers got most of these';
   else grade = 'Concerning - your network is now a botnet';
   finalGrade.textContent = grade;
-  finalStats.innerHTML = `<span>${misses} breaches</span><span>${score} points</span>`;
+  finalStats.innerHTML = `<span>${misses} breaches</span><span>${ROUND_LENGTH}s round</span>`;
   gameOver.classList.add('visible');
+  if (window.CyberSounds) {
+    if (score >= 2000) CyberSounds.win();
+    else CyberSounds.lose();
+  }
 }
 
 startBtn.addEventListener('click', start);
@@ -583,5 +599,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
+<script src="sounds.js"></script>
 </body>
 </html>

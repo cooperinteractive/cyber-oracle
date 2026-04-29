@@ -773,6 +773,7 @@ function startRace() {
     }
     const cls = quantumTickIdx === QUANTUM_TICKS.length - 2 ? 'tick' : '';
     appendStatus(quantumStatus, QUANTUM_TICKS[quantumTickIdx], cls);
+    if (window.CyberSounds) CyberSounds.crackTick();
     quantumTickIdx++;
   }, tickInterval);
 
@@ -792,6 +793,7 @@ function startRace() {
       laneQuantum.classList.add('won');
       quantumKeyBox.innerHTML = `Private key recovered:<br><strong>${p.privateKey}</strong><br>Plaintext: ${p.plaintext}`;
       quantumKeyBox.classList.add('visible');
+      if (window.CyberSounds) CyberSounds.crackWin();
       finishRace();
       return;
     }
@@ -829,5 +831,6 @@ raceAgainBtn.addEventListener('click', startRace);
 
 selectKey(128);
 </script>
+<script src="sounds.js"></script>
 </body>
 </html>

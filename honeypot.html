@@ -501,7 +501,7 @@
 <div class="container">
   <div class="top-bar">
     <a href="games.html" class="back-link">&#8592; Cyber Games</a>
-    <span class="back-link" style="border-color: rgba(0, 255, 255, 0.4); color: #00ffff; cursor: default;">90s round</span>
+    <span class="back-link" style="border-color: rgba(0, 255, 255, 0.4); color: #00ffff; cursor: default;">60s &middot; max 5 breaches</span>
   </div>
 
   <header>
@@ -512,11 +512,14 @@
   <div class="hud" role="status">
     <div class="hud-cell"><div class="hud-label">Intel</div><div class="hud-value intel" id="intel">0</div></div>
     <div class="hud-cell"><div class="hud-label">Caught</div><div class="hud-value caught" id="caught">0</div></div>
-    <div class="hud-cell"><div class="hud-label">Breached</div><div class="hud-value breached" id="breached">0</div></div>
+    <div class="hud-cell"><div class="hud-label">Breached</div><div class="hud-value breached" id="breached">0 / 5</div></div>
     <div class="hud-cell"><div class="hud-label">Time</div><div class="hud-value" id="timer">90</div></div>
   </div>
 
-  <p class="instructions">Pick a trap, click in the arena to place it. Catch attackers before they reach the honeypot.</p>
+  <p class="instructions">
+    Pick a trap, click in the arena to place it. Catch attackers, harvest intel.<br>
+    Survive 60 seconds. Lose 5 breaches and your network falls.
+  </p>
 
   <main>
     <div class="layout">
@@ -595,7 +598,8 @@ const playAgain = document.getElementById('playAgain');
 const log = document.getElementById('log');
 const trapOptions = Array.from(document.querySelectorAll('.trap-option'));
 
-const ROUND_LENGTH = 90;
+const ROUND_LENGTH = 60;
+const BREACH_LIMIT = 5;
 const ATTACKER_TYPES = [
   { name: 'Brute force', ttp: 'Tried 14,287 password combos', speed: 0.6, cls: 'bad' },
   { name: 'SQL injection', ttp: 'Probed login forms with UNION SELECT', speed: 0.7, cls: 'bad' },
@@ -632,7 +636,9 @@ function logEvent(text, cls) {
 function updateHud() {
   intelEl.textContent = intel;
   caughtEl.textContent = caught;
-  breachedEl.textContent = breached;
+  breachedEl.textContent = breached + ' / ' + BREACH_LIMIT;
+  if (breached >= BREACH_LIMIT - 1) breachedEl.style.animation = 'pulse 0.6s infinite';
+  else breachedEl.style.animation = '';
   // Update trap option affordability
   trapOptions.forEach(opt => {
     const cost = parseInt(opt.dataset.cost, 10);
@@ -672,6 +678,7 @@ arena.addEventListener('click', (e) => {
 
   placeTrap(x, y, type, radius);
   logEvent(`Placed ${type} at (${Math.round(x)}, ${Math.round(y)})`, 'info');
+  if (window.CyberSounds) CyberSounds.place();
 
   selectedTrap.classList.remove('active');
   selectedTrap = null;
@@ -754,10 +761,15 @@ function update() {
       // Reached server = breach
       breached++;
       logEvent(`BREACH: ${a.type.name} reached the honeypot`, 'bad');
+      if (window.CyberSounds) CyberSounds.breach();
       a.el.classList.add('fading');
       setTimeout(() => a.el.remove(), 400);
       attackers.splice(i, 1);
       updateHud();
+      if (breached >= BREACH_LIMIT) {
+        end(false);
+        return;
+      }
       continue;
     }
 
@@ -782,6 +794,7 @@ function update() {
       const intelGain = 12 + Math.floor(Math.random() * 18);
       intel += intelGain;
       logEvent(`Caught ${a.type.name}: ${a.type.ttp} (+${intelGain} intel)`, a.type.cls);
+      if (window.CyberSounds) CyberSounds.catch();
       a.el.classList.add('caught');
       setTimeout(() => { a.el.classList.add('fading'); }, 600);
       setTimeout(() => a.el.remove(), 1100);
@@ -847,30 +860,54 @@ function start() {
   countdown = setInterval(() => {
     timeLeft--;
     timerEl.textContent = timeLeft;
-    if (timeLeft <= 0) end();
+    if (timeLeft <= 10 && timeLeft > 0 && window.CyberSounds) CyberSounds.timeWarn();
+    if (timeLeft <= 0) end(true);
   }, 1000);
 
   if (!rafId) rafId = requestAnimationFrame(update);
 }
 
-function end() {
+function end(survived) {
   running = false;
   clearInterval(countdown);
   clearTimeout(spawnTimer);
 
+  const won = survived && breached < BREACH_LIMIT;
+
   finalScore.textContent = intel;
-  let grade;
-  if (caught >= 18 && breached <= 2) grade = 'Threat hunter elite';
-  else if (caught >= 12) grade = 'Solid tradecraft';
-  else if (caught >= 6) grade = 'Decent intel haul';
-  else grade = 'Let too many through';
+  let title, grade;
+  if (won) {
+    if (caught >= 14 && breached === 0) { title = 'Flawless defense'; grade = 'Threat hunter elite. Zero breaches.'; }
+    else if (caught >= 10) { title = 'Network secure'; grade = 'Solid tradecraft. You held the line.'; }
+    else { title = 'Network secure'; grade = 'Survived. Could refine your trap placement.'; }
+    if (window.CyberSounds) CyberSounds.win();
+  } else {
+    title = 'Network overrun';
+    grade = `${BREACH_LIMIT} breaches reached. Attackers own your perimeter.`;
+    if (window.CyberSounds) CyberSounds.lose();
+  }
+  document.querySelector('#gameOver h2').textContent = title;
   finalGrade.textContent = grade;
   finalStats.innerHTML = `${caught} caught &middot; ${breached} breaches &middot; ${intel} final intel`;
   gameOver.classList.add('visible');
+
+  // Color the panel by outcome
+  if (won) {
+    gameOver.style.borderColor = 'rgba(0, 255, 136, 0.5)';
+    gameOver.style.background = 'linear-gradient(135deg, rgba(0, 80, 30, 0.7), rgba(0, 30, 60, 0.7))';
+    finalScore.style.color = '#00ff88';
+    finalScore.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.5)';
+  } else {
+    gameOver.style.borderColor = 'rgba(255, 80, 100, 0.5)';
+    gameOver.style.background = 'linear-gradient(135deg, rgba(60, 0, 30, 0.8), rgba(30, 0, 0, 0.8))';
+    finalScore.style.color = '#ff6b88';
+    finalScore.style.textShadow = '0 0 25px rgba(255, 80, 100, 0.5)';
+  }
 }
 
 startBtn.addEventListener('click', start);
 playAgain.addEventListener('click', start);
 </script>
+<script src="sounds.js"></script>
 </body>
 </html>

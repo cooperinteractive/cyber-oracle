@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Engineering: Choose Your Adventure | Cyber Games</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh; min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #1a0820 0%, #02000a 80%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0; overflow-x: hidden; padding: 16px 16px 60px;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: radial-gradient(1px 1px at 50% 50%, #fff, transparent);
+    background-size: 200% 200%; opacity: 0.18; z-index: 0; pointer-events: none;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .back-link {
+    color: #ff66cc; text-decoration: none; font-family: 'Courier New', monospace;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 12px; border: 1px solid rgba(255, 102, 204, 0.4); border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .back-link:hover, .back-link:focus-visible { background: rgba(255, 102, 204, 0.1); color: #fff; outline: none; }
+
+  header { text-align: center; margin-bottom: 18px; }
+
+  h1 {
+    font-size: clamp(1.4rem, 4vw, 2.1rem); font-weight: 200;
+    letter-spacing: 3px; text-transform: uppercase;
+    background: linear-gradient(90deg, #ff00cc, #66aaff, #ff00cc);
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: hueShift 5s linear infinite;
+  }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
+
+  /* Side selection */
+  .role-selector {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+  }
+
+  .role-btn {
+    padding: 18px 16px;
+    background: rgba(0, 10, 30, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+  .role-btn:hover, .role-btn:focus-visible {
+    transform: translateY(-2px);
+    outline: none;
+  }
+
+  .role-btn.attacker:hover, .role-btn.attacker:focus-visible, .role-btn.attacker.active {
+    border-color: rgba(255, 0, 200, 0.6);
+    background: rgba(40, 0, 30, 0.7);
+    box-shadow: 0 0 25px rgba(255, 0, 200, 0.2);
+  }
+
+  .role-btn.defender:hover, .role-btn.defender:focus-visible, .role-btn.defender.active {
+    border-color: rgba(0, 255, 200, 0.6);
+    background: rgba(0, 30, 30, 0.7);
+    box-shadow: 0 0 25px rgba(0, 255, 200, 0.2);
+  }
+
+  .role-name { font-size: 1.05rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .role-btn.attacker .role-name { color: #ff66cc; text-shadow: 0 0 10px rgba(255, 0, 200, 0.5); }
+  .role-btn.defender .role-name { color: #66ffcc; text-shadow: 0 0 10px rgba(0, 255, 200, 0.5); }
+
+  .role-desc { font-size: 0.78rem; color: #c8d8ff; line-height: 1.5; }
+
+  /* Scenario panel */
+  .scenario {
+    background: rgba(0, 10, 25, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(10px);
+    line-height: 1.65;
+  }
+
+  .scenario.attacker { border-color: rgba(255, 0, 200, 0.3); }
+  .scenario.defender { border-color: rgba(0, 255, 200, 0.3); }
+
+  .scene-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  }
+
+  .scene-tag {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #ffaa00;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid rgba(255, 170, 0, 0.4);
+    border-radius: 12px;
+    background: rgba(255, 170, 0, 0.05);
+  }
+
+  .scene-progress {
+    flex: 1;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #8aa0c0;
+    letter-spacing: 1.5px;
+  }
+
+  .scene-text {
+    font-size: 0.95rem;
+    color: #e0e8f0;
+    margin-bottom: 14px;
+  }
+
+  .scene-text em { color: #ffcc66; font-style: italic; }
+  .scene-text strong { color: #fff; }
+
+  .scene-quote {
+    margin: 12px 0;
+    padding: 10px 14px;
+    background: rgba(0, 0, 30, 0.5);
+    border-left: 3px solid #ff66cc;
+    border-radius: 6px;
+    font-style: italic;
+    color: #ffd8f0;
+    font-size: 0.92rem;
+  }
+
+  .scenario.defender .scene-quote { border-left-color: #66ffcc; color: #d8ffe8; }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+
+  .choice {
+    padding: 12px 14px;
+    background: rgba(20, 20, 30, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #d8e0e8;
+    font-family: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.5;
+  }
+
+  .choice:hover, .choice:focus-visible {
+    background: rgba(40, 40, 60, 0.7);
+    border-color: rgba(0, 255, 255, 0.5);
+    color: #fff;
+    transform: translateX(4px);
+    outline: none;
+  }
+  .choice:disabled { opacity: 0.5; cursor: wait; transform: none; }
+
+  /* Endgame */
+  .ending {
+    background: linear-gradient(135deg, rgba(40, 0, 60, 0.8), rgba(0, 30, 60, 0.8));
+    border: 1px solid rgba(255, 0, 200, 0.5);
+    border-radius: 16px;
+    padding: 24px 22px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    display: none;
+  }
+  .ending.visible { display: block; animation: revealIn 0.5s ease; }
+  @keyframes revealIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .ending.success { border-color: rgba(0, 255, 136, 0.5); background: linear-gradient(135deg, rgba(0, 60, 30, 0.8), rgba(0, 30, 60, 0.8)); }
+  .ending.failure { border-color: rgba(255, 80, 100, 0.5); background: linear-gradient(135deg, rgba(60, 0, 30, 0.8), rgba(30, 0, 0, 0.8)); }
+
+  .ending h2 {
+    font-size: 1.4rem; color: #fff; letter-spacing: 4px;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+
+  .ending.success h2 { color: #00ff88; text-shadow: 0 0 15px rgba(0, 255, 136, 0.6); }
+  .ending.failure h2 { color: #ff6b88; text-shadow: 0 0 15px rgba(255, 80, 100, 0.6); }
+
+  .ending-text {
+    color: #d8e8ff;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 540px;
+    margin: 0 auto 18px;
+  }
+
+  .lesson-card {
+    background: rgba(0, 0, 30, 0.5);
+    border-left: 3px solid #ffcc66;
+    border-radius: 6px;
+    padding: 14px;
+    text-align: left;
+    margin: 16px 0;
+  }
+  .lesson-card .lesson-tag {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #ffcc66;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .lesson-card .lesson-body {
+    font-size: 0.85rem;
+    color: #d8e8ff;
+    line-height: 1.6;
+  }
+
+  .restart-btn {
+    padding: 14px 28px;
+    background: rgba(0, 255, 255, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover, .restart-btn:focus-visible {
+    background: rgba(0, 255, 255, 0.3);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    .role-selector { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
+    <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;" id="modeBadge">Pick a side</span>
+  </div>
+
+  <header>
+    <h1>Social Engineering</h1>
+    <div class="subtitle">Choose your role. Choose your battle.</div>
+  </header>
+
+  <main>
+    <div class="role-selector" id="roleSelector">
+      <button class="role-btn attacker" type="button" data-role="attacker">
+        <div class="role-name">Attacker</div>
+        <div class="role-desc">You are a pen-tester (or worse). Extract a sensitive credential from the target. Choose your pretext, your story, and your pressure.</div>
+      </button>
+      <button class="role-btn defender" type="button" data-role="defender">
+        <div class="role-name">Defender</div>
+        <div class="role-desc">You are an employee on a normal Tuesday. Someone is trying very hard to get you to break a security rule. Refuse them politely.</div>
+      </button>
+    </div>
+
+    <div id="game" style="display:none;">
+      <div class="scenario" id="scenario"></div>
+      <div class="ending" id="ending" role="status">
+        <h2 id="endingTitle"></h2>
+        <div class="ending-text" id="endingText"></div>
+        <div class="lesson-card">
+          <div class="lesson-tag">Real-world lesson</div>
+          <div class="lesson-body" id="endingLesson"></div>
+        </div>
+        <button class="restart-btn" id="restartBtn" type="button">Try the other role</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const ATTACKER_TREE = {
+  start: {
+    text: 'Your target: <strong>Marcus, an IT Helpdesk technician</strong> at a mid-sized regional bank. Your goal is the password reset for the CFO\'s account. Pick your pretext.',
+    choices: [
+      { text: 'Pretend to be the CFO. Demand urgency.', goto: 'cfo_demand' },
+      { text: 'Pretend to be a new helpdesk vendor doing onboarding tests.', goto: 'vendor' },
+      { text: 'Pretend to be the CFO\'s assistant, panicked, on speakerphone.', goto: 'assistant' }
+    ]
+  },
+  cfo_demand: {
+    text: 'You call posing as the CFO. You skip pleasantries: <em>"I need my password reset RIGHT NOW. I have a board call in 4 minutes."</em> Marcus politely asks you to verify your identity.',
+    choices: [
+      { text: 'Get angry. "Do you know who I am? Do this now or I\'ll have your job."', goto: 'angry' },
+      { text: 'Soften. "Look, I\'m just panicking. Can we please skip protocol this once?"', goto: 'soften' },
+      { text: 'Pivot. "Fine, I\'ll come down in person." (Hang up.)', goto: 'pivot' }
+    ]
+  },
+  vendor: {
+    text: 'You introduce yourself: <em>"Hi, I\'m Lauren from CipherSafe Helpdesk Audit. We\'re running quarterly compliance pen-tests. Can you walk me through your password reset workflow?"</em> Marcus seems uncertain.',
+    choices: [
+      { text: 'Reassure. "Your manager knows. Here\'s a fake reference number."', goto: 'reference' },
+      { text: 'Lower stakes. "We don\'t need to actually reset anything, just walk me through it hypothetically."', goto: 'hypothetical' },
+      { text: 'Add friendly chat. "Where are you based? I\'m in Charlotte too."', goto: 'rapport' }
+    ]
+  },
+  assistant: {
+    text: 'You call frantic. <em>"Hi, this is Janet, I work for the CFO. He\'s on the runway, jet door is closing. He needs his password reset before takeoff for an investor call. Please please please."</em> Marcus asks how he should verify.',
+    choices: [
+      { text: 'Sob. "He doesn\'t have his phone, I can\'t do callback verification, he\'ll be furious."', goto: 'sob' },
+      { text: 'Promise. "Reset it and I\'ll have him email you confirmation later."', goto: 'promise' },
+      { text: 'Drop a name. "His admin Brad authorized this last time, ask him."', goto: 'name_drop' }
+    ]
+  },
+  angry: {
+    end: 'failure',
+    title: 'Marcus hung up',
+    text: 'Marcus has been doing this for 8 years. Yelling executives are a known scam pattern. He logged the call, alerted his manager, and you are now in the bank\'s threat-intel dashboard.',
+    lesson: 'Real executives, when they exist, almost never need their workflows to skip security. Hostility is a tell, not an authority signal. Helpdesk training emphasizes this exact pattern.'
+  },
+  soften: {
+    text: 'Marcus softens. <em>"I get it, I\'ve had those days. Let me just call you back at the number we have on file for the CFO."</em>',
+    choices: [
+      { text: 'Insist your phone is broken, give a different number.', goto: 'different_number' },
+      { text: 'Hang up. (You don\'t have access to the CFO\'s real phone.)', goto: 'failed_pivot' }
+    ]
+  },
+  pivot: {
+    end: 'failure',
+    title: 'You ran out the clock',
+    text: 'You hung up. Marcus, alarmed, alerts the security team. The CFO\'s account is flagged for monitoring. By the time you try a different angle, the bank\'s SOC has already flagged your phone number.',
+    lesson: 'Defenders escalating after a suspicious call is the most common reason attackers fail. Speed and flow matter for the attacker. Disruption matters for the defender.'
+  },
+  reference: {
+    text: 'Marcus says <em>"Let me check that reference number against our authorized vendor list."</em>',
+    choices: [
+      { text: 'Stay on the line confidently.', goto: 'busted' },
+      { text: 'Make excuse and hang up.', goto: 'failed_pivot' }
+    ]
+  },
+  hypothetical: {
+    text: 'Marcus walks you through the abstract workflow but won\'t name his tools or share screen. <em>"For real reset requests we always callback the user. No exceptions."</em>',
+    choices: [
+      { text: 'Push for the tool name. "Just so I understand your stack."', goto: 'busted' },
+      { text: 'Thank him and hang up. Note the callback policy.', goto: 'recon_only' }
+    ]
+  },
+  rapport: {
+    text: 'Marcus warms up. You exchange pleasantries about Charlotte. He asks <em>"so what specifically do you need to test?"</em>',
+    choices: [
+      { text: 'Now ask for a specific account reset, the CFO.', goto: 'busted' },
+      { text: 'Ask about the helpdesk software they use.', goto: 'recon_only' }
+    ]
+  },
+  sob: {
+    text: 'Marcus pauses. <em>"I really do feel for you. But I cannot reset a C-suite password without verification. Can he just text his admin from the plane?"</em>',
+    choices: [
+      { text: 'Push harder. "He\'s already in the air, no signal!"', goto: 'busted' },
+      { text: 'Try a different angle. "Can you at least tell me his current login email?"', goto: 'busted' }
+    ]
+  },
+  promise: {
+    end: 'failure',
+    title: 'Verification trap',
+    text: 'Marcus says <em>"Sure, after he emails confirmation from his real account, we can reset."</em> You have no access to the real account. Your story collapses.',
+    lesson: 'Loops back to the original account: classic helpdesk anti-fraud move. If you cannot prove control of the real account, you cannot reset it.'
+  },
+  name_drop: {
+    text: 'Marcus says <em>"Brad, the executive admin? Sure, let me reach out to Brad to confirm."</em>',
+    choices: [
+      { text: 'Wait while he calls Brad.', goto: 'busted' },
+      { text: 'Make excuse and hang up.', goto: 'failed_pivot' }
+    ]
+  },
+  different_number: {
+    end: 'failure',
+    title: 'Out-of-band verification stopped you',
+    text: 'Marcus politely declines: <em>"Policy is to use the number on file. If we cannot reach you, we cannot reset."</em> The CFO\'s real account stays safe.',
+    lesson: 'OUT-OF-BAND VERIFICATION is the single best defense against pretexting. Use a phone number you ALREADY HAVE, not one given to you mid-call. This is helpdesk policy at every well-run bank.'
+  },
+  busted: {
+    end: 'failure',
+    title: 'Marcus knew',
+    text: 'Marcus has been quietly stalling. He\'d already alerted his security team via Slack. They traced your call. You are on the bank\'s do-not-trust list and probably the FBI\'s phone.',
+    lesson: 'Trained helpdesk staff are taught to keep callers on the line while alerting security. The longer the pretext drags, the more rope the attacker gives themselves.'
+  },
+  failed_pivot: {
+    end: 'failure',
+    title: 'You bailed',
+    text: 'You bailed before the trap closed. The bank logged the suspicious call. Your phone number, voiceprint, and timing are now in their threat database. The next call from you will be flagged before you finish saying "hi".',
+    lesson: 'Failed social engineering attempts leave evidence. Even when you walk away clean, you have made the next attempt harder. Defenders accumulate signal over time.'
+  },
+  recon_only: {
+    end: 'success',
+    title: 'Reconnaissance only',
+    text: 'You did not get the password, but you confirmed: callback policy is mandatory, Marcus is well-trained, the helpdesk uses [redacted] software. Useful intel for a future, more sophisticated attempt.',
+    lesson: 'Real social engineering campaigns are multi-call, multi-week. Pen-testers count "I learned the policies" as a partial success because it scopes the attack surface for next time.'
+  }
+};
+
+const DEFENDER_TREE = {
+  start: {
+    text: 'You are <strong>Marcus, an IT Helpdesk technician</strong>. Your phone rings. The voice on the other end says: <em>"Hi, this is the CFO\'s assistant Janet. He\'s on a flight, jet door is closing, he needs his password reset for an investor call. Please hurry."</em>',
+    choices: [
+      { text: 'Verify identity. "Can you give me the CFO\'s employee ID?"', goto: 'verify_id' },
+      { text: 'Politely insist on callback. "I\'ll need to call you back at the number on file."', goto: 'callback' },
+      { text: 'Try to be helpful. "Of course, what\'s the email on the account?"', goto: 'helpful' }
+    ]
+  },
+  verify_id: {
+    text: 'The caller fumbles. <em>"Um, I don\'t have the ID memorized, but I have his email and his last 4."</em> She offers what sounds like real-ish info.',
+    choices: [
+      { text: 'Accept the email and last 4. Sounds legit.', goto: 'accept_pii' },
+      { text: 'Decline and require formal callback.', goto: 'callback' },
+      { text: 'Ask if she can text from the CFO\'s actual phone.', goto: 'text_request' }
+    ]
+  },
+  callback: {
+    text: 'You say: <em>"Policy is callback to the number on file. I\'ll dial right now."</em> The caller protests: <em>"He\'s on a plane, I won\'t reach him!"</em>',
+    choices: [
+      { text: 'Hold firm. Hang up and call the CFO\'s real number.', goto: 'win_callback' },
+      { text: 'Make exception this once given urgency.', goto: 'exception' }
+    ]
+  },
+  helpful: {
+    text: 'You ask for the email. She gives it. You\'re about to start the reset.',
+    choices: [
+      { text: 'Wait, run identity verification first.', goto: 'verify_id' },
+      { text: 'Reset it. She sounded urgent and knew the email.', goto: 'breach' }
+    ]
+  },
+  accept_pii: {
+    text: 'Last 4 of SSN matches. Email matches. You\'re inclined to proceed but something nags at you.',
+    choices: [
+      { text: 'Trust your gut. Insist on callback verification anyway.', goto: 'win_callback' },
+      { text: 'Proceed with the reset since basic verification passed.', goto: 'breach' }
+    ]
+  },
+  text_request: {
+    text: 'She replies <em>"He doesn\'t have signal on the runway, that won\'t work."</em>',
+    choices: [
+      { text: 'Then no reset. We\'ll wait until he lands.', goto: 'win_patience' },
+      { text: 'Skip texting and just verify last 4 of SSN.', goto: 'accept_pii' }
+    ]
+  },
+  exception: {
+    end: 'failure',
+    title: 'Account compromised',
+    text: 'You reset the password. The "assistant" was an attacker who used a convincing pretext. The real CFO finds out 3 hours later when wire transfer requests start going to Albania. Your manager finds out from the FBI.',
+    lesson: 'Exceptions to verification policy exist because attackers manufacture exceptions. The phrase "this once" should trigger MORE caution, not less. Urgency is the most common attack vector against helpdesks.'
+  },
+  breach: {
+    end: 'failure',
+    title: 'CFO account hijacked',
+    text: 'The reset succeeded. The attacker now controls the CFO\'s email. Within an hour they email the controller with new wire instructions. The bank\'s incident response team starts working on a press statement.',
+    lesson: 'Attackers buy or guess the basic identifiers (email, last 4 of SSN). Those are not authentication, they are public-ish identity claims. Real verification requires independent channels.'
+  },
+  win_callback: {
+    end: 'success',
+    title: 'You stopped the attack',
+    text: 'You hang up and call the CFO\'s real cell. He answers: <em>"Hi Marcus, what\'s up?"</em> No flight. No assistant named Janet. You alert security. The attacker\'s phone number gets blacklisted.',
+    lesson: 'OUT-OF-BAND VERIFICATION is the single most effective control against pretexting. The phrase "I will call you back at the number we have on file" stops 90%+ of these attacks.'
+  },
+  win_patience: {
+    end: 'success',
+    title: 'Patience paid off',
+    text: 'You declined the reset until you could verify. The attacker hung up and tried a different employee 30 minutes later, who, having heard about your call in the team Slack, also refused.',
+    lesson: 'Slowness is a defender superpower. Attackers need flow and momentum. Saying "I\'ll need to verify, expect a call back in 15 minutes" defeats most pretexting calls cold.'
+  }
+};
+
+const scenarioEl = document.getElementById('scenario');
+const endingEl = document.getElementById('ending');
+const endingTitle = document.getElementById('endingTitle');
+const endingText = document.getElementById('endingText');
+const endingLesson = document.getElementById('endingLesson');
+const restartBtn = document.getElementById('restartBtn');
+const gameEl = document.getElementById('game');
+const roleSelector = document.getElementById('roleSelector');
+const modeBadge = document.getElementById('modeBadge');
+
+let currentRole = null;
+let currentTree = null;
+let currentNode = null;
+let stepCount = 0;
+
+function chooseRole(role) {
+  currentRole = role;
+  currentTree = role === 'attacker' ? ATTACKER_TREE : DEFENDER_TREE;
+  roleSelector.style.display = 'none';
+  gameEl.style.display = 'block';
+  modeBadge.textContent = role === 'attacker' ? 'Playing as Attacker' : 'Playing as Defender';
+  modeBadge.style.borderColor = role === 'attacker' ? 'rgba(255, 0, 200, 0.4)' : 'rgba(0, 255, 200, 0.4)';
+  modeBadge.style.color = role === 'attacker' ? '#ff66cc' : '#66ffcc';
+  stepCount = 0;
+  endingEl.classList.remove('visible', 'success', 'failure');
+  show('start');
+  if (window.CyberSounds) CyberSounds.click();
+}
+
+function show(nodeKey) {
+  const node = currentTree[nodeKey];
+  currentNode = node;
+  stepCount++;
+
+  if (node.end) {
+    showEnding(node);
+    return;
+  }
+
+  scenarioEl.className = 'scenario ' + currentRole;
+  scenarioEl.innerHTML = `
+    <div class="scene-header">
+      <span class="scene-tag">${currentRole === 'attacker' ? 'Op in progress' : 'Caller incoming'}</span>
+      <span class="scene-progress">Step ${stepCount}</span>
+    </div>
+    <div class="scene-text">${node.text}</div>
+    <div class="choices" id="choices"></div>
+  `;
+
+  const choicesEl = scenarioEl.querySelector('#choices');
+  node.choices.forEach((c) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'choice';
+    btn.textContent = c.text;
+    btn.addEventListener('click', () => {
+      Array.from(choicesEl.children).forEach(b => b.disabled = true);
+      if (window.CyberSounds) CyberSounds.click();
+      setTimeout(() => show(c.goto), 250);
+    });
+    choicesEl.appendChild(btn);
+  });
+}
+
+function showEnding(node) {
+  scenarioEl.style.display = 'none';
+  endingTitle.textContent = node.title;
+  endingText.textContent = node.text;
+  endingLesson.textContent = node.lesson;
+  endingEl.className = 'ending visible ' + node.end;
+  if (window.CyberSounds) {
+    if (node.end === 'success') CyberSounds.win();
+    else CyberSounds.lose();
+  }
+}
+
+document.querySelectorAll('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => chooseRole(btn.dataset.role));
+});
+
+restartBtn.addEventListener('click', () => {
+  scenarioEl.style.display = '';
+  endingEl.classList.remove('visible');
+  gameEl.style.display = 'none';
+  roleSelector.style.display = 'grid';
+  modeBadge.textContent = 'Pick a side';
+  modeBadge.style.borderColor = 'rgba(255, 170, 0, 0.4)';
+  modeBadge.style.color = '#ffaa00';
+});
+</script>
+<script src="sounds.js"></script>
+</body>
+</html>

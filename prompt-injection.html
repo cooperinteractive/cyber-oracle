@@ -667,6 +667,7 @@ function aiReply(userText) {
     if (isInjection) {
       reply = lvl.revealReply.replace('[LEAK]', `<span class="leak">${lvl.secret}</span>`);
       addMsg('ai', reply);
+      if (window.CyberSounds) CyberSounds.receive();
       setTimeout(() => winLevel(), 900);
     } else {
       // Multi-turn: vary reply based on trust score
@@ -683,6 +684,7 @@ function aiReply(userText) {
         reply = lvl.defaultReply;
       }
       addMsg('ai', reply);
+      if (window.CyberSounds) CyberSounds.receive();
     }
     cooldownActive = false;
     sendBtn.disabled = false;
@@ -698,6 +700,7 @@ function winLevel() {
   techniqueLabel.textContent = 'Technique: ' + lvl.technique;
   winExplainer.textContent = lvl.winExplainer;
   levelWin.classList.add('visible');
+  if (window.CyberSounds) CyberSounds.levelUp();
   input.disabled = true;
   sendBtn.disabled = true;
   if (currentLevel === levels.length - 1) {
@@ -714,6 +717,7 @@ function send() {
   cooldownActive = true;
   sendBtn.disabled = true;
   input.disabled = true;
+  if (window.CyberSounds) CyberSounds.send();
   addMsg('user', escapeHtml(text));
   input.value = '';
   aiReply(text);
@@ -727,9 +731,11 @@ sendBtn.addEventListener('click', send);
 input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); send(); } });
 
 nextBtn.addEventListener('click', () => {
+  if (window.CyberSounds) CyberSounds.click();
   if (currentLevel >= levels.length - 1) {
     gameComplete.classList.add('visible');
     levelWin.classList.remove('visible');
+    if (window.CyberSounds) CyberSounds.win();
   } else {
     loadLevel(currentLevel + 1);
   }
@@ -757,5 +763,6 @@ hintBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' 
 
 loadLevel(0);
 </script>
+<script src="sounds.js"></script>
 </body>
 </html>
