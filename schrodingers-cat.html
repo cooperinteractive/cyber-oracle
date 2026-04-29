@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schrodinger's Cat Explained</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 28px 16px 40px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.35;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+  header { text-align: center; margin-bottom: 28px; }
+
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff00cc, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+  .subtitle {
+    color: #c8d8ff; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase;
+    margin-top: 10px; text-shadow: 0 0 12px rgba(200, 216, 255, 0.4); font-style: italic;
+  }
+
+  .nav { text-align: center; margin-bottom: 24px; }
+  .nav a {
+    color: #00ffff; font-size: 0.8rem; text-decoration: none; letter-spacing: 2px;
+    text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 255, 0.4);
+    padding-bottom: 2px; transition: all 0.2s;
+  }
+  .nav a:hover, .nav a:focus-visible { color: #fff; border-bottom-color: #fff; outline: none; }
+  .nav a:focus-visible { box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.6); border-radius: 2px; }
+  .nav-sep { color: rgba(0, 255, 255, 0.4); }
+  .nav a { display: inline-block; margin: 4px 2px; }
+
+  .act {
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.55), rgba(40, 0, 60, 0.55));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 16px; padding: 22px; margin-bottom: 22px;
+    backdrop-filter: blur(10px); box-shadow: 0 0 40px rgba(0, 255, 255, 0.06);
+  }
+
+  .act-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .act-num {
+    font-family: 'Courier New', monospace; font-size: 0.7rem; color: #00ffff;
+    letter-spacing: 2px; border: 1px solid rgba(0, 255, 255, 0.5); border-radius: 20px;
+    padding: 3px 12px; background: rgba(0, 255, 255, 0.08);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+  .act-title { font-size: 1.15rem; color: #fff; font-weight: 600; letter-spacing: 1px; }
+  .act-title em { color: #ff00cc; font-style: normal; text-shadow: 0 0 12px rgba(255, 0, 200, 0.5); }
+
+  .stage {
+    position: relative; width: 100%; height: 320px;
+    background: rgba(0, 0, 20, 0.5); border-radius: 12px;
+    overflow: hidden; border: 1px solid rgba(0, 255, 255, 0.15); margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .explanation { font-size: 0.92rem; color: #d8e8ff; line-height: 1.65; font-weight: 300; }
+  .explanation strong { color: #00ffff; font-weight: 600; }
+  .explanation em { color: #ff00cc; font-style: normal; font-weight: 600; }
+
+  .fact-row { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .fact {
+    flex: 1; min-width: 200px; padding: 10px 12px; background: rgba(0, 0, 30, 0.4);
+    border-left: 3px solid #00ffff; border-radius: 4px;
+    font-size: 0.8rem; color: #c8d8ff; line-height: 1.45;
+  }
+  .fact-label {
+    font-family: 'Courier New', monospace; font-size: 0.65rem; color: #00ffff;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .controls { text-align: center; margin-top: 18px; }
+  .btn {
+    background: rgba(0, 255, 255, 0.08); border: 1px solid rgba(0, 255, 255, 0.5);
+    color: #00ffff; padding: 10px 22px; border-radius: 30px;
+    font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase;
+    font-family: inherit; cursor: pointer; transition: all 0.25s;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+  .btn:hover, .btn:focus-visible {
+    background: rgba(0, 255, 255, 0.18); color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3); outline: none;
+  }
+
+  .takeaway {
+    background: linear-gradient(135deg, rgba(60, 0, 60, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(255, 0, 200, 0.4); border-radius: 16px;
+    padding: 24px; text-align: center;
+  }
+  .takeaway h3 {
+    color: #ff00cc; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 10px; text-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  }
+  .takeaway p { color: #d8e8ff; line-height: 1.7; font-size: 0.95rem; max-width: 640px; margin: 0 auto; }
+
+  /* ============ The Box scene ============ */
+  .box-scene {
+    position: relative;
+    width: 320px;
+    height: 240px;
+  }
+
+  .box {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #5a3a20, #3a2410);
+    border: 3px solid #2a1808;
+    border-radius: 8px;
+    box-shadow:
+      inset 0 0 30px rgba(0, 0, 0, 0.6),
+      0 10px 30px rgba(0, 0, 0, 0.5),
+      0 0 40px rgba(0, 255, 255, 0.1);
+    overflow: hidden;
+  }
+
+  .box::after {
+    content: '';
+    position: absolute;
+    top: 12px; left: 12px; right: 12px; bottom: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .box-lid {
+    position: absolute;
+    top: 0; left: -3px; right: -3px;
+    height: 30px;
+    background: linear-gradient(180deg, #6a4a2a, #4a3018);
+    border: 3px solid #2a1808;
+    border-radius: 8px 8px 0 0;
+    transform-origin: top center;
+    transition: transform 1.2s cubic-bezier(0.5, 0, 0.5, 1.5);
+    z-index: 3;
+  }
+
+  .box.open .box-lid {
+    transform: rotateX(-110deg);
+  }
+
+  .cat {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 90px;
+    transition: opacity 0.6s, transform 0.6s;
+    line-height: 1;
+  }
+
+  .cat.alive {
+    color: #66ffaa;
+    text-shadow: 0 0 30px #00ffaa, 0 0 60px rgba(0, 255, 170, 0.5);
+  }
+
+  .cat.dead {
+    color: #ff6666;
+    text-shadow: 0 0 30px #ff0044, 0 0 60px rgba(255, 100, 100, 0.5);
+    filter: grayscale(0.3);
+  }
+
+  .cat.ghost {
+    opacity: 0.5;
+    animation: ghostFlicker 2s ease-in-out infinite;
+  }
+
+  @keyframes ghostFlicker {
+    0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  .cat.observed {
+    animation: catReveal 0.8s ease-out;
+  }
+
+  @keyframes catReveal {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); filter: blur(8px); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  }
+
+  .cat.hidden { display: none; }
+
+  .question-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: bold;
+    z-index: 1;
+  }
+
+  .vapor {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 60%, rgba(0, 255, 255, 0.18), transparent 40%),
+      radial-gradient(circle at 70% 40%, rgba(255, 0, 200, 0.18), transparent 40%);
+    animation: vaporSwirl 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes vaporSwirl {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .box.open .vapor { opacity: 0; transition: opacity 0.4s; }
+
+  .status-banner {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: #c8d8ff;
+    text-transform: uppercase;
+    background: rgba(0, 0, 30, 0.7);
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    z-index: 5;
+  }
+
+  /* ============ Crypto box scene ============ */
+  .crypto-stage {
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    padding: 0 16px;
+  }
+
+  .crypto-box {
+    width: 140px;
+    height: 160px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(0, 30, 60, 0.7), rgba(0, 10, 30, 0.9));
+    border: 2px solid rgba(0, 255, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+    position: relative;
+  }
+
+  .crypto-box.weak { border-color: rgba(255, 100, 100, 0.6); box-shadow: 0 0 25px rgba(255, 100, 100, 0.3); }
+  .crypto-box.strong { border-color: rgba(100, 255, 150, 0.6); box-shadow: 0 0 25px rgba(100, 255, 150, 0.3); }
+
+  .crypto-icon { font-size: 36px; }
+  .crypto-name {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #fff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .crypto-status {
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    padding: 3px 8px;
+    border-radius: 8px;
+  }
+  .crypto-box.weak .crypto-status { color: #ff8888; background: rgba(255, 100, 100, 0.1); border: 1px solid rgba(255, 100, 100, 0.4); }
+  .crypto-box.strong .crypto-status { color: #88ffaa; background: rgba(100, 255, 150, 0.1); border: 1px solid rgba(100, 255, 150, 0.4); }
+
+  .crypto-arrow {
+    font-size: 1.6rem;
+    color: rgba(255, 0, 200, 0.7);
+    text-shadow: 0 0 10px rgba(255, 0, 200, 0.5);
+  }
+
+  @media (max-width: 600px) {
+    .stage { height: 280px; }
+    .box-scene { width: 260px; height: 200px; }
+    .cat, .question-mark { font-size: 70px; }
+    .crypto-stage { gap: 14px; height: auto; padding: 16px; }
+    .crypto-box { width: 110px; height: 140px; padding: 10px; }
+    .crypto-icon { font-size: 28px; }
+    .act { padding: 18px; }
+    .act-title { font-size: 1rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vapor, .cat.ghost, h1 { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="nav" aria-label="Top navigation">
+    <a href="quantum.html">quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="superposition.html">superposition</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="entanglement.html">entanglement</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="quantum-tunneling.html">tunneling</a>
+  </nav>
+
+  <header>
+    <h1>Schrodinger's Cat</h1>
+    <div class="subtitle">The most famous thought experiment in physics</div>
+  </header>
+
+  <main>
+
+  <!-- ACT 1: The setup -->
+  <section class="act" aria-labelledby="act1-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 01</div>
+      <h2 id="act1-title" class="act-title">The <em>setup</em></h2>
+    </div>
+
+    <p class="explanation">
+      In 1935, physicist Erwin Schrodinger proposed a thought experiment to show how strange quantum mechanics gets when you scale it up. Put a cat in a sealed box. Inside the box: a tiny radioactive sample, a Geiger counter, and a vial of poison. If the radioactive atom decays, the counter triggers, the vial breaks, and the cat dies. If it does not decay, the cat lives. <em>Schrodinger was not actually proposing this as an experiment.</em> He was making a point.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">Why a cat</div>
+        Schrodinger picked something macroscopic and unmistakably alive or dead to make the absurdity vivid. A radioactive atom in superposition is fine. A cat in superposition is bizarre.
+      </div>
+      <div class="fact">
+        <div class="fact-label">No real cats</div>
+        No actual animals were ever harmed for this. It is a thought experiment, not a lab procedure.
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 2: Interactive box -->
+  <section class="act" aria-labelledby="act2-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 02</div>
+      <h2 id="act2-title" class="act-title">Until you <em>look</em>, the cat is both</h2>
+    </div>
+
+    <div class="stage" aria-hidden="true">
+      <div class="box-scene">
+        <div class="box" id="box">
+          <div class="vapor" id="vapor"></div>
+          <div class="box-lid"></div>
+          <div class="cat alive ghost" id="catAlive">&#128008;</div>
+          <div class="cat dead ghost hidden" id="catDead">&#128576;</div>
+          <div class="question-mark" id="qMark">?</div>
+        </div>
+        <div class="status-banner" id="statusBanner">Box sealed. Cat in superposition.</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="openBtn">Open the box</button>
+      <button class="btn" id="closeBtn" style="margin-left: 8px; display:none;">Reset</button>
+    </div>
+
+    <p class="explanation" style="margin-top: 14px;">
+      While the box is sealed, the radioactive atom is in <strong>superposition</strong>. It has not decayed AND it has decayed, simultaneously. By the rules of quantum mechanics, that means the cat is also in superposition. <em>Both alive and dead.</em> Not "we don't know which one." Genuinely both, with full mathematical reality. The moment you open the box, the wavefunction <strong>collapses</strong> and you find one outcome. The act of looking changes reality.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">The deeper question</div>
+        What counts as "looking"? A human? A camera? A particle? This is called the <strong>measurement problem</strong>, and physicists still argue about it 90 years later.
+      </div>
+      <div class="fact">
+        <div class="fact-label">Many-worlds</div>
+        Some physicists say there is no collapse. Reality just splits. In one branch the cat lives. In another, it does not. Both are equally real. You only experience one.
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 3: Cybersecurity translation -->
+  <section class="act" aria-labelledby="act3-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 03</div>
+      <h2 id="act3-title" class="act-title">The <em>cybersecurity</em> version</h2>
+    </div>
+
+    <div class="stage crypto-stage" aria-hidden="true">
+      <div class="crypto-box weak">
+        <div class="crypto-icon">&#128274;</div>
+        <div class="crypto-name">RSA-2048</div>
+        <div class="crypto-status">Box still sealed</div>
+      </div>
+      <span class="crypto-arrow">&#8594;</span>
+      <div class="crypto-box weak">
+        <div class="crypto-icon">&#128275;</div>
+        <div class="crypto-name">RSA-2048</div>
+        <div class="crypto-status">Quantum opens it</div>
+      </div>
+      <span class="crypto-arrow">&#8594;</span>
+      <div class="crypto-box strong">
+        <div class="crypto-icon">&#129683;</div>
+        <div class="crypto-name">Kyber</div>
+        <div class="crypto-status">Stays sealed</div>
+      </div>
+    </div>
+
+    <p class="explanation">
+      Every encrypted message you send today is like a sealed box. Right now, no one can open it. But somewhere, attackers are storing those boxes, waiting. When a sufficiently powerful quantum computer arrives, it will <em>open every old box at once</em>, collapsing years of harvested traffic into readable plaintext. This is called <strong>Harvest Now, Decrypt Later</strong>. The question is not whether the cat is alive. The question is whether your data is still safe when someone finally opens the lid.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">What stays sealed</div>
+        Post-quantum algorithms like <strong>CRYSTALS-Kyber</strong> and <strong>CRYSTALS-Dilithium</strong>, standardized by NIST in 2024, are designed to stay sealed even against quantum computers.
+      </div>
+      <div class="fact">
+        <div class="fact-label">Migration urgency</div>
+        Anything you encrypted today that needs to stay secret for 10+ years should already be using post-quantum cryptography. The boxes you seal now will be opened by tomorrow's quantum computers.
+      </div>
+    </div>
+  </section>
+
+  <div class="takeaway">
+    <h3>The big idea</h3>
+    <p>
+      Schrodinger's cat is really a parable about observation, uncertainty, and the limits of common sense at quantum scale. For security, it is also a warning: the secrets you seal today are not safe forever. The longer the box stays closed, the better the tools to crack it. Choose your locks accordingly.
+    </p>
+  </div>
+
+  </main>
+
+  <nav class="nav" style="margin-top: 28px;" aria-label="Bottom navigation">
+    <a href="quantum.html">quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="superposition.html">superposition</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="entanglement.html">entanglement</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="quantum-tunneling.html">tunneling</a>
+  </nav>
+</div>
+
+<script>
+  const box = document.getElementById('box');
+  const catAlive = document.getElementById('catAlive');
+  const catDead = document.getElementById('catDead');
+  const qMark = document.getElementById('qMark');
+  const status = document.getElementById('statusBanner');
+  const openBtn = document.getElementById('openBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
+  function reset() {
+    box.classList.remove('open');
+    catAlive.classList.add('ghost');
+    catAlive.classList.remove('hidden', 'observed');
+    catDead.classList.add('ghost', 'hidden');
+    catDead.classList.remove('observed');
+    qMark.style.display = 'block';
+    status.textContent = 'Box sealed. Cat in superposition.';
+    openBtn.style.display = '';
+    closeBtn.style.display = 'none';
+  }
+
+  openBtn.addEventListener('click', () => {
+    box.classList.add('open');
+    qMark.style.display = 'none';
+    catAlive.classList.remove('ghost');
+    catDead.classList.remove('ghost');
+
+    const alive = Math.random() < 0.5;
+    if (alive) {
+      catAlive.classList.add('observed');
+      catDead.classList.add('hidden');
+      status.innerHTML = 'Wavefunction collapsed: <strong style="color:#66ffaa">cat is alive</strong>';
+    } else {
+      catDead.classList.remove('hidden');
+      catAlive.classList.add('hidden');
+      catDead.classList.add('observed');
+      status.innerHTML = 'Wavefunction collapsed: <strong style="color:#ff8888">cat did not survive</strong>';
+    }
+
+    openBtn.style.display = 'none';
+    closeBtn.style.display = '';
+  });
+
+  closeBtn.addEventListener('click', reset);
+</script>
+
+</body>
+</html>

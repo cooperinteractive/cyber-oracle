@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Tunneling Explained</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 28px 16px 40px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 20%, #fcc, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent),
+      radial-gradient(1px 1px at 80% 40%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.35;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff00cc, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    text-shadow: 0 0 12px rgba(200, 216, 255, 0.4);
+    font-style: italic;
+  }
+
+  .nav {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .nav a {
+    color: #00ffff;
+    font-size: 0.8rem;
+    text-decoration: none;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.4);
+    padding-bottom: 2px;
+    transition: all 0.2s;
+  }
+
+  .nav a:hover, .nav a:focus-visible { color: #fff; border-bottom-color: #fff; outline: none; }
+  .nav a:focus-visible { box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.6); border-radius: 2px; }
+  .nav-sep { color: rgba(0, 255, 255, 0.4); }
+  .nav a { display: inline-block; margin: 4px 2px; }
+
+  /* Act card */
+  .act {
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.55), rgba(40, 0, 60, 0.55));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 22px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.06);
+  }
+
+  .act-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .act-num {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #00ffff;
+    letter-spacing: 2px;
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 3px 12px;
+    background: rgba(0, 255, 255, 0.08);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .act-title {
+    font-size: 1.15rem;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .act-title em {
+    color: #ff00cc;
+    font-style: normal;
+    text-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  }
+
+  /* Stage = where the animation runs */
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    background: rgba(0, 0, 20, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    margin-bottom: 14px;
+  }
+
+  /* Floor for classical stage */
+  .floor {
+    position: absolute;
+    bottom: 30px;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
+  }
+
+  /* The barrier (wall) */
+  .barrier {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 30px;
+    width: 28px;
+    height: 130px;
+    background: linear-gradient(180deg,
+      rgba(255, 100, 100, 0.3),
+      rgba(255, 60, 100, 0.7),
+      rgba(255, 100, 100, 0.3));
+    border-left: 2px solid rgba(255, 80, 120, 0.8);
+    border-right: 2px solid rgba(255, 80, 120, 0.8);
+    box-shadow:
+      0 0 20px rgba(255, 60, 100, 0.4),
+      inset 0 0 10px rgba(255, 200, 200, 0.2);
+  }
+
+  .barrier-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    font-family: 'Courier New', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    color: #ffaaaa;
+    white-space: nowrap;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(255, 100, 100, 0.6);
+  }
+
+  /* Classical particle */
+  .particle {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff, #00ffff 50%, #0080ff);
+    box-shadow: 0 0 15px #00ffff, 0 0 30px rgba(0, 255, 255, 0.6);
+    transform: translateY(50%);
+  }
+
+  .particle.classical {
+    animation: classicalBounce 4s ease-in-out infinite;
+  }
+
+  @keyframes classicalBounce {
+    0% { left: 5%; transform: translateY(50%) scale(1); }
+    35% { left: calc(50% - 30px); transform: translateY(50%) scale(1); }
+    40% { left: calc(50% - 30px); transform: translateY(50%) scale(1.3, 0.7); }
+    45% { left: calc(50% - 30px); transform: translateY(50%) scale(1); }
+    80% { left: 5%; transform: translateY(50%) scale(1); }
+    100% { left: 5%; transform: translateY(50%) scale(1); }
+  }
+
+  /* Trail lines */
+  .trail {
+    position: absolute;
+    bottom: calc(30px + 9px);
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5));
+    transform: translateY(50%);
+    pointer-events: none;
+  }
+
+  /* Stage labels */
+  .stage-label {
+    position: absolute;
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(0, 0, 30, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+  }
+
+  .stage-label.left { top: 12px; left: 12px; }
+  .stage-label.right { top: 12px; right: 12px; }
+  .stage-label.bottom { bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; }
+
+  .verdict {
+    position: absolute;
+    bottom: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(0, 0, 30, 0.7);
+  }
+
+  .verdict.bounced { left: 16px; color: #ff6666; border: 1px solid rgba(255, 100, 100, 0.5); text-shadow: 0 0 8px rgba(255, 100, 100, 0.5); }
+  .verdict.through { right: 16px; color: #66ff99; border: 1px solid rgba(100, 255, 150, 0.5); text-shadow: 0 0 8px rgba(100, 255, 150, 0.5); }
+
+  /* Quantum stage uses canvas */
+  canvas.wave-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Cyber stage */
+  .cyber-stage {
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: relative;
+  }
+
+  .actor {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: 80px;
+  }
+
+  .actor-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    margin: 0 auto 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+  }
+
+  .attacker .actor-icon {
+    background: linear-gradient(135deg, #ff00cc, #a060ff);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(255, 0, 200, 0.6);
+    animation: attackerPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes attackerPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(255, 0, 200, 0.5); }
+    50% { box-shadow: 0 0 50px rgba(255, 0, 200, 0.9); }
+  }
+
+  .target .actor-icon {
+    background: linear-gradient(135deg, #00ffaa, #00aaff);
+    color: #001020;
+    box-shadow: 0 0 30px rgba(0, 255, 170, 0.5);
+  }
+
+  .actor-label {
+    font-size: 0.7rem;
+    color: #fff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Firewall */
+  .firewall {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 20px;
+    bottom: 20px;
+    width: 50px;
+    background:
+      repeating-linear-gradient(45deg,
+        rgba(255, 60, 60, 0.4) 0px,
+        rgba(255, 60, 60, 0.4) 6px,
+        rgba(255, 100, 100, 0.7) 6px,
+        rgba(255, 100, 100, 0.7) 12px);
+    border-left: 2px solid rgba(255, 80, 120, 0.9);
+    border-right: 2px solid rgba(255, 80, 120, 0.9);
+    border-radius: 4px;
+    box-shadow: 0 0 25px rgba(255, 60, 100, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .firewall-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 8px #ff0000;
+    transform: rotate(-90deg);
+    white-space: nowrap;
+  }
+
+  /* Tunneling attacker beam */
+  .beam {
+    position: absolute;
+    top: 50%;
+    left: 110px;
+    height: 4px;
+    width: 0;
+    background: linear-gradient(90deg, rgba(255, 0, 200, 0.9), rgba(0, 255, 255, 0.9));
+    box-shadow: 0 0 20px #ff00cc, 0 0 40px #00ffff;
+    border-radius: 2px;
+    transform: translateY(-50%);
+    z-index: 1;
+    animation: beamShoot 4s ease-in-out infinite;
+  }
+
+  @keyframes beamShoot {
+    0% { width: 0; opacity: 0; }
+    20% { width: 0; opacity: 0; }
+    35% { width: calc(100% - 220px); opacity: 1; }
+    50% { width: calc(100% - 220px); opacity: 1; filter: brightness(1.5); }
+    65% { width: calc(100% - 220px); opacity: 1; }
+    80% { width: 0; opacity: 0; }
+    100% { width: 0; opacity: 0; }
+  }
+
+  /* Explanation text below each stage */
+  .explanation {
+    font-size: 0.92rem;
+    color: #d8e8ff;
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  .explanation strong {
+    color: #00ffff;
+    font-weight: 600;
+  }
+
+  .explanation em {
+    color: #ff00cc;
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* Fact sidebar inside cards */
+  .fact-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .fact {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 30, 0.4);
+    border-left: 3px solid #00ffff;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #c8d8ff;
+    line-height: 1.45;
+  }
+
+  .fact-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: #00ffff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  /* Replay button */
+  .controls {
+    text-align: center;
+    margin-top: 18px;
+  }
+
+  .btn {
+    background: rgba(0, 255, 255, 0.08);
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    color: #00ffff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .btn:hover {
+    background: rgba(0, 255, 255, 0.18);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+  }
+
+  /* Takeaway final card */
+  .takeaway {
+    background: linear-gradient(135deg, rgba(60, 0, 60, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(255, 0, 200, 0.4);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .takeaway h3 {
+    color: #ff00cc;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  }
+
+  .takeaway p {
+    color: #d8e8ff;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 600px) {
+    .stage { height: 180px; }
+    .cyber-stage { height: 200px; padding: 0 12px; }
+    .actor { width: 64px; }
+    .actor-icon { width: 48px; height: 48px; font-size: 22px; }
+    .firewall { width: 38px; }
+    .barrier { width: 22px; height: 110px; }
+    .act { padding: 18px; }
+    .act-title { font-size: 1rem; }
+    .explanation { font-size: 0.88rem; }
+    .stage-label { font-size: 0.55rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .particle.classical, .beam, h1, .attacker .actor-icon { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="nav" aria-label="Site navigation">
+    <a href="quantum.html">back to quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="superposition.html">superposition</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="entanglement.html">entanglement</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="schrodingers-cat.html">schrodinger's cat</a>
+  </nav>
+
+  <header>
+    <h1>Quantum Tunneling</h1>
+    <div class="subtitle">How particles walk through walls</div>
+  </header>
+
+  <!-- ACT 1: Classical world -->
+  <div class="act">
+    <div class="act-header">
+      <div class="act-num">Act 01</div>
+      <div class="act-title">In the <em>classical</em> world, walls work</div>
+    </div>
+
+    <div class="stage" id="stageClassical">
+      <span class="stage-label left">START</span>
+      <span class="stage-label right">GOAL</span>
+      <div class="floor"></div>
+      <div class="barrier">
+        <span class="barrier-label">Barrier</span>
+      </div>
+      <div class="particle classical"></div>
+      <span class="verdict bounced">⟵ Bounced</span>
+    </div>
+
+    <div class="explanation">
+      A classical particle - think of a tennis ball - needs enough <strong>energy</strong> to climb over a wall. If the wall is taller than the ball's energy, it bounces off. <em>Every time. No exceptions.</em> This is the world we live in: doors stop people, walls stop balls, firewalls stop packets.
+    </div>
+  </div>
+
+  <!-- ACT 2: Quantum world -->
+  <div class="act">
+    <div class="act-header">
+      <div class="act-num">Act 02</div>
+      <div class="act-title">In the <em>quantum</em> world, walls leak</div>
+    </div>
+
+    <div class="stage" id="stageQuantum">
+      <canvas class="wave-canvas" id="waveCanvas"></canvas>
+      <span class="stage-label left">|ψ⟩ wave</span>
+      <span class="stage-label right">tunnel zone</span>
+      <span class="verdict bounced">most reflects</span>
+      <span class="verdict through">some tunnels</span>
+    </div>
+
+    <div class="explanation">
+      A quantum particle isn't a ball - it's a <strong>wave of probability</strong> (the squiggle marked <strong>|ψ⟩</strong>). When that wave hits a wall it can't classically cross, most of it bounces back… but a small piece <em>leaks straight through to the other side</em>. The particle didn't climb over. It didn't break the wall. It just had a non-zero chance of being there. And in quantum mechanics, "non-zero chance" means it happens.
+    </div>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">Why it works</div>
+        Particles don't have exact positions - only probabilities. The probability tail extends through the barrier, so the particle can be found on the other side.
+      </div>
+      <div class="fact">
+        <div class="fact-label">Where you've seen it</div>
+        Tunneling powers the sun (fusion), modern flash memory, and the scanning tunneling microscopes that image individual atoms.
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="replayBtn">Replay wave</button>
+    </div>
+  </div>
+
+  <!-- ACT 3: Cybersecurity translation -->
+  <div class="act">
+    <div class="act-header">
+      <div class="act-num">Act 03</div>
+      <div class="act-title">The <em>cybersecurity</em> metaphor</div>
+    </div>
+
+    <div class="stage cyber-stage">
+      <div class="actor attacker">
+        <div class="actor-icon">⚡</div>
+        <div class="actor-label">Quantum<br>Attacker</div>
+      </div>
+      <div class="firewall">
+        <span class="firewall-label">Firewall</span>
+      </div>
+      <div class="actor target">
+        <div class="actor-icon">🔒</div>
+        <div class="actor-label">Your<br>Data</div>
+      </div>
+      <div class="beam"></div>
+    </div>
+
+    <div class="explanation">
+      A classical attacker has to <strong>climb over your defenses</strong> - find a misconfiguration, brute-force a password, exploit a known bug. A quantum-equipped attacker is more like the wave: they don't go around your firewall, they <em>compute through the math that makes it work</em>. <strong>Shor's algorithm</strong> on a sufficiently large quantum computer would tunnel straight through RSA and ECC encryption - the cryptographic walls protecting most of the internet today.
+    </div>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">Real threat: HNDL</div>
+        <strong>Harvest Now, Decrypt Later</strong>: nation-states are recording your encrypted traffic <em>today</em>, planning to tunnel through it later when quantum hardware catches up.
+      </div>
+      <div class="fact">
+        <div class="fact-label">The defense</div>
+        <strong>Post-quantum cryptography</strong> (Kyber, Dilithium, lattice-based schemes) - math problems that even quantum computers can't tunnel through.
+      </div>
+    </div>
+  </div>
+
+  <!-- Takeaway -->
+  <div class="takeaway">
+    <h3>The big idea</h3>
+    <p>
+      Quantum tunneling is the universe's reminder that "impossible" depends on what kind of physics you're playing with. A wall that stops every ball can leak waves. A cryptosystem that's safe against every classical computer can fall to a quantum one. The work is to build defenses based on problems that <em>nothing we know of</em> - quantum or classical - can tunnel through.
+    </p>
+  </div>
+
+  <div class="nav" style="margin-top: 28px;"><a href="quantum.html">← back to quantum oracle</a></div>
+</div>
+
+<script>
+/* ============================================================
+   Quantum wave animation
+   Renders an evolving probability wave hitting a barrier.
+   ============================================================ */
+const canvas = document.getElementById('waveCanvas');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  W = rect.width;
+  H = rect.height;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+let t = 0;
+let waveStart = performance.now();
+
+// Barrier zone: 45%-55% of width
+function inBarrier(x) {
+  return x > W * 0.45 && x < W * 0.55;
+}
+
+// Build a rightward-moving Gaussian wave packet that hits the barrier.
+// We split it into incident + reflected (left of barrier) and a smaller
+// transmitted packet (right of barrier) - that's the tunneling effect.
+function drawFrame(now) {
+  const elapsed = (now - waveStart) / 1000; // seconds
+  const T = 4; // total cycle seconds
+  const cyc = (elapsed % T) / T; // 0..1
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw barrier zone background
+  const barrierX = W * 0.45;
+  const barrierW = W * 0.10;
+  const grad = ctx.createLinearGradient(barrierX, 0, barrierX + barrierW, 0);
+  grad.addColorStop(0, 'rgba(255, 60, 100, 0.05)');
+  grad.addColorStop(0.5, 'rgba(255, 60, 100, 0.30)');
+  grad.addColorStop(1, 'rgba(255, 60, 100, 0.05)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(barrierX, 0, barrierW, H);
+
+  // Barrier vertical lines
+  ctx.strokeStyle = 'rgba(255, 100, 130, 0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(barrierX, 0); ctx.lineTo(barrierX, H);
+  ctx.moveTo(barrierX + barrierW, 0); ctx.lineTo(barrierX + barrierW, H);
+  ctx.stroke();
+
+  const baseY = H * 0.55;
+
+  // ============ Incident packet (moves right toward barrier) ==========
+  // Position: starts at 0, reaches barrier mid-way
+  const incidentCenter = cyc * (W * 0.5);  // 0 → 0.5W over the cycle
+  const incidentSigma = W * 0.06;
+  const incidentAmp = 35 * Math.max(0, 1 - cyc * 0.6); // fades a bit as it interacts
+
+  // ============ Reflected packet (after impact, moves left) ===========
+  const reflectStart = 0.45;
+  const reflectProgress = Math.max(0, (cyc - reflectStart) / (1 - reflectStart));
+  const reflectedCenter = barrierX - reflectProgress * (W * 0.45);
+  const reflectedAmp = 25 * Math.min(1, reflectProgress * 2);
+
+  // ============ Transmitted packet (tunneled, moves right past barrier)
+  const transmitStart = 0.5;
+  const transmitProgress = Math.max(0, (cyc - transmitStart) / (1 - transmitStart));
+  const transmittedCenter = (barrierX + barrierW) + transmitProgress * (W * 0.4);
+  const transmittedAmp = 12 * Math.min(1, transmitProgress * 2); // SMALLER - most of wave reflected
+
+  // Draw axis line
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, baseY); ctx.lineTo(W, baseY);
+  ctx.stroke();
+
+  // Helper to draw a wave packet (gaussian envelope * oscillation)
+  function drawPacket(centerX, sigma, amp, color, glow, region) {
+    if (amp < 0.5) return;
+    ctx.beginPath();
+    let started = false;
+    const step = 2;
+    for (let x = 0; x <= W; x += step) {
+      // region filter so packets stay on their side
+      if (region === 'left' && x > barrierX) continue;
+      if (region === 'right' && x < barrierX + barrierW) continue;
+      const dx = x - centerX;
+      const env = Math.exp(-(dx * dx) / (2 * sigma * sigma));
+      const phase = (x * 0.18) - elapsed * 6;
+      const y = baseY - amp * env * Math.cos(phase);
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Probability density |ψ|² fill
+    ctx.beginPath();
+    started = false;
+    for (let x = 0; x <= W; x += step) {
+      if (region === 'left' && x > barrierX) continue;
+      if (region === 'right' && x < barrierX + barrierW) continue;
+      const dx = x - centerX;
+      const env = Math.exp(-(dx * dx) / (2 * sigma * sigma));
+      const y = baseY - amp * 0.4 * env * env;
+      if (!started) { ctx.moveTo(x, baseY); ctx.lineTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W, baseY);
+    ctx.closePath();
+    ctx.fillStyle = color.replace(/[\d.]+\)$/, '0.15)');
+    ctx.fill();
+  }
+
+  // Incident wave (cyan) - only on left side of barrier
+  if (cyc < 0.55) {
+    drawPacket(incidentCenter, incidentSigma, incidentAmp,
+               'rgba(0, 255, 255, 0.95)', '#00ffff', 'left');
+  }
+
+  // Reflected wave (cyan, leftward)
+  if (reflectProgress > 0) {
+    drawPacket(reflectedCenter, incidentSigma, reflectedAmp,
+               'rgba(100, 200, 255, 0.85)', '#66ccff', 'left');
+  }
+
+  // Tunneled wave (magenta, on right side)
+  if (transmitProgress > 0) {
+    drawPacket(transmittedCenter, incidentSigma, transmittedAmp,
+               'rgba(255, 0, 200, 0.95)', '#ff00cc', 'right');
+  }
+
+  // Decaying wave INSIDE the barrier - exponential damping
+  if (cyc > 0.30 && cyc < 0.75) {
+    ctx.beginPath();
+    let started = false;
+    for (let x = barrierX; x <= barrierX + barrierW; x += 1) {
+      const depth = (x - barrierX) / barrierW; // 0..1
+      const decay = Math.exp(-depth * 4);
+      const phase = elapsed * 6;
+      const fade = Math.sin((cyc - 0.30) / 0.45 * Math.PI); // fades in/out
+      const amp = 22 * decay * fade;
+      const y = baseY - amp * Math.cos(phase + depth * 8);
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(255, 200, 100, 0.85)';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#ffaa44';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  requestAnimationFrame(drawFrame);
+}
+
+requestAnimationFrame(drawFrame);
+
+document.getElementById('replayBtn').addEventListener('click', () => {
+  waveStart = performance.now();
+});
+</script>
+
+</body>
+</html>

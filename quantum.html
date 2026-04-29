@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Oracle | Schrödinger's Security Advisor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #0a0820 0%, #02000a 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+    padding: 24px 16px 70px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+
+  /* Starfield background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 20%, #fcc, transparent),
+      radial-gradient(1px 1px at 10% 80%, #ccf, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent),
+      radial-gradient(1px 1px at 80% 40%, #fff, transparent),
+      radial-gradient(1px 1px at 30% 90%, #aaf, transparent);
+    background-size: 200% 200%;
+    opacity: 0.4;
+    animation: twinkle 8s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+
+  .scanline {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(140, 200, 255, 0.02) 2px, rgba(140, 200, 255, 0.02) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: 540px;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 200;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff00cc, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-align: center;
+    animation: hueShift 6s linear infinite;
+    text-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  h1 span {
+    display: block;
+    font-size: 0.4em;
+    letter-spacing: 6px;
+    color: #c8d8ff;
+    margin-top: 10px;
+    -webkit-text-fill-color: #c8d8ff;
+    text-shadow: 0 0 14px rgba(200, 216, 255, 0.4);
+    font-style: italic;
+  }
+
+  /* Question input */
+  .question-area {
+    width: 100%;
+    max-width: 420px;
+    padding: 0 8px;
+  }
+
+  .question-input {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    background: rgba(0, 100, 200, 0.05);
+    color: #e0e0e0;
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+
+  .question-input::placeholder {
+    color: #a0b8d0;
+    font-style: italic;
+    opacity: 1;
+  }
+
+  .question-input:focus {
+    border-color: rgba(0, 255, 255, 0.6);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.15);
+  }
+
+  .chamber-container:focus-visible {
+    outline: 3px solid #00ffff;
+    outline-offset: 10px;
+    border-radius: 50%;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border: 0;
+  }
+
+  /* Quantum chamber container */
+  .chamber-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    perspective: 800px;
+  }
+
+  /* Outer glow ring */
+  .glow-ring {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 255, 255, 0.15), transparent 65%);
+    filter: blur(20px);
+    animation: glowPulse 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  /* The chamber (glass sphere) */
+  .chamber {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.08), transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(0, 50, 100, 0.4), rgba(0, 0, 30, 0.9));
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    box-shadow:
+      0 0 60px rgba(0, 255, 255, 0.2),
+      0 0 100px rgba(255, 0, 200, 0.1),
+      inset 0 0 60px rgba(0, 100, 200, 0.2),
+      inset 0 -30px 60px rgba(0, 0, 30, 0.6);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .chamber.observing {
+    animation: collapse 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes collapse {
+    0%   { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg) brightness(1) saturate(1); }
+    15%  { transform: scale(1.08) rotate(3deg); filter: hue-rotate(40deg) brightness(1.2) saturate(1.4); }
+    30%  { transform: scale(0.88) rotate(-5deg); filter: hue-rotate(120deg) brightness(1.6) saturate(2); }
+    45%  { transform: scale(1.14) rotate(4deg); filter: hue-rotate(220deg) brightness(2) saturate(2.5); box-shadow: 0 0 100px #ff00cc, 0 0 200px #00ffff, inset 0 0 80px rgba(255, 0, 200, 0.6); }
+    60%  { transform: scale(0.92) rotate(-2deg); filter: hue-rotate(300deg) brightness(1.5) saturate(1.8); }
+    75%  { transform: scale(1.05) rotate(1deg); filter: hue-rotate(180deg) brightness(1.3) saturate(1.4); }
+    100% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg) brightness(1) saturate(1); }
+  }
+
+  /* Spinning orbits accelerate during collapse */
+  .chamber.observing .orbit.o1 { animation-duration: 0.6s; }
+  .chamber.observing .orbit.o2 { animation-duration: 0.4s; }
+  .chamber.observing .orbit.o3 { animation-duration: 0.25s; }
+
+  /* Glass shine */
+  .chamber::before {
+    content: '';
+    position: absolute;
+    top: 8%;
+    left: 15%;
+    width: 40%;
+    height: 30%;
+    background: radial-gradient(ellipse, rgba(255, 255, 255, 0.18), transparent 70%);
+    border-radius: 50%;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* Orbiting qubits */
+  .orbits {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+  }
+
+  .orbit {
+    position: absolute;
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: 50%;
+    transform-style: preserve-3d;
+  }
+
+  .orbit.o1 { width: 80%; height: 80%; animation: spin1 8s linear infinite; }
+  .orbit.o2 { width: 60%; height: 60%; animation: spin2 6s linear infinite; }
+  .orbit.o3 { width: 40%; height: 40%; animation: spin3 4s linear infinite; }
+
+  @keyframes spin1 {
+    from { transform: rotateY(70deg) rotateZ(0deg); }
+    to { transform: rotateY(70deg) rotateZ(360deg); }
+  }
+  @keyframes spin2 {
+    from { transform: rotateY(20deg) rotateX(60deg) rotateZ(0deg); }
+    to { transform: rotateY(20deg) rotateX(60deg) rotateZ(-360deg); }
+  }
+  @keyframes spin3 {
+    from { transform: rotateX(70deg) rotateZ(0deg); }
+    to { transform: rotateX(70deg) rotateZ(360deg); }
+  }
+
+  .qubit {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #00ffff 50%, transparent);
+    box-shadow: 0 0 12px #00ffff, 0 0 24px rgba(0, 255, 255, 0.5);
+    top: 50%;
+    left: -6px;
+    transform: translateY(-50%);
+  }
+
+  .qubit.pink { background: radial-gradient(circle, #fff, #ff00cc 50%, transparent); box-shadow: 0 0 12px #ff00cc, 0 0 24px rgba(255, 0, 200, 0.5); }
+  .qubit.purple { background: radial-gradient(circle, #fff, #a060ff 50%, transparent); box-shadow: 0 0 12px #a060ff, 0 0 24px rgba(160, 96, 255, 0.5); }
+
+  /* Core */
+  .core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #00ffff 30%, transparent 70%);
+    box-shadow: 0 0 30px #00ffff, 0 0 60px rgba(0, 255, 255, 0.5);
+    z-index: 4;
+    animation: corePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes corePulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.2); }
+  }
+
+  /* Superposition text overlays - shows multiple answers ghosted */
+  .superposition {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  .super-text {
+    position: absolute;
+    font-size: 9px;
+    color: rgba(0, 255, 255, 0.4);
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    animation: floatGhost 4s ease-in-out infinite;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+  }
+
+  @keyframes floatGhost {
+    0%, 100% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 0.7; transform: translateY(-8px); }
+  }
+
+  .chamber.collapsed .super-text { display: none; }
+
+  /* Result display inside core area */
+  .result-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 7;
+    width: 70%;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .chamber.collapsed .core { animation: none; opacity: 0.3; transition: opacity 0.5s; }
+  .chamber.collapsed .result-display {
+    opacity: 1;
+    animation: resultMaterialize 0.8s ease-out forwards;
+  }
+
+  @keyframes resultMaterialize {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); filter: blur(8px); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  }
+
+  .result-display .quantum-state {
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffffff;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    text-shadow:
+      0 0 6px #ff00cc,
+      0 0 14px #ff00cc,
+      0 0 24px rgba(255, 0, 200, 0.6);
+    background: rgba(0, 0, 30, 0.55);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 0, 200, 0.5);
+    backdrop-filter: blur(4px);
+    line-height: 1.3;
+  }
+
+  /* Prompt */
+  .prompt {
+    font-size: 0.9rem;
+    color: #c8d8ff;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    text-shadow: 0 0 14px rgba(0, 255, 255, 0.4);
+    animation: promptPulse 2s ease-in-out infinite;
+    font-weight: 300;
+  }
+
+  @keyframes promptPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .prompt.hidden { display: none; }
+
+  /* Final answer below */
+  .answer-display {
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.6s ease 0.4s;
+    text-align: center;
+  }
+
+  .answer-display.visible { opacity: 1; }
+
+  .answer-display .full-answer {
+    font-size: clamp(1.05rem, 3vw, 1.35rem);
+    font-weight: 500;
+    color: #fff;
+    text-shadow: 0 0 25px rgba(0, 255, 255, 0.5), 0 0 50px rgba(255, 0, 200, 0.2);
+    max-width: 460px;
+    line-height: 1.45;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+  }
+
+  .badge.entangled { color: #00ffff; border: 1px solid rgba(0, 255, 255, 0.4); background: rgba(0, 255, 255, 0.06); }
+  .badge.collapsed { color: #ff00cc; border: 1px solid rgba(255, 0, 200, 0.4); background: rgba(255, 0, 200, 0.06); }
+  .badge.decoherent { color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.4); background: rgba(255, 204, 0, 0.06); }
+  .badge.coherent { color: #88ff88; border: 1px solid rgba(136, 255, 136, 0.4); background: rgba(136, 255, 136, 0.06); }
+
+  /* Wave collapse ripples */
+  .ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 2px solid rgba(0, 255, 255, 0.7);
+    pointer-events: none;
+    z-index: 8;
+  }
+
+  /* Scanning beam during observation */
+  .scan-beam {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 7;
+  }
+
+  .scan-beam::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #00ffff, #fff, #00ffff, transparent);
+    box-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff;
+  }
+
+  .chamber.observing .scan-beam {
+    opacity: 1;
+    animation: scanSweep 1.2s ease-in-out;
+  }
+
+  @keyframes scanSweep {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .chamber.observing .scan-beam::before {
+    animation: beamMove 1.2s ease-in-out;
+  }
+
+  @keyframes beamMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(420px); }
+  }
+
+  /* Learn-more / explainer box */
+  .explainer {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 8px;
+    margin-top: 4px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease 0.8s, transform 0.5s ease 0.8s;
+    pointer-events: none;
+  }
+
+  .explainer.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .explainer-card {
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.7), rgba(40, 0, 60, 0.7));
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 14px;
+    padding: 16px 18px;
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 0 30px rgba(0, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    text-align: left;
+    position: relative;
+  }
+
+  .explainer-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  }
+
+  .explainer-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0, 255, 255, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    font-size: 12px;
+    color: #00ffff;
+    font-family: Georgia, serif;
+    font-style: italic;
+  }
+
+  .explainer-concept {
+    font-size: 0.9rem;
+    color: #ff00cc;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-shadow: 0 0 12px rgba(255, 0, 200, 0.4);
+    letter-spacing: 0.5px;
+  }
+
+  .explainer-body {
+    font-size: 0.85rem;
+    color: #d8e8ff;
+    line-height: 1.55;
+    font-weight: 300;
+  }
+
+  .explainer-body strong {
+    color: #00ffff;
+    font-weight: 600;
+  }
+
+  /* Particle burst */
+  .particle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Footer */
+  .footer {
+    position: fixed;
+    bottom: 16px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 0.7rem;
+    color: #c8d8ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    padding: 0 16px;
+  }
+
+  .footer::before { content: 'ψ '; color: #ff00cc; text-shadow: 0 0 8px rgba(255, 0, 200, 0.6); font-weight: bold; }
+
+  /* Learn-the-concepts grid */
+  .learn-section {
+    width: 100%;
+    max-width: 720px;
+    margin-top: 16px;
+    padding: 0 8px;
+  }
+
+  .learn-heading {
+    text-align: center;
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #c8d8ff;
+    margin-bottom: 14px;
+    text-shadow: 0 0 12px rgba(0, 255, 255, 0.3);
+    font-family: 'Courier New', monospace;
+  }
+
+  .learn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+
+  .learn-card {
+    display: block;
+    padding: 14px 14px;
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.55), rgba(40, 0, 60, 0.55));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 12px;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(8px);
+    text-align: left;
+  }
+
+  .learn-card:hover, .learn-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: rgba(255, 0, 200, 0.6);
+    box-shadow: 0 6px 30px rgba(255, 0, 200, 0.2);
+    outline: none;
+  }
+
+  .learn-card-icon {
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+    display: inline-block;
+  }
+
+  .learn-card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #00ffff;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    margin-bottom: 4px;
+  }
+
+  .learn-card-desc {
+    font-size: 0.72rem;
+    color: #c8d8ff;
+    line-height: 1.45;
+    font-weight: 300;
+  }
+
+  @media (max-width: 480px) {
+    .learn-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .learn-card { padding: 12px; }
+    .learn-card-title { font-size: 0.78rem; }
+    .learn-card-desc { font-size: 0.68rem; }
+  }
+
+  @media (max-width: 480px) {
+    .content { gap: 18px; }
+    .chamber-container { width: 260px; height: 260px; }
+    .core { width: 40px; height: 40px; }
+    .super-text { font-size: 8px; }
+    .result-display { width: 82%; }
+    .result-display .quantum-state { font-size: 13px; padding: 6px 10px; }
+    h1 { letter-spacing: 3px; }
+    h1 span { letter-spacing: 4px; font-size: 0.5em; }
+    .footer { font-size: 0.62rem; letter-spacing: 1.5px; }
+    .explainer-card { padding: 14px 16px; }
+    .explainer-concept { font-size: 0.85rem; }
+    .explainer-body { font-size: 0.8rem; }
+  }
+
+  @media (max-height: 720px) {
+    body { justify-content: flex-start; padding-top: 20px; }
+    .content { gap: 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orbit, .core, h1, body::before, .glow-ring { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<div class="content">
+  <h1>Quantum Oracle<span>Schrödinger's Security Advisor</span></h1>
+
+  <div class="question-area">
+    <label for="questionInput" class="sr-only">Type your question for the Quantum Oracle</label>
+    <input type="text" class="question-input" id="questionInput"
+           placeholder="Ask the qubits anything..."
+           maxlength="120"
+           autocomplete="off"
+           aria-describedby="chamberHint">
+    <span id="chamberHint" class="sr-only">Press Enter to observe the wavefunction.</span>
+  </div>
+
+  <div class="chamber-container" id="chamberContainer"
+       role="button" tabindex="0"
+       aria-label="Quantum chamber. Activate to observe the wavefunction and collapse it to a single answer.">
+    <div class="glow-ring"></div>
+    <div class="chamber" id="chamber">
+      <div class="scan-beam"></div>
+      <div class="orbits">
+        <div class="orbit o1"><div class="qubit"></div></div>
+        <div class="orbit o2"><div class="qubit pink"></div></div>
+        <div class="orbit o3"><div class="qubit purple"></div></div>
+      </div>
+      <div class="core"></div>
+      <div class="superposition" id="superposition"></div>
+      <div class="result-display" id="resultDisplay">
+        <div class="quantum-state" id="quantumState">|0⟩ + |1⟩ → |1⟩</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="prompt" id="prompt">Observe the wavefunction</p>
+
+  <div class="answer-display" id="answerDisplay" role="status" aria-live="polite" aria-atomic="true">
+    <div class="full-answer" id="fullAnswer"></div>
+    <div class="badge-row">
+      <div class="badge" id="stateBadge"></div>
+      <div class="badge" id="probBadge"></div>
+    </div>
+  </div>
+
+  <div class="explainer" id="explainer">
+    <div class="explainer-card">
+      <div class="explainer-header">
+        <span class="explainer-icon" aria-hidden="true">i</span>
+        <span>Decoded for humans</span>
+      </div>
+      <div class="explainer-concept" id="explainerConcept"></div>
+      <div class="explainer-body" id="explainerBody"></div>
+    </div>
+  </div>
+
+  <nav class="learn-section" aria-label="Quantum concept explainers">
+    <div class="learn-heading">Explore the concepts</div>
+    <div class="learn-grid">
+      <a class="learn-card" href="superposition.html">
+        <span class="learn-card-icon" aria-hidden="true">&#9883;</span>
+        <div class="learn-card-title">Superposition</div>
+        <div class="learn-card-desc">Both states at once, until you look</div>
+      </a>
+      <a class="learn-card" href="entanglement.html">
+        <span class="learn-card-icon" aria-hidden="true">&#8734;</span>
+        <div class="learn-card-title">Entanglement</div>
+        <div class="learn-card-desc">Two particles, one shared fate</div>
+      </a>
+      <a class="learn-card" href="quantum-tunneling.html">
+        <span class="learn-card-icon" aria-hidden="true">&#8633;</span>
+        <div class="learn-card-title">Quantum Tunneling</div>
+        <div class="learn-card-desc">Walking straight through walls</div>
+      </a>
+      <a class="learn-card" href="schrodingers-cat.html">
+        <span class="learn-card-icon" aria-hidden="true">&#128008;</span>
+        <div class="learn-card-title">Schrodinger's Cat</div>
+        <div class="learn-card-desc">Alive and dead, simultaneously</div>
+      </a>
+    </div>
+  </nav>
+</div>
+
+<div class="footer">quantum_oracle v0.∞ - observer effect engaged</div>
+
+<script>
+const answers = [
+  // COHERENT (positive)
+  { text: "The qubits align in your favor - proceed", state: "coherent", q: "|ψ⟩ → |yes⟩",
+    concept: "Wavefunction collapse",
+    learn: "A quantum system exists as |ψ⟩ - a blend of all possible outcomes. When measured, it collapses to one. Here, it collapsed to <strong>yes</strong>." },
+
+  { text: "Post-quantum encryption says go for it", state: "coherent", q: "CRYSTALS-Kyber: APPROVED",
+    concept: "Post-quantum cryptography (PQC)",
+    learn: "<strong>CRYSTALS-Kyber</strong> is one of the new NIST-approved algorithms designed to resist attacks from future quantum computers. Standard RSA and ECC won't survive - Kyber will." },
+
+  { text: "Your lattice-based crypto is holding up beautifully", state: "coherent", q: "LWE problem: hard",
+    concept: "Lattice-based cryptography",
+    learn: "<strong>Learning With Errors (LWE)</strong> is a math problem so hard that even quantum computers can't crack it efficiently. It's the foundation of most post-quantum encryption." },
+
+  { text: "Shor's algorithm respectfully declines to break this", state: "coherent", q: "factoring: intractable",
+    concept: "Shor's algorithm",
+    learn: "<strong>Shor's algorithm</strong> is the quantum algorithm that can break RSA by factoring huge numbers in seconds - something classical computers would need millennia to do. If it 'declines,' you're safe." },
+
+  { text: "BB84 protocol confirms - channel is secure", state: "coherent", q: "QKD: verified",
+    concept: "Quantum Key Distribution (QKD)",
+    learn: "<strong>BB84</strong> is the original quantum key distribution protocol. It uses physics - not math - to detect eavesdroppers: any attempt to intercept changes the quantum state and reveals the spy." },
+
+  { text: "Yes, in this branch of the multiverse", state: "coherent", q: "branch ID: 0xAF21",
+    concept: "Many-worlds interpretation",
+    learn: "Some physicists believe every quantum measurement splits reality into parallel universes. So 'yes in this branch' is a wink at the idea that somewhere, you got 'no.'" },
+
+  { text: "Entanglement check: passed. Send it.", state: "coherent", q: "Bell state: stable",
+    concept: "Bell states",
+    learn: "<strong>Bell states</strong> are the four maximally-entangled two-qubit states. Stable Bell states mean your entangled system is healthy - essential for quantum communication." },
+
+  { text: "The cat is alive - and approves", state: "coherent", q: "|alive⟩ collapsed",
+    concept: "Schrödinger's cat",
+    learn: "Schrödinger's famous thought experiment: a cat in a sealed box is both alive AND dead until you peek. 'Alive' means you opened the box and got the good outcome." },
+
+  { text: "Quantum supremacy for the win", state: "coherent", q: "10^15 ops/sec: yes",
+    concept: "Quantum supremacy",
+    learn: "<strong>Quantum supremacy</strong> is the moment a quantum computer solves a problem no classical computer realistically can. Google claimed it in 2019 with their Sycamore chip." },
+
+  // ENTANGLED (positive but conditional)
+  { text: "Entangled with success - but only if you measure correctly", state: "entangled", q: "|00⟩ + |11⟩",
+    concept: "Quantum entanglement",
+    learn: "When two qubits are entangled, measuring one instantly determines the other - even across galaxies. <strong>|00⟩ + |11⟩</strong> means they're locked: both 0 or both 1, never mixed." },
+
+  { text: "Your fate is now linked to a particle in Geneva", state: "entangled", q: "spooky action: yes",
+    concept: "Spooky action at a distance",
+    learn: "Einstein's nickname for entanglement. He hated it because it felt like faster-than-light communication. Turns out he was right that it's spooky - wrong that it was impossible." },
+
+  { text: "Yes, but the answer changes if anyone observes", state: "entangled", q: "decoherence risk: low",
+    concept: "Observer effect",
+    learn: "In quantum mechanics, observing a system changes it. This is also a real cybersecurity concern: a snooping eavesdropper on a quantum channel leaves fingerprints in the data." },
+
+  { text: "Approved - assuming the cat is still in the box", state: "entangled", q: "P(alive) = 0.5",
+    concept: "Schrödinger's cat (probability)",
+    learn: "Before you open Schrödinger's box, the cat has a 50/50 chance of being alive. The joke: your decision is approved, but only in the timeline where the cat survives." },
+
+  // COLLAPSED (definitive negative)
+  { text: "The wavefunction collapsed. The answer is no.", state: "collapsed", q: "|ψ⟩ → |no⟩",
+    concept: "Wavefunction collapse",
+    learn: "When a quantum system is measured, all its possibilities collapse into a single observed result. This time, it collapsed to <strong>no</strong>. Sorry." },
+
+  { text: "Shor's algorithm would shred that in 8 seconds", state: "collapsed", q: "RSA-2048: dead",
+    concept: "Shor's algorithm vs. RSA",
+    learn: "Today, breaking RSA-2048 would take a classical computer billions of years. A sufficiently large quantum computer running <strong>Shor's algorithm</strong> would do it in hours or less." },
+
+  { text: "Your RSA keys are weeping. Migrate now.", state: "collapsed", q: "PQC migration: urgent",
+    concept: "PQC migration",
+    learn: "Governments and enterprises are rushing to swap RSA/ECC for <strong>post-quantum algorithms</strong> before large quantum computers arrive. Waiting too long means everything you sent before becomes readable later." },
+
+  { text: "A qubit somewhere is screaming 'no'", state: "collapsed", q: "|ψ⟩ = 0",
+    concept: "Qubit measurement",
+    learn: "A qubit measured as <strong>|0⟩</strong> is the quantum equivalent of a hard 'no.' This is just dramatic flair - the universe doesn't actually scream. (Probably.)" },
+
+  { text: "Definitely not - harvest-now-decrypt-later applies", state: "collapsed", q: "HNDL threat: active",
+    concept: "Harvest Now, Decrypt Later",
+    learn: "<strong>HNDL</strong> is a real attack: nation-states are recording encrypted traffic <em>today</em>, planning to decrypt it later when quantum computers exist. Anything sensitive with a long shelf-life is at risk." },
+
+  { text: "The cat is dead. So is this idea.", state: "collapsed", q: "|dead⟩ collapsed",
+    concept: "Schrödinger's cat (the bad outcome)",
+    learn: "In Schrödinger's thought experiment, the cat is both alive and dead until observed. 'Cat is dead' = the box opened on the unfortunate timeline. Your idea didn't survive the measurement either." },
+
+  { text: "Quantum tunneling would reveal that vulnerability instantly", state: "collapsed", q: "tunneling P > 0.9",
+    concept: "Quantum tunneling",
+    learn: "Particles can pass through barriers they classically shouldn't be able to cross. Metaphorically: a quantum-equipped attacker walks straight through your defenses." },
+
+  { text: "No - your ECC is about to be obsolete", state: "collapsed", q: "ECDLP: solved by Shor",
+    concept: "Elliptic Curve Cryptography (ECC)",
+    learn: "ECC secures most of the modern web (TLS, Bitcoin, signal). Its hard problem is the <strong>Elliptic Curve Discrete Log Problem (ECDLP)</strong> - which Shor's algorithm also solves. Same fate as RSA." },
+
+  // DECOHERENT (uncertain / try again)
+  { text: "Reply lost to decoherence - observe again", state: "decoherent", q: "T2: expired",
+    concept: "Decoherence (T2 time)",
+    learn: "<strong>T2</strong> is how long a qubit can hold its quantum state before noise destroys it - usually microseconds. 'T2 expired' = the answer faded before it could be read." },
+
+  { text: "Heisenberg says we cannot know both at once", state: "decoherent", q: "Δx·Δp ≥ ħ/2",
+    concept: "Heisenberg uncertainty principle",
+    learn: "You can't simultaneously know a particle's exact position AND momentum. The more you pin down one, the fuzzier the other gets. Some questions just can't have a clean answer." },
+
+  { text: "The qubit is in a tantrum - try again", state: "decoherent", q: "fidelity: 0.31",
+    concept: "Qubit fidelity",
+    learn: "<strong>Fidelity</strong> measures how accurately a qubit holds its intended state (1.0 = perfect). 0.31 means it's basically lying. Real quantum hardware fights this constantly." },
+
+  { text: "Both yes and no - until you decide", state: "decoherent", q: "α|0⟩ + β|1⟩",
+    concept: "Superposition",
+    learn: "Before measurement, a qubit can be in a blend of states: <strong>α|0⟩ + β|1⟩</strong>, where α and β are probabilities. The qubit is genuinely 'both' - until something forces a choice." },
+
+  { text: "Reality forked - check both timelines", state: "decoherent", q: "many-worlds: yes",
+    concept: "Many-worlds interpretation",
+    learn: "Hugh Everett's idea that every quantum measurement creates a new universe for each outcome. So instead of collapsing, reality just… branches. Forever." },
+
+  { text: "The observer has not yet observed", state: "decoherent", q: "measurement pending",
+    concept: "Measurement problem",
+    learn: "Until a quantum system is measured, it has no definite state. Physicists still argue over what 'measurement' even means - it's one of the deepest open problems in physics." },
+
+  { text: "Ask again after the next decoherence cycle", state: "decoherent", q: "T1 reset: 47μs",
+    concept: "Decoherence (T1 time)",
+    learn: "<strong>T1</strong> is how long a qubit holds its energy state before relaxing back to ground. After T1, the qubit forgets what you stored. 47 microseconds is realistic for today's hardware." },
+
+  { text: "Quantum noise is high today - retry", state: "decoherent", q: "SNR: poor",
+    concept: "Quantum noise",
+    learn: "Real qubits are incredibly sensitive - vibrations, heat, stray photons, all add noise. A poor signal-to-noise ratio means the answer is unreliable. This is why quantum computers live in cryogenic refrigerators." },
+
+  { text: "Schrödinger filed an inconclusive report", state: "decoherent", q: "|cat⟩ undefined",
+    concept: "Schrödinger's cat",
+    learn: "Until the box is opened, the cat is genuinely both alive and dead - it's not just unknown, it's <em>undefined</em>. So Schrödinger himself can't give you a straight answer." },
+
+  { text: "Your question is in superposition with its own answer", state: "decoherent", q: "self-entangled",
+    concept: "Superposition (recursive)",
+    learn: "A joke: your question is in a quantum blend of itself and its answer. Real superposition only applies to quantum states, not English sentences - but the universe has a sense of humor." },
+];
+
+// Fisher-Yates shuffle for true randomness
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+shuffle(answers);
+
+const chamber = document.getElementById('chamber');
+const chamberContainer = document.getElementById('chamberContainer');
+const superposition = document.getElementById('superposition');
+const resultDisplay = document.getElementById('resultDisplay');
+const quantumState = document.getElementById('quantumState');
+const fullAnswer = document.getElementById('fullAnswer');
+const stateBadge = document.getElementById('stateBadge');
+const probBadge = document.getElementById('probBadge');
+const answerDisplay = document.getElementById('answerDisplay');
+const explainer = document.getElementById('explainer');
+const explainerConcept = document.getElementById('explainerConcept');
+const explainerBody = document.getElementById('explainerBody');
+const prompt = document.getElementById('prompt');
+const questionInput = document.getElementById('questionInput');
+
+let isAnimating = false;
+let lastIdx = -1;
+
+// Spawn ghost superposition text snippets
+function spawnSuperposition() {
+  superposition.innerHTML = '';
+  const ghosts = ['YES', 'NO', 'MAYBE', '|0⟩', '|1⟩', 'COLLAPSE', 'OBSERVE', 'ENTANGLE'];
+  for (let i = 0; i < 8; i++) {
+    const span = document.createElement('span');
+    span.className = 'super-text';
+    span.textContent = ghosts[i];
+    const angle = (i / 8) * Math.PI * 2;
+    const r = 35 + Math.random() * 25;
+    const x = Math.cos(angle) * r;
+    const y = Math.sin(angle) * r;
+    span.style.transform = `translate(${x}%, ${y}%)`;
+    span.style.animationDelay = (Math.random() * 4) + 's';
+    superposition.appendChild(span);
+  }
+}
+spawnSuperposition();
+
+function getAnswer() {
+  let idx;
+  do { idx = Math.floor(Math.random() * answers.length); } while (idx === lastIdx);
+  lastIdx = idx;
+  return answers[idx];
+}
+
+function spawnParticles() {
+  const rect = chamberContainer.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['#00ffff', '#ff00cc', '#a060ff', '#ffffff'];
+
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    p.style.background = color;
+    p.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    document.body.appendChild(p);
+
+    const angle = (Math.PI * 2 * i) / 24 + (Math.random() - 0.5) * 0.4;
+    const distance = 100 + Math.random() * 120;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+
+    p.animate([
+      { opacity: 1, transform: 'translate(0, 0) scale(1)' },
+      { opacity: 0, transform: `translate(${tx}px, ${ty}px) scale(0)` }
+    ], { duration: 800 + Math.random() * 500, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' })
+      .onfinish = () => p.remove();
+  }
+}
+
+function spawnRipples() {
+  const colors = ['rgba(0, 255, 255, 0.7)', 'rgba(255, 0, 200, 0.6)', 'rgba(160, 96, 255, 0.6)'];
+  for (let i = 0; i < 3; i++) {
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.borderColor = colors[i];
+    ripple.style.width = '60px';
+    ripple.style.height = '60px';
+    chamber.appendChild(ripple);
+
+    ripple.animate([
+      { width: '60px', height: '60px', opacity: 1, borderWidth: '3px' },
+      { width: '320px', height: '320px', opacity: 0, borderWidth: '1px' }
+    ], { duration: 1100, delay: i * 180, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' })
+      .onfinish = () => ripple.remove();
+  }
+}
+
+function observe() {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  // Reset
+  chamber.classList.remove('collapsed');
+  answerDisplay.classList.remove('visible');
+  explainer.classList.remove('visible');
+  prompt.classList.add('hidden');
+
+  // Trigger collapse animation
+  chamber.classList.add('observing');
+  spawnRipples();
+
+  setTimeout(() => spawnParticles(), 700);
+
+  setTimeout(() => {
+    chamber.classList.remove('observing');
+    chamber.classList.add('collapsed');
+
+    const ans = getAnswer();
+    quantumState.textContent = ans.q;
+    fullAnswer.textContent = ans.text;
+
+    const stateLabels = {
+      coherent: 'Coherent',
+      entangled: 'Entangled',
+      collapsed: 'Collapsed',
+      decoherent: 'Decoherent'
+    };
+    stateBadge.textContent = stateLabels[ans.state];
+    stateBadge.className = 'badge ' + ans.state;
+
+    // Random plausible probability
+    const prob = (0.51 + Math.random() * 0.48).toFixed(3);
+    probBadge.textContent = `P = ${prob}`;
+    probBadge.className = 'badge ' + ans.state;
+
+    // Populate the learning explainer
+    explainerConcept.textContent = ans.concept;
+    explainerBody.innerHTML = ans.learn;
+
+    setTimeout(() => answerDisplay.classList.add('visible'), 200);
+    setTimeout(() => explainer.classList.add('visible'), 600);
+    setTimeout(() => { isAnimating = false; }, 1700);
+  }, 1400);
+}
+
+chamberContainer.addEventListener('click', observe);
+chamberContainer.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    observe();
+  }
+});
+questionInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); observe(); }
+});
+</script>
+</body>
+</html>

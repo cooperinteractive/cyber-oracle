@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superposition Explained</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 28px 16px 40px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 20%, #fcc, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.35;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+  header { text-align: center; margin-bottom: 28px; }
+
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff00cc, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+
+  @keyframes hueShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .subtitle {
+    color: #c8d8ff;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    text-shadow: 0 0 12px rgba(200, 216, 255, 0.4);
+    font-style: italic;
+  }
+
+  .nav { text-align: center; margin-bottom: 24px; }
+
+  .nav a {
+    color: #00ffff;
+    font-size: 0.8rem;
+    text-decoration: none;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.4);
+    padding-bottom: 2px;
+    transition: all 0.2s;
+  }
+
+  .nav a:hover, .nav a:focus-visible { color: #fff; border-bottom-color: #fff; outline: none; }
+  .nav a:focus-visible { box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.6); border-radius: 2px; }
+  .nav-sep { color: rgba(0, 255, 255, 0.4); }
+  .nav a { display: inline-block; margin: 4px 2px; }
+
+  .act {
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.55), rgba(40, 0, 60, 0.55));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 22px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.06);
+  }
+
+  .act-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  .act-num {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #00ffff;
+    letter-spacing: 2px;
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 3px 12px;
+    background: rgba(0, 255, 255, 0.08);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .act-title { font-size: 1.15rem; color: #fff; font-weight: 600; letter-spacing: 1px; }
+  .act-title em { color: #ff00cc; font-style: normal; text-shadow: 0 0 12px rgba(255, 0, 200, 0.5); }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    background: rgba(0, 0, 20, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .explanation {
+    font-size: 0.92rem;
+    color: #d8e8ff;
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  .explanation strong { color: #00ffff; font-weight: 600; }
+  .explanation em { color: #ff00cc; font-style: normal; font-weight: 600; }
+
+  .fact-row { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+
+  .fact {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 30, 0.4);
+    border-left: 3px solid #00ffff;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #c8d8ff;
+    line-height: 1.45;
+  }
+
+  .fact-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: #00ffff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .controls { text-align: center; margin-top: 18px; }
+
+  .btn {
+    background: rgba(0, 255, 255, 0.08);
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    color: #00ffff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .btn:hover, .btn:focus-visible {
+    background: rgba(0, 255, 255, 0.18);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+    outline: none;
+  }
+
+  .takeaway {
+    background: linear-gradient(135deg, rgba(60, 0, 60, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(255, 0, 200, 0.4);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .takeaway h3 {
+    color: #ff00cc;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  }
+
+  .takeaway p { color: #d8e8ff; line-height: 1.7; font-size: 0.95rem; max-width: 640px; margin: 0 auto; }
+
+  /* ============ Coin scene ============ */
+  .coin-scene { perspective: 800px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+
+  .coin {
+    width: 130px;
+    height: 130px;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: coinSpin 1.4s linear infinite;
+  }
+
+  @keyframes coinSpin {
+    0% { transform: rotateY(0deg) rotateX(15deg); }
+    100% { transform: rotateY(360deg) rotateX(15deg); }
+  }
+
+  .coin-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    font-weight: 800;
+    backface-visibility: hidden;
+    box-shadow: 0 0 40px currentColor, inset 0 -20px 30px rgba(0,0,0,0.4);
+  }
+
+  .coin-face.heads {
+    background: radial-gradient(circle at 35% 30%, #66ffcc, #00aa88);
+    color: #001a14;
+    text-shadow: 0 0 8px rgba(0, 255, 200, 0.5);
+  }
+
+  .coin-face.tails {
+    background: radial-gradient(circle at 35% 30%, #ff77ff, #aa0099);
+    color: #1a0014;
+    transform: rotateY(180deg);
+    text-shadow: 0 0 8px rgba(255, 100, 255, 0.5);
+  }
+
+  .coin.collapsed { animation: none; }
+  .coin.collapsed.heads { transform: rotateY(0deg) rotateX(15deg); }
+  .coin.collapsed.tails { transform: rotateY(180deg) rotateX(15deg); }
+
+  .coin-label {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    background: rgba(0, 0, 30, 0.6);
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+  }
+
+  .coin-label.collapsed { color: #ff00cc; border-color: rgba(255, 0, 200, 0.5); text-shadow: 0 0 10px rgba(255, 0, 200, 0.6); }
+
+  /* ============ Bloch sphere ============ */
+  .bloch-scene {
+    perspective: 900px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bloch-sphere {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    transform-style: preserve-3d;
+    animation: blochRotate 14s linear infinite;
+  }
+
+  @keyframes blochRotate {
+    from { transform: rotateY(0deg) rotateX(15deg); }
+    to { transform: rotateY(360deg) rotateX(15deg); }
+  }
+
+  .bloch-shell {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: radial-gradient(circle at 35% 30%, rgba(0, 255, 255, 0.06), transparent 60%);
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.2), inset 0 0 40px rgba(0, 100, 200, 0.15);
+  }
+
+  .bloch-equator {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
+    transform: rotateX(90deg);
+  }
+
+  .bloch-meridian {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 0, 200, 0.25);
+    transform: rotateY(90deg);
+  }
+
+  .bloch-label {
+    position: absolute;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #fff;
+    text-shadow: 0 0 10px #00ffff;
+    font-weight: bold;
+  }
+
+  .bloch-label.top { top: -22px; left: 50%; transform: translateX(-50%); }
+  .bloch-label.bottom { bottom: -22px; left: 50%; transform: translateX(-50%); }
+
+  .bloch-vector {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 110px;
+    height: 3px;
+    background: linear-gradient(90deg, #ff00cc, #00ffff);
+    box-shadow: 0 0 16px #ff00cc, 0 0 24px #00ffff;
+    transform-origin: 0 50%;
+    border-radius: 2px;
+    animation: vectorWobble 4s ease-in-out infinite;
+  }
+
+  @keyframes vectorWobble {
+    0%, 100% { transform: rotateZ(-30deg) rotateY(0deg); }
+    25% { transform: rotateZ(-60deg) rotateY(45deg); }
+    50% { transform: rotateZ(-90deg) rotateY(90deg); }
+    75% { transform: rotateZ(-45deg) rotateY(-30deg); }
+  }
+
+  .bloch-vector::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #00ffff 50%, transparent);
+    box-shadow: 0 0 16px #00ffff, 0 0 32px rgba(0, 255, 255, 0.5);
+  }
+
+  /* ============ Cyber metaphor: parallel logins ============ */
+  .cyber-stage {
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 0 16px;
+    flex-wrap: wrap;
+  }
+
+  .qbox {
+    width: 96px;
+    height: 96px;
+    border-radius: 12px;
+    background: rgba(0, 0, 30, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #c8d8ff;
+    text-align: center;
+    padding: 8px;
+    position: relative;
+    transition: all 0.4s ease;
+  }
+
+  .qbox.active {
+    border-color: rgba(0, 255, 255, 0.9);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+    background: rgba(0, 100, 150, 0.2);
+  }
+
+  .qbox-bit {
+    font-size: 1.4rem;
+    color: #00ffff;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .qbox-label { font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; }
+
+  .arrow {
+    font-size: 1.4rem;
+    color: rgba(255, 0, 200, 0.7);
+    text-shadow: 0 0 10px rgba(255, 0, 200, 0.5);
+  }
+
+  @media (max-width: 600px) {
+    .stage { height: 240px; }
+    .coin { width: 100px; height: 100px; }
+    .coin-face { font-size: 42px; }
+    .bloch-sphere { width: 170px; height: 170px; }
+    .qbox { width: 78px; height: 78px; font-size: 0.62rem; }
+    .qbox-bit { font-size: 1.1rem; }
+    .arrow { font-size: 1.1rem; }
+    .act { padding: 18px; }
+    .act-title { font-size: 1rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .coin, .bloch-sphere, .bloch-vector, h1 { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="nav" aria-label="Top navigation">
+    <a href="quantum.html">quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="entanglement.html">entanglement</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="quantum-tunneling.html">tunneling</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="schrodingers-cat.html">schrodinger's cat</a>
+  </nav>
+
+  <header>
+    <h1>Superposition</h1>
+    <div class="subtitle">Both states at once, until you look</div>
+  </header>
+
+  <main>
+
+  <!-- ACT 1: The classical coin -->
+  <section class="act" aria-labelledby="act1-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 01</div>
+      <h2 id="act1-title" class="act-title">A coin is <em>either</em> heads or tails</h2>
+    </div>
+
+    <div class="stage" aria-hidden="true">
+      <div class="coin-scene">
+        <div class="coin" id="classicalCoin">
+          <div class="coin-face heads">H</div>
+          <div class="coin-face tails">T</div>
+        </div>
+      </div>
+      <div class="coin-label">Spinning. Final state will be H or T.</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="flipBtn" aria-label="Flip the classical coin">Flip the coin</button>
+    </div>
+
+    <p class="explanation" style="margin-top: 14px;">
+      A real coin in midair is just <em>moving fast</em>. It already has a definite state. We just cannot see it yet. When it lands, we discover what it always was. <strong>Heads</strong> or <strong>tails</strong>. One or the other. Never both.
+    </p>
+  </section>
+
+  <!-- ACT 2: Quantum coin in superposition -->
+  <section class="act" aria-labelledby="act2-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 02</div>
+      <h2 id="act2-title" class="act-title">A <em>qubit</em> is genuinely both at once</h2>
+    </div>
+
+    <div class="stage" aria-hidden="true">
+      <div class="bloch-scene">
+        <div class="bloch-sphere">
+          <div class="bloch-shell"></div>
+          <div class="bloch-equator"></div>
+          <div class="bloch-meridian"></div>
+          <span class="bloch-label top">|0&#10217;</span>
+          <span class="bloch-label bottom">|1&#10217;</span>
+          <div class="bloch-vector"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="explanation">
+      A qubit is not just unknown. It is genuinely <em>both</em> states simultaneously. Physicists draw it as an arrow on a sphere, called a <strong>Bloch sphere</strong>. The poles are the two definite states, written <strong>|0&#10217;</strong> and <strong>|1&#10217;</strong>. Everywhere else is a mixture. The arrow can point in any direction, encoding any blend of 0 and 1, with any phase. That is one qubit holding infinite shades of meaning.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">The math</div>
+        Any qubit state is &#945;|0&#10217; + &#946;|1&#10217;, where &#945; and &#946; are complex numbers and |&#945;|&#178; + |&#946;|&#178; = 1. Those squared values are the probabilities of measuring 0 or 1.
+      </div>
+      <div class="fact">
+        <div class="fact-label">Why it matters</div>
+        Two qubits in superposition represent four states at once. Ten qubits represent 1,024. Three hundred qubits hold more states than there are atoms in the visible universe.
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 3: Cybersecurity translation -->
+  <section class="act" aria-labelledby="act3-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 03</div>
+      <h2 id="act3-title" class="act-title">Why this <em>matters</em> for security</h2>
+    </div>
+
+    <div class="stage cyber-stage" aria-hidden="true">
+      <div class="qbox" id="qb1"><span class="qbox-bit">|0&#10217;</span><span class="qbox-label">classical</span></div>
+      <span class="arrow">&#8594;</span>
+      <div class="qbox" id="qb2"><span class="qbox-bit">|0&#10217;+|1&#10217;</span><span class="qbox-label">superposition</span></div>
+      <span class="arrow">&#8594;</span>
+      <div class="qbox" id="qb3"><span class="qbox-bit">2&#7506; states</span><span class="qbox-label">parallel</span></div>
+    </div>
+
+    <p class="explanation">
+      Classical computers brute-force a password by trying one guess at a time. A quantum computer in superposition can explore <strong>many guesses simultaneously</strong>. <strong>Grover's algorithm</strong> uses this to crack symmetric encryption roughly twice as fast as the best classical method. AES-128 effectively becomes AES-64 strength. The fix is not to abandon AES. It is to double the key size to AES-256, which Grover cannot meaningfully shorten.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">Grover's algorithm</div>
+        A quantum search that finds a needle in an N-item haystack in roughly &#8730;N steps instead of N. Halves the effective bit-strength of any symmetric cipher.
+      </div>
+      <div class="fact">
+        <div class="fact-label">Practical defense</div>
+        Use AES-256, SHA-384 or larger, and ChaCha20 with full key length. These survive Grover. RSA and ECC do not survive Shor (different attack, same lesson).
+      </div>
+    </div>
+  </section>
+
+  <div class="takeaway">
+    <h3>The big idea</h3>
+    <p>
+      Superposition means a quantum bit can hold every possible answer simultaneously. That is a computing superpower. And it is also the engine that lets quantum attackers explore your defenses in parallel. The whole field of post-quantum cryptography exists to build problems that even a parallel-everything computer cannot crack faster.
+    </p>
+  </div>
+
+  </main>
+
+  <nav class="nav" style="margin-top: 28px;" aria-label="Bottom navigation">
+    <a href="quantum.html">quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="entanglement.html">entanglement</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="quantum-tunneling.html">tunneling</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="schrodingers-cat.html">schrodinger's cat</a>
+  </nav>
+</div>
+
+<script>
+  const coin = document.getElementById('classicalCoin');
+  const flipBtn = document.getElementById('flipBtn');
+  flipBtn.addEventListener('click', () => {
+    coin.classList.remove('collapsed', 'heads', 'tails');
+    void coin.offsetWidth;
+    setTimeout(() => {
+      const result = Math.random() < 0.5 ? 'heads' : 'tails';
+      coin.classList.add('collapsed', result);
+    }, 1100);
+  });
+
+  // Pulse the qboxes left to right
+  const boxes = ['qb1', 'qb2', 'qb3'].map(id => document.getElementById(id));
+  let activeIdx = 0;
+  setInterval(() => {
+    boxes.forEach(b => b.classList.remove('active'));
+    boxes[activeIdx].classList.add('active');
+    activeIdx = (activeIdx + 1) % boxes.length;
+  }, 1200);
+</script>
+
+</body>
+</html>

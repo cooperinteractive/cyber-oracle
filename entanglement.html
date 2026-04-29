@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Entanglement Explained</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(ellipse at top, #0a0820 0%, #02000a 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    padding: 28px 16px 40px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #aaf, transparent),
+      radial-gradient(1px 1px at 40% 60%, #fff, transparent),
+      radial-gradient(2px 2px at 50% 50%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.35;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+  header { text-align: center; margin-bottom: 28px; }
+
+  h1 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    font-weight: 200;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff00cc, #00ffff, #ff00cc);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hueShift 6s linear infinite;
+  }
+  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+  .subtitle {
+    color: #c8d8ff; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase;
+    margin-top: 10px; text-shadow: 0 0 12px rgba(200, 216, 255, 0.4); font-style: italic;
+  }
+
+  .nav { text-align: center; margin-bottom: 24px; }
+  .nav a {
+    color: #00ffff; font-size: 0.8rem; text-decoration: none; letter-spacing: 2px;
+    text-transform: uppercase; border-bottom: 1px solid rgba(0, 255, 255, 0.4);
+    padding-bottom: 2px; transition: all 0.2s;
+  }
+  .nav a:hover, .nav a:focus-visible { color: #fff; border-bottom-color: #fff; outline: none; }
+  .nav a:focus-visible { box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.6); border-radius: 2px; }
+  .nav-sep { color: rgba(0, 255, 255, 0.4); }
+  .nav a { display: inline-block; margin: 4px 2px; }
+
+  .act {
+    background: linear-gradient(135deg, rgba(0, 30, 60, 0.55), rgba(40, 0, 60, 0.55));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 16px; padding: 22px; margin-bottom: 22px;
+    backdrop-filter: blur(10px); box-shadow: 0 0 40px rgba(0, 255, 255, 0.06);
+  }
+
+  .act-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  .act-num {
+    font-family: 'Courier New', monospace; font-size: 0.7rem; color: #00ffff;
+    letter-spacing: 2px; border: 1px solid rgba(0, 255, 255, 0.5); border-radius: 20px;
+    padding: 3px 12px; background: rgba(0, 255, 255, 0.08);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .act-title { font-size: 1.15rem; color: #fff; font-weight: 600; letter-spacing: 1px; }
+  .act-title em { color: #ff00cc; font-style: normal; text-shadow: 0 0 12px rgba(255, 0, 200, 0.5); }
+
+  .stage {
+    position: relative; width: 100%; height: 280px;
+    background: rgba(0, 0, 20, 0.5); border-radius: 12px;
+    overflow: hidden; border: 1px solid rgba(0, 255, 255, 0.15); margin-bottom: 14px;
+  }
+
+  .explanation { font-size: 0.92rem; color: #d8e8ff; line-height: 1.65; font-weight: 300; }
+  .explanation strong { color: #00ffff; font-weight: 600; }
+  .explanation em { color: #ff00cc; font-style: normal; font-weight: 600; }
+
+  .fact-row { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .fact {
+    flex: 1; min-width: 200px; padding: 10px 12px; background: rgba(0, 0, 30, 0.4);
+    border-left: 3px solid #00ffff; border-radius: 4px;
+    font-size: 0.8rem; color: #c8d8ff; line-height: 1.45;
+  }
+  .fact-label {
+    font-family: 'Courier New', monospace; font-size: 0.65rem; color: #00ffff;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  .controls { text-align: center; margin-top: 18px; }
+  .btn {
+    background: rgba(0, 255, 255, 0.08); border: 1px solid rgba(0, 255, 255, 0.5);
+    color: #00ffff; padding: 10px 22px; border-radius: 30px;
+    font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase;
+    font-family: inherit; cursor: pointer; transition: all 0.25s;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+  .btn:hover, .btn:focus-visible {
+    background: rgba(0, 255, 255, 0.18); color: #fff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.3); outline: none;
+  }
+  .btn[disabled] { opacity: 0.4; cursor: wait; }
+
+  .takeaway {
+    background: linear-gradient(135deg, rgba(60, 0, 60, 0.7), rgba(0, 30, 60, 0.7));
+    border: 1px solid rgba(255, 0, 200, 0.4); border-radius: 16px;
+    padding: 24px; text-align: center;
+  }
+  .takeaway h3 {
+    color: #ff00cc; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 10px; text-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  }
+  .takeaway p { color: #d8e8ff; line-height: 1.7; font-size: 0.95rem; max-width: 640px; margin: 0 auto; }
+
+  /* ============ Two entangled particles ============ */
+  .pair-stage {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 24px;
+    position: relative;
+  }
+
+  .label-row {
+    position: absolute;
+    top: 16px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-around;
+    pointer-events: none;
+  }
+
+  .person-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #c8d8ff;
+    text-transform: uppercase;
+    background: rgba(0, 0, 30, 0.6);
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+  }
+
+  .qparticle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.5s;
+    background: radial-gradient(circle at 35% 30%, #fff, #888 50%, #444);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+    border: none;
+  }
+
+  .qparticle:focus-visible {
+    outline: 3px solid #00ffff;
+    outline-offset: 4px;
+  }
+
+  .qparticle.unmeasured {
+    animation: particleSwirl 2s linear infinite;
+    background:
+      conic-gradient(from 0deg,
+        rgba(0, 255, 255, 0.7),
+        rgba(255, 0, 200, 0.7),
+        rgba(160, 96, 255, 0.7),
+        rgba(0, 255, 255, 0.7));
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  @keyframes particleSwirl {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+  }
+
+  .qparticle.up {
+    background: radial-gradient(circle at 35% 30%, #aaffcc, #00aa66);
+    color: #001a14;
+    box-shadow: 0 0 40px rgba(0, 255, 150, 0.7);
+  }
+
+  .qparticle.down {
+    background: radial-gradient(circle at 35% 30%, #ffaaff, #aa0099);
+    color: #1a0014;
+    box-shadow: 0 0 40px rgba(255, 0, 200, 0.7);
+  }
+
+  /* Glowing entanglement line */
+  .link {
+    position: absolute;
+    top: 50%;
+    left: 22%;
+    right: 22%;
+    height: 4px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg,
+      rgba(0, 255, 255, 0.6),
+      rgba(255, 0, 200, 0.6),
+      rgba(0, 255, 255, 0.6));
+    background-size: 200% 100%;
+    border-radius: 2px;
+    box-shadow: 0 0 16px rgba(255, 0, 200, 0.5);
+    animation: linkFlow 2.5s linear infinite;
+  }
+
+  @keyframes linkFlow {
+    from { background-position: 0% 50%; }
+    to { background-position: 200% 50%; }
+  }
+
+  .link.broken { opacity: 0.2; animation: none; }
+
+  .result-text {
+    position: absolute;
+    bottom: 14px;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    color: #c8d8ff;
+    text-transform: uppercase;
+    min-height: 18px;
+  }
+
+  /* ============ BB84 visual ============ */
+  .bb84-stage {
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: relative;
+  }
+
+  .actor {
+    text-align: center;
+    width: 80px;
+    z-index: 2;
+  }
+
+  .actor-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    margin: 0 auto 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+  }
+
+  .alice .actor-icon { background: linear-gradient(135deg, #00ffaa, #00aaff); color: #001020; box-shadow: 0 0 25px rgba(0, 255, 170, 0.5); }
+  .bob .actor-icon { background: linear-gradient(135deg, #ff00cc, #a060ff); color: #fff; box-shadow: 0 0 25px rgba(255, 0, 200, 0.5); }
+  .eve .actor-icon { background: linear-gradient(135deg, #ff4444, #aa0022); color: #fff; box-shadow: 0 0 25px rgba(255, 60, 60, 0.5); }
+
+  .eve {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 14px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .eve.visible { opacity: 1; }
+
+  .actor-label {
+    font-size: 0.7rem; color: #fff; letter-spacing: 1.5px;
+    text-transform: uppercase; font-family: 'Courier New', monospace;
+  }
+
+  .photon-track {
+    position: absolute;
+    top: 50%;
+    left: 110px;
+    right: 110px;
+    height: 3px;
+    transform: translateY(-50%);
+    background: rgba(0, 255, 255, 0.15);
+    border-radius: 2px;
+  }
+
+  .photon {
+    position: absolute;
+    top: -7px;
+    left: 0;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #00ffff 50%, transparent);
+    box-shadow: 0 0 16px #00ffff;
+    animation: photonTravel 3s linear infinite;
+  }
+
+  @keyframes photonTravel {
+    from { left: 0; }
+    to { left: calc(100% - 17px); }
+  }
+
+  @media (max-width: 600px) {
+    .qparticle { width: 84px; height: 84px; font-size: 22px; }
+    .stage { height: 220px; }
+    .pair-stage { padding: 0 12px; }
+    .bb84-stage { height: 200px; padding: 0 8px; }
+    .actor { width: 64px; }
+    .actor-icon { width: 48px; height: 48px; font-size: 22px; }
+    .photon-track { left: 88px; right: 88px; }
+    .act { padding: 18px; }
+    .act-title { font-size: 1rem; }
+    .person-label { font-size: 0.6rem; padding: 3px 8px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qparticle.unmeasured, .link, .photon, h1 { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <nav class="nav" aria-label="Top navigation">
+    <a href="quantum.html">quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="superposition.html">superposition</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="quantum-tunneling.html">tunneling</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="schrodingers-cat.html">schrodinger's cat</a>
+  </nav>
+
+  <header>
+    <h1>Entanglement</h1>
+    <div class="subtitle">Two particles, one shared fate</div>
+  </header>
+
+  <main>
+
+  <!-- ACT 1: The classical comparison -->
+  <section class="act" aria-labelledby="act1-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 01</div>
+      <h2 id="act1-title" class="act-title">Two coins are <em>independent</em></h2>
+    </div>
+
+    <p class="explanation">
+      Take two coins, one to New York and one to Tokyo. Flip both. The result of one tells you nothing about the result of the other. They are independent. Measuring one coin in New York does not change the coin in Tokyo. This is how the classical world works. This is what Einstein wanted physics to be.
+    </p>
+  </section>
+
+  <!-- ACT 2: Quantum entanglement -->
+  <section class="act" aria-labelledby="act2-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 02</div>
+      <h2 id="act2-title" class="act-title">Two <em>entangled</em> qubits share a fate</h2>
+    </div>
+
+    <div class="stage pair-stage" aria-hidden="true">
+      <div class="label-row">
+        <span class="person-label">Alice (Earth)</span>
+        <span class="person-label">Bob (Mars)</span>
+      </div>
+      <button class="qparticle unmeasured" id="pA" type="button" aria-label="Measure Alice's particle">?</button>
+      <div class="link" id="link"></div>
+      <button class="qparticle unmeasured" id="pB" type="button" aria-label="Measure Bob's particle">?</button>
+      <div class="result-text" id="resultText">Click either particle to measure it</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="resetBtn">Reset and entangle again</button>
+    </div>
+
+    <p class="explanation" style="margin-top: 14px;">
+      These two qubits are <strong>entangled</strong>. Before measurement, neither one has a definite state. Both are spinning through every possibility at once. The instant Alice measures her particle on Earth and gets <strong>green</strong>, Bob's particle on Mars locks into <strong>green</strong> too. <em>Faster than light could travel between them.</em> Einstein called this "spooky action at a distance" and refused to believe it. Experiments have proven him wrong many times since.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">Bell state</div>
+        The simplest entangled pair is &#945;|00&#10217; + &#946;|11&#10217;: both qubits are 0, or both are 1, never one of each. Measuring one tells you the other instantly.
+      </div>
+      <div class="fact">
+        <div class="fact-label">No FTL communication</div>
+        Entanglement does not let you send messages faster than light. The outcomes are random, just correlated. You still need a classical channel to coordinate.
+      </div>
+    </div>
+  </section>
+
+  <!-- ACT 3: BB84 / QKD -->
+  <section class="act" aria-labelledby="act3-title">
+    <div class="act-header">
+      <div class="act-num" aria-hidden="true">Act 03</div>
+      <h2 id="act3-title" class="act-title">The <em>cybersecurity</em> superpower: QKD</h2>
+    </div>
+
+    <div class="stage bb84-stage" aria-hidden="true">
+      <div class="actor alice">
+        <div class="actor-icon">A</div>
+        <div class="actor-label">Alice</div>
+      </div>
+      <div class="photon-track">
+        <div class="photon"></div>
+      </div>
+      <div class="actor bob">
+        <div class="actor-icon">B</div>
+        <div class="actor-label">Bob</div>
+      </div>
+      <div class="actor eve" id="eve">
+        <div class="actor-icon">E</div>
+        <div class="actor-label">Eve</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="eveBtn">Add an eavesdropper</button>
+    </div>
+
+    <p class="explanation" style="margin-top: 14px;">
+      <strong>Quantum Key Distribution (QKD)</strong>, like the famous <strong>BB84 protocol</strong>, uses entangled photons to share encryption keys. The genius part: <em>any attempt to eavesdrop disturbs the quantum state and gets caught.</em> If Eve intercepts the photons, the entanglement breaks. Alice and Bob compare a small portion of their key over a normal channel. If the error rate is too high, they know they were spied on, and they throw the key away. With classical encryption, you can be wiretapped silently. With quantum keys, eavesdropping leaves fingerprints in physics itself.
+    </p>
+
+    <div class="fact-row">
+      <div class="fact">
+        <div class="fact-label">Already deployed</div>
+        QKD networks exist today in China (over 4,600 km), the EU, and several banks and governments. Satellite-based QKD has been demonstrated.
+      </div>
+      <div class="fact">
+        <div class="fact-label">Limits</div>
+        QKD only protects the key exchange. You still need strong post-quantum algorithms for the rest. And it requires special hardware. So most security teams will use post-quantum cryptography first.
+      </div>
+    </div>
+  </section>
+
+  <div class="takeaway">
+    <h3>The big idea</h3>
+    <p>
+      Entanglement links two particles so deeply that measuring one instantly defines the other, no matter the distance. It is the closest thing physics has to magic. For cybersecurity, it gives us a channel where eavesdropping is mathematically impossible to hide. The universe enforces the secret for you.
+    </p>
+  </div>
+
+  </main>
+
+  <nav class="nav" style="margin-top: 28px;" aria-label="Bottom navigation">
+    <a href="quantum.html">quantum oracle</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="superposition.html">superposition</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="quantum-tunneling.html">tunneling</a>
+    <span class="nav-sep" aria-hidden="true">&nbsp;&middot;&nbsp;</span>
+    <a href="schrodingers-cat.html">schrodinger's cat</a>
+  </nav>
+</div>
+
+<script>
+  const pA = document.getElementById('pA');
+  const pB = document.getElementById('pB');
+  const link = document.getElementById('link');
+  const resetBtn = document.getElementById('resetBtn');
+  const resultText = document.getElementById('resultText');
+  let measured = false;
+  let pendingState = null;
+
+  function measure(first, second) {
+    if (measured) return;
+    measured = true;
+
+    // Random shared state
+    const state = Math.random() < 0.5 ? 'up' : 'down';
+    pendingState = state;
+    const symbol = state === 'up' ? '&#8593;' : '&#8595;';
+    const name = state === 'up' ? 'spin up' : 'spin down';
+
+    first.classList.remove('unmeasured');
+    first.classList.add(state);
+    first.innerHTML = symbol;
+
+    resultText.innerHTML = `Measured: <strong style="color:#fff">${name}</strong>. The other particle locks instantly...`;
+
+    setTimeout(() => {
+      second.classList.remove('unmeasured');
+      second.classList.add(state);
+      second.innerHTML = symbol;
+      resultText.innerHTML = `Both particles: <strong style="color:#fff">${name}</strong>. Always correlated.`;
+      link.classList.add('broken');
+    }, 700);
+  }
+
+  pA.addEventListener('click', () => measure(pA, pB));
+  pB.addEventListener('click', () => measure(pB, pA));
+
+  resetBtn.addEventListener('click', () => {
+    measured = false;
+    pendingState = null;
+    [pA, pB].forEach(p => {
+      p.classList.remove('up', 'down');
+      p.classList.add('unmeasured');
+      p.textContent = '?';
+    });
+    link.classList.remove('broken');
+    resultText.textContent = 'Click either particle to measure it';
+  });
+
+  // BB84 demo
+  const eveBtn = document.getElementById('eveBtn');
+  const eve = document.getElementById('eve');
+  let eveOn = false;
+  eveBtn.addEventListener('click', () => {
+    eveOn = !eveOn;
+    eve.classList.toggle('visible', eveOn);
+    eveBtn.textContent = eveOn ? 'Eve detected, remove her' : 'Add an eavesdropper';
+  });
+</script>
+
+</body>
+</html>
