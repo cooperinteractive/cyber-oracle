@@ -92,6 +92,10 @@
     combo: (lvl) => tone({ freq: 600 + Math.min(lvl, 6) * 90, duration: 0.05, type: 'square', volume: 0.04 }),
     tick: () => tone({ freq: 1200, duration: 0.015, type: 'square', volume: 0.025 }),
     timeWarn: () => tone({ freq: 880, duration: 0.06, type: 'square', volume: 0.06 }),
+    alert: () => {
+      tone({ freq: 880, duration: 0.1, type: 'square', volume: 0.07 });
+      setTimeout(() => tone({ freq: 660, duration: 0.12, type: 'square', volume: 0.07 }), 110);
+    },
     win: () => {
       const notes = [523.25, 659.25, 783.99, 1046.5];
       notes.forEach((n, i) => setTimeout(() => tone({ freq: n, duration: 0.18, type: 'square', volume: 0.08 }), i * 110));

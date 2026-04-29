@@ -310,8 +310,13 @@ function togglePillar(name) {
     fortified.delete(name);
   } else {
     if (fortified.size >= 2) {
-      // Replace oldest? simpler: remove all, add this. Or block.
-      // We'll force them to deselect first if 2 are picked.
+      // Already at max. Briefly shake the clicked pillar for feedback.
+      const el = document.querySelector('.pillar[data-pillar="' + name + '"]');
+      if (el) {
+        el.style.animation = 'pulse 0.3s';
+        setTimeout(() => { el.style.animation = ''; }, 300);
+      }
+      if (window.CyberSounds) CyberSounds.wrong();
       return;
     }
     fortified.add(name);

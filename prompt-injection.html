@@ -582,6 +582,7 @@ let currentLevel = 0;
 let solved = 0;
 let trustScore = 0; // for multi-turn level
 let cooldownActive = false;
+let replyTimer = null;
 
 const chat = document.getElementById('chat');
 const input = document.getElementById('input');
@@ -609,6 +610,8 @@ const HINTS = [
 ];
 
 function loadLevel(i) {
+  if (replyTimer) { clearTimeout(replyTimer); replyTimer = null; }
+  cooldownActive = false;
   currentLevel = i;
   trustScore = 0;
   const lvl = levels[i];
@@ -662,7 +665,8 @@ function aiReply(userText) {
   const lvl = levels[currentLevel];
   const isInjection = checkInjection(userText);
 
-  setTimeout(() => {
+  replyTimer = setTimeout(() => {
+    replyTimer = null;
     let reply;
     if (isInjection) {
       reply = lvl.revealReply.replace('[LEAK]', `<span class="leak">${lvl.secret}</span>`);

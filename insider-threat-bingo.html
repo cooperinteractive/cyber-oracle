@@ -333,7 +333,7 @@ function clickSquare(i, el) {
     updateLines();
     checkBingo();
   } else {
-    score = Math.max(0, score - 10);
+    score = Math.max(0, score - 3);
     el.classList.add('miss-flash');
     if (window.CyberSounds) CyberSounds.wrong();
     setTimeout(() => el.classList.remove('miss-flash'), 400);
@@ -399,6 +399,12 @@ function loadProfile() {
     const id = m.match(/data-i="([^"]+)"/)[1];
     activeIndicators.add(id);
   });
+
+  // Append a hint showing how many flags to find
+  const hint = document.createElement('div');
+  hint.style.cssText = 'margin-top: 10px; font-family: monospace; font-size: 0.7rem; color: #ffcc66; letter-spacing: 1.5px; text-transform: uppercase;';
+  hint.textContent = `${activeIndicators.size} red flag${activeIndicators.size === 1 ? '' : 's'} in this profile`;
+  profileNarrativeEl.appendChild(hint);
 }
 
 function endRound() {
