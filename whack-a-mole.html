@@ -372,6 +372,18 @@
     text-transform: uppercase;
   }
 
+  .copy-state {
+    margin-top: 8px;
+    min-height: 18px;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.35);
+  }
+
   .score-message textarea {
     width: 100%;
     min-height: 92px;
@@ -460,8 +472,9 @@
         <button class="btn" id="playAgain" type="button">Play again</button>
       </div>
       <div class="score-message" id="scoreMessagePanel">
-        <label for="scoreMessage">Message box</label>
+        <label for="scoreMessage">Webex chat message</label>
         <textarea id="scoreMessage" readonly></textarea>
+        <div class="copy-state" id="copyState" aria-live="polite"></div>
       </div>
     </div>
   </main>
@@ -502,6 +515,7 @@ const finalStats = document.getElementById('finalStats');
 const submitScore = document.getElementById('submitScore');
 const scoreMessagePanel = document.getElementById('scoreMessagePanel');
 const scoreMessage = document.getElementById('scoreMessage');
+const copyState = document.getElementById('copyState');
 const playAgain = document.getElementById('playAgain');
 
 let score = 0;
@@ -592,6 +606,7 @@ function start() {
   gameOver.classList.remove('visible');
   scoreMessagePanel.classList.remove('visible');
   scoreMessage.value = '';
+  copyState.textContent = '';
   submitScore.disabled = false;
   submitScore.textContent = 'Submit score';
   startBtn.style.display = 'none';
@@ -660,8 +675,10 @@ submitScore.addEventListener('click', async () => {
   scoreMessage.select();
   try {
     await navigator.clipboard.writeText(message);
+    copyState.textContent = 'Copied for Webex chat';
   } catch (err) {
     // Some embedded browsers disable clipboard writes; the message still appears selected.
+    copyState.textContent = 'Selected for Webex chat';
   }
 });
 
