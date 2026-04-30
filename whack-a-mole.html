@@ -93,7 +93,7 @@
 
   .hud {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
     margin-bottom: 18px;
   }
@@ -127,6 +127,7 @@
   .hud-value.time { color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
   .hud-value.time.low { color: #ff4488; text-shadow: 0 0 10px rgba(255, 68, 136, 0.6); animation: pulse 0.5s infinite; }
   .hud-value.misses { color: #ff6b88; text-shadow: 0 0 10px rgba(255, 100, 130, 0.5); }
+  .hud-value.high { color: #ffaa00; text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
 
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
@@ -344,6 +345,47 @@
     font-family: 'Courier New', monospace;
   }
 
+  .score-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .score-message {
+    display: none;
+    margin: 14px auto 0;
+    max-width: 560px;
+    text-align: left;
+  }
+
+  .score-message.visible { display: block; }
+
+  .score-message label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .score-message textarea {
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 170, 0, 0.45);
+    background: rgba(0, 10, 20, 0.85);
+    color: #fff;
+    font: 0.9rem/1.5 'Courier New', monospace;
+    outline: none;
+    box-shadow: inset 0 0 20px rgba(255, 170, 0, 0.04);
+  }
+
   /* Custom hammer cursor on board */
   .game-board.active { cursor: crosshair; }
 
@@ -370,7 +412,6 @@
 
 <div class="container">
   <div class="top-bar">
-    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
     <span class="back-link" style="border-color: rgba(255, 170, 0, 0.4); color: #ffaa00; cursor: default;">30s round</span>
   </div>
 
@@ -384,6 +425,7 @@
     <div class="hud-cell"><div class="hud-label">Combo</div><div class="hud-value" id="combo">x1</div></div>
     <div class="hud-cell"><div class="hud-label">Misses</div><div class="hud-value misses" id="misses">0</div></div>
     <div class="hud-cell"><div class="hud-label">Time</div><div class="hud-value time" id="timer">30</div></div>
+    <div class="hud-cell"><div class="hud-label">High Score</div><div class="hud-value high" id="highScore">0</div></div>
   </div>
 
   <p class="instructions">
@@ -413,7 +455,14 @@
       <div class="final-score" id="finalScore">0</div>
       <div class="final-grade" id="finalGrade"></div>
       <div class="final-stats" id="finalStats"></div>
-      <button class="btn" id="playAgain" type="button">Play again</button>
+      <div class="score-actions">
+        <button class="btn" id="submitScore" type="button">Submit score</button>
+        <button class="btn" id="playAgain" type="button">Play again</button>
+      </div>
+      <div class="score-message" id="scoreMessagePanel">
+        <label for="scoreMessage">Message box</label>
+        <textarea id="scoreMessage" readonly></textarea>
+      </div>
     </div>
   </main>
 </div>
@@ -444,14 +493,19 @@ const scoreEl = document.getElementById('score');
 const comboEl = document.getElementById('combo');
 const missesEl = document.getElementById('misses');
 const timerEl = document.getElementById('timer');
+const highScoreEl = document.getElementById('highScore');
 const startBtn = document.getElementById('startBtn');
 const gameOver = document.getElementById('gameOver');
 const finalScore = document.getElementById('finalScore');
 const finalGrade = document.getElementById('finalGrade');
 const finalStats = document.getElementById('finalStats');
+const submitScore = document.getElementById('submitScore');
+const scoreMessagePanel = document.getElementById('scoreMessagePanel');
+const scoreMessage = document.getElementById('scoreMessage');
 const playAgain = document.getElementById('playAgain');
 
 let score = 0;
+let highScore = 0;
 let misses = 0;
 let combo = 1;
 let comboTimer = null;
@@ -536,6 +590,10 @@ function start() {
   timerEl.textContent = ROUND_LENGTH;
   timerEl.classList.remove('low');
   gameOver.classList.remove('visible');
+  scoreMessagePanel.classList.remove('visible');
+  scoreMessage.value = '';
+  submitScore.disabled = false;
+  submitScore.textContent = 'Submit score';
   startBtn.style.display = 'none';
   running = true;
 
@@ -579,7 +637,7 @@ function end() {
   else if (score >= 1000) grade = 'Risky - the attackers got most of these';
   else grade = 'Concerning - your network is now a botnet';
   finalGrade.textContent = grade;
-  finalStats.innerHTML = `<span>${misses} breaches</span><span>${ROUND_LENGTH}s round</span>`;
+  finalStats.innerHTML = `<span>${misses} breaches</span><span>${ROUND_LENGTH}s round</span><span>submit to set high score</span>`;
   gameOver.classList.add('visible');
   if (window.CyberSounds) {
     if (score >= 2000) CyberSounds.win();
@@ -589,6 +647,23 @@ function end() {
 
 startBtn.addEventListener('click', start);
 playAgain.addEventListener('click', start);
+submitScore.addEventListener('click', async () => {
+  highScore = score;
+  highScoreEl.textContent = highScore;
+  const message = `President your hands confirm that you fired a rifle. High score: ${highScore}.`;
+  scoreMessage.value = message;
+  scoreMessagePanel.classList.add('visible');
+  finalStats.innerHTML = `<span>${misses} breaches</span><span>${ROUND_LENGTH}s round</span><span>high score ${highScore}</span>`;
+  submitScore.disabled = true;
+  submitScore.textContent = 'Submitted';
+  scoreMessage.focus();
+  scoreMessage.select();
+  try {
+    await navigator.clipboard.writeText(message);
+  } catch (err) {
+    // Some embedded browsers disable clipboard writes; the message still appears selected.
+  }
+});
 
 // Keyboard: Space to start
 document.addEventListener('keydown', (e) => {
@@ -599,6 +674,5 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
-<script src="sounds.js"></script>
 </body>
 </html>
