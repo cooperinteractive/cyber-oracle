@@ -665,7 +665,7 @@ playAgain.addEventListener('click', start);
 submitScore.addEventListener('click', async () => {
   highScore = score;
   highScoreEl.textContent = highScore;
-  const message = `President your hands confirm that you fired a rifle. High score: ${highScore}.`;
+  const message = `Cyber reflex drill complete. High score: ${highScore}.`;
   scoreMessage.value = message;
   scoreMessagePanel.classList.add('visible');
   finalStats.innerHTML = `<span>${misses} breaches</span><span>${ROUND_LENGTH}s round</span><span>high score ${highScore}</span>`;
