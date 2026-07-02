@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Reel 'Em In | Caught in the Net</title>
+<style>
+:root {
+  /* water */
+  --abyss: #041B26;        /* page background base */
+  --depth: #072A3C;        /* gradient partner */
+  --panel: #0B3348;        /* sign boards / cards */
+  --panel-deep: #082838;   /* inset wells */
+  --line: rgba(244, 235, 217, 0.16);   /* rope hairlines */
+  /* ink */
+  --cream: #F4EBD9;        /* primary text */
+  --cream-dim: #C9BFA8;    /* secondary text */
+  /* accents */
+  --lure: #FF7A45;         /* orange: primary action, player warmth */
+  --bobber: #E8564A;       /* red: danger, phish, enemies */
+  --biolume: #53DFE8;      /* cyan: glow, defense, friendly tech */
+  --kelp: #4FC98C;         /* green: success, safe */
+  --brass: #F5C15C;        /* gold: score, coins, trophies */
+  /* type */
+  --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--body);
+  color: var(--cream);
+  background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%) fixed;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ================= decor layer ================= */
+.decor { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.decor .net {
+  position: absolute; inset: -40%;
+  transform: rotate(8deg);
+  background:
+    repeating-linear-gradient(45deg, var(--line) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(-45deg, var(--line) 0 1px, transparent 1px 72px);
+  opacity: 0.35;
+}
+.decor .rays {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(100deg, transparent 10%, rgba(244,235,217,0.05) 15%, transparent 21%),
+    linear-gradient(96deg, transparent 34%, rgba(244,235,217,0.04) 39%, transparent 45%),
+    linear-gradient(104deg, transparent 58%, rgba(244,235,217,0.05) 63%, transparent 69%);
+}
+.decor .bub {
+  position: absolute;
+  bottom: -30px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .decor .bub { animation: decor-rise linear infinite; }
+  @keyframes decor-rise {
+    from { transform: translateY(0); opacity: 0.55; }
+    to   { transform: translateY(-115vh); opacity: 0; }
+  }
+}
+
+/* ================= home chip ================= */
+.home-chip {
+  position: fixed; top: 12px; left: 12px; z-index: 60;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 56px; padding: 0 20px;
+  border: 2px solid var(--cream); border-radius: 14px;
+  background: rgba(4, 27, 38, 0.75);
+  color: var(--cream); text-decoration: none;
+  font-family: var(--display); font-weight: 700;
+  font-size: 0.9rem; letter-spacing: 0.1em; text-transform: uppercase;
+  touch-action: manipulation;
+}
+.home-chip:active { transform: scale(0.96); background: rgba(11, 51, 72, 0.95); }
+
+/* ================= frame ================= */
+.frame {
+  position: relative; z-index: 1;
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  gap: 10px;
+  width: 100%; max-width: 1100px; margin: 0 auto;
+  padding: 10px 14px 14px;
+}
+
+.masthead { text-align: center; padding: 4px 130px 0; }
+.masthead h1 {
+  font-family: var(--display); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  font-size: clamp(1.2rem, 3.2vw, 1.9rem);
+  color: var(--cream);
+}
+.rope-rule {
+  position: relative;
+  width: min(280px, 56%); margin: 5px auto 3px;
+  border-top: 2px dashed var(--line);
+}
+.rope-rule span {
+  position: absolute; top: -0.75em; left: 50%; transform: translateX(-50%);
+  background: var(--abyss); padding: 0 10px;
+  color: var(--cream-dim); font-size: 0.8rem; line-height: 1;
+}
+.masthead .sub {
+  color: var(--cream-dim); font-size: 0.68rem;
+  letter-spacing: 0.28em; text-transform: uppercase;
+}
+@media (max-height: 640px) { .masthead .sub { display: none; } }
+
+/* ================= HUD ================= */
+.hud { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.well {
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 14px; min-width: 104px; text-align: center;
+}
+.well .lbl {
+  display: block;
+  font-family: var(--display); font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--cream-dim);
+}
+.well .val {
+  font-family: var(--mono); font-weight: 700;
+  font-size: 1.15rem; color: var(--brass);
+}
+.pip { color: var(--bobber); font-size: 1.05rem; letter-spacing: 0.2em; }
+.pip.spent { color: rgba(244, 235, 217, 0.18); }
+
+/* ================= stage ================= */
+.stage {
+  position: relative; flex: 1; min-height: 0;
+  border: 2px solid var(--line); border-radius: 18px;
+  overflow: hidden;
+  background: var(--abyss);
+}
+canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+/* catch banner */
+.banner {
+  position: absolute; top: 11%; left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  z-index: 4; pointer-events: none;
+  max-width: 88%;
+  padding: 10px 20px; text-align: center;
+  background: rgba(11, 51, 72, 0.94);
+  border: 2px solid var(--line); border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.banner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.banner.good { border-color: var(--kelp); }
+.banner.bad { border-color: var(--bobber); }
+.banner .verdict {
+  font-family: var(--display); font-weight: 700;
+  letter-spacing: 0.1em; font-size: 1.02rem; text-transform: uppercase;
+}
+.banner.good .verdict { color: var(--kelp); }
+.banner.bad .verdict { color: var(--bobber); }
+.banner .why { color: var(--cream-dim); font-size: 0.85rem; margin-top: 2px; }
+
+/* ================= overlays ================= */
+.overlay {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; padding: 20px; text-align: center;
+  background: rgba(4, 27, 38, 0.84);
+  overflow-y: auto;
+}
+.overlay.hidden { display: none; }
+.overlay .big-title {
+  font-family: var(--display); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  font-size: clamp(1.9rem, 6vw, 3.2rem);
+  color: var(--cream);
+}
+.overlay .tagline {
+  color: var(--cream-dim); font-size: 0.8rem;
+  letter-spacing: 0.24em; text-transform: uppercase;
+}
+.howto {
+  color: var(--cream-dim); max-width: 480px;
+  font-size: 0.95rem; line-height: 1.55;
+}
+.howto strong { color: var(--cream); font-weight: 600; }
+
+.chip {
+  min-height: 56px; padding: 0 30px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border: 2px solid var(--cream); border-radius: 14px;
+  background: rgba(8, 40, 56, 0.45);
+  color: var(--cream);
+  font-family: var(--display); font-weight: 700;
+  font-size: 0.95rem; letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:active { transform: scale(0.96); background: rgba(11, 51, 72, 0.95); }
+.chip-primary {
+  min-height: 68px; padding: 0 48px;
+  font-size: 1.2rem;
+  border-color: var(--lure); color: var(--lure);
+  background: rgba(255, 122, 69, 0.08);
+}
+.chip-primary:active { background: rgba(255, 122, 69, 0.24); }
+
+a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--biolume);
+  outline-offset: 3px;
+}
+
+.score-big {
+  font-family: var(--mono); font-weight: 700;
+  font-size: clamp(2.2rem, 7vw, 3.2rem);
+  color: var(--brass); line-height: 1.05;
+}
+.best-line { font-family: var(--mono); color: var(--cream-dim); font-size: 0.95rem; }
+.new-best {
+  font-family: var(--display); font-weight: 700;
+  color: var(--brass); letter-spacing: 0.16em; font-size: 0.85rem;
+  text-transform: uppercase;
+}
+.new-best.hidden { display: none; }
+
+.fact-card {
+  background: var(--panel);
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 18px; max-width: 460px;
+}
+.fact-card h3 {
+  font-family: var(--display); font-weight: 700;
+  font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--brass); margin-bottom: 6px;
+}
+.fact-card p { color: var(--cream); font-size: 0.92rem; line-height: 1.55; }
+
+/* visually hidden live region */
+.sr-status {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<div class="decor" aria-hidden="true">
+  <div class="net"></div>
+  <div class="rays"></div>
+</div>
+
+<a class="home-chip" href="caught-in-the-net.html">⌂ ARCADE</a>
+
+<main class="frame">
+  <header class="masthead">
+    <h1>Reel 'Em In</h1>
+    <div class="rope-rule" aria-hidden="true"><span>&#9875;</span></div>
+    <p class="sub">A Phishing Fishing Derby</p>
+  </header>
+
+  <div class="hud" aria-hidden="true">
+    <div class="well"><span class="lbl">Score</span><span class="val" id="hudScore">0</span></div>
+    <div class="well"><span class="lbl">Combo</span><span class="val" id="hudCombo">x1</span></div>
+    <div class="well"><span class="lbl">Baits</span><span class="val" id="hudBaits"></span></div>
+    <div class="well"><span class="lbl">Time</span><span class="val" id="hudTime">60</span></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="game"></canvas>
+
+    <div class="banner" id="banner" aria-hidden="true">
+      <div class="verdict" id="bannerVerdict"></div>
+      <div class="why" id="bannerWhy"></div>
+    </div>
+
+    <div class="overlay" id="attract">
+      <div class="big-title">Reel 'Em In</div>
+      <p class="tagline">Hook the phish, spare the mail</p>
+      <p class="howto">
+        <strong>Hold</strong> anywhere to drop the hook. <strong>Release</strong> to reel it up.<br>
+        Read each tag before you hook: phishy mail pays points, deeper catches pay more.<br>
+        Real mail costs a bait and breaks your combo. You carry 3 baits.<br>
+        60 seconds on the clock. The Space bar works too.
+      </p>
+      <button type="button" class="chip chip-primary" id="playBtn">&#127907; Play</button>
+    </div>
+
+    <div class="overlay hidden" id="gameover">
+      <div class="big-title" id="overTitle">Time's Up</div>
+      <div class="score-big" id="finalScore">0</div>
+      <div class="new-best hidden" id="newBest">New best haul!</div>
+      <div class="best-line" id="bestLine">BEST 0</div>
+      <div class="fact-card">
+        <h3>&#128031; Catch of the Day</h3>
+        <p id="factText"></p>
+      </div>
+      <button type="button" class="chip chip-primary" id="againBtn">&#127907; Play Again</button>
+    </div>
+  </div>
+</main>
+
+<div class="sr-status" role="status" aria-live="polite" id="live"></div>
+
+<script src="sounds.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- elements ---------- */
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var stage = document.getElementById('stage');
+  var banner = document.getElementById('banner');
+  var bannerVerdict = document.getElementById('bannerVerdict');
+  var bannerWhy = document.getElementById('bannerWhy');
+  var attractEl = document.getElementById('attract');
+  var overEl = document.getElementById('gameover');
+  var overTitle = document.getElementById('overTitle');
+  var finalScoreEl = document.getElementById('finalScore');
+  var newBestEl = document.getElementById('newBest');
+  var bestLine = document.getElementById('bestLine');
+  var factText = document.getElementById('factText');
+  var playBtn = document.getElementById('playBtn');
+  var againBtn = document.getElementById('againBtn');
+  var liveEl = document.getElementById('live');
+  var hudScore = document.getElementById('hudScore');
+  var hudCombo = document.getElementById('hudCombo');
+  var hudBaits = document.getElementById('hudBaits');
+  var hudTime = document.getElementById('hudTime');
+
+  var motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function reduced() { return motionQuery.matches; }
+
+  /* ---------- sound helper ---------- */
+  function sfx(name, arg) {
+    try {
+      var S = window.CyberSounds;
+      if (S && typeof S[name] === 'function') S[name](arg);
+    } catch (e) { /* audio is optional */ }
+  }
+
+  /* ---------- constants ---------- */
+  var BEST_KEY = 'citn-reel-best';
+  var ROUND_SECONDS = 60;
+  var LANE_SCORES = [100, 140, 170, 200];
+  /* neutral body palette: fish color carries no phish or legit signal */
+  var FISH_PALETTE = ['#C9BFA8', '#53DFE8', '#4FC98C', '#F5C15C', '#7A8B99'];
+  /* verdict colors shown only after a catch */
+  var VERDICT_PHISH = '#E8564A';
+  var VERDICT_LEGIT = '#4FC98C';
+  var FONT_BODY = "'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', sans-serif";
+  var FONT_MONO = "'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace";
+
+  /* ---------- content ---------- */
+  var PHISH = [
+    { tag: "URGENT!! verify acct", why: "urgency + odd spelling" },
+    { tag: "Free g1ft card 4 you", why: "too good to be true" },
+    { tag: "CEO needs iTunes cards", why: "gift card ask from a boss" },
+    { tag: "Password expires NOW", why: "panic push to click" },
+    { tag: "Bank alert: click fast", why: "urgency + fake link" },
+    { tag: "You won a cruise!", why: "prize bait from nowhere" },
+    { tag: "HR: update your SSN", why: "asks for sensitive data" },
+    { tag: "DocuSlgn: sign now", why: "lookalike sender name" },
+    { tag: "Reset your paypa1 pass", why: "lookalike domain, digit swap" },
+    { tag: "Wire $ before 5pm", why: "money rush, zero context" },
+    { tag: "Pkg held: pay $1 fee", why: "tiny fee, classic hook" },
+    { tag: "Mailbox full: fix now", why: "fake quota scare" }
+  ];
+  var LEGIT = [
+    { tag: "Team standup 10am", why: "routine meeting, no ask" },
+    { tag: "Invoice #2231 from Acme", why: "expected, known vendor" },
+    { tag: "Lunch order Friday?", why: "known sender, no ask" },
+    { tag: "Q3 report attached", why: "expected internal mail" },
+    { tag: "PTO request approved", why: "reply to your own request" },
+    { tag: "Minutes: security sync", why: "routine notes, no link bait" },
+    { tag: "Welcome our new intern", why: "no link, no request" },
+    { tag: "Printer down in rm 4", why: "plain FYI, nothing to click" },
+    { tag: "Payroll on the 15th", why: "routine notice, no push" },
+    { tag: "Kudos to the dev team", why: "no ask, no urgency" },
+    { tag: "Book club Thursday", why: "regular thread, no ask" }
+  ];
+  var FACTS = [
+    "Phishers rush you on purpose. Real companies let you take your time. Slow down before you click.",
+    "Check the sender's address, not just the display name. Lookalike domains hide one swapped letter.",
+    "Press and hold a link to preview it before you tap. The real destination often gives the scam away.",
+    "No real boss asks for gift cards over email. That request is a scam every single time.",
+    "When in doubt, go direct. Open the site yourself instead of tapping the link in the message."
+  ];
+
+  /* shuffle bags keep subject lines rotating without repeats */
+  function makeBag(items) {
+    var pool = [];
+    return function () {
+      if (pool.length === 0) {
+        pool = items.slice();
+        for (var i = pool.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+        }
+      }
+      return pool.pop();
+    };
+  }
+  var nextPhish = makeBag(PHISH);
+  var nextLegit = makeBag(LEGIT);
+
+  /* ---------- state ---------- */
+  var W = 0, H = 0;
+  var surfaceY = 100, lanesY = [0, 0, 0, 0], maxDepth = 400, rodX = 0, rodY = 0;
+  var state = 'attract';
+  var score = 0, combo = 0, baits = 3, timeLeft = ROUND_SECONDS, elapsed = 0;
+  var fishes = [];
+  var hookedFish = null;
+  var hook = { x: 0, y: 0 };
+  var pointerHeld = false, spaceHeld = false, activePointer = null;
+  var particles = [];
+  var ambient = [];
+  var spawnTimer = 0;
+  var lastWarnSecond = -1;
+  var lastShownSecond = -1;
+  var bannerTimer = null;
+  var factIndex = Math.floor(Math.random() * FACTS.length);
+  var best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+
+  function holding() { return pointerHeld || spaceHeld; }
+
+  /* ---------- layout / resize ---------- */
+  function resize() {
+    var rect = stage.getBoundingClientRect();
+    W = Math.max(320, Math.floor(rect.width));
+    H = Math.max(320, Math.floor(rect.height));
+    var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    surfaceY = Math.max(84, Math.round(H * 0.2));
+    var top = surfaceY + 64;
+    var bottom = H - 36;
+    for (var i = 0; i < 4; i++) {
+      lanesY[i] = top + (bottom - top) * (i / 3);
+    }
+    maxDepth = H - 26;
+    rodX = Math.round(W / 2 + Math.min(90, W * 0.09));
+    rodY = surfaceY - 42;
+    if (state !== 'playing') {
+      hook.x = rodX;
+      hook.y = surfaceY - 6;
+    } else {
+      hook.y = Math.min(hook.y, maxDepth);
+    }
+    seedAmbient();
+  }
+
+  /* ---------- ambient canvas bubbles ---------- */
+  function seedAmbient() {
+    ambient.length = 0;
+    for (var i = 0; i < 10; i++) {
+      ambient.push({
+        x: Math.random() * W,
+        y: surfaceY + Math.random() * (H - surfaceY),
+        r: 1.5 + Math.random() * 2.5,
+        v: 12 + Math.random() * 18
+      });
+    }
+  }
+
+  /* ---------- fish ---------- */
+  function spawnFish(randomX) {
+    var counts = [0, 0, 0, 0];
+    for (var i = 0; i < fishes.length; i++) counts[fishes[i].lane]++;
+    var open = [];
+    for (var l = 0; l < 4; l++) { if (counts[l] < 4) open.push(l); }
+    if (open.length === 0) return;
+    var lane = open[Math.floor(Math.random() * open.length)];
+    var dir = (lane % 2 === 0) ? 1 : -1;
+    var kind = Math.random() < 0.5 ? 'phish' : 'legit';
+    var item = kind === 'phish' ? nextPhish() : nextLegit();
+    var ramp = state === 'playing' ? (1 + (elapsed / ROUND_SECONDS) * 0.7) : 1;
+    fishes.push({
+      lane: lane,
+      x: randomX ? (40 + Math.random() * (W - 80)) : (dir === 1 ? -100 : W + 100),
+      y: lanesY[lane],
+      dir: dir,
+      speed: (42 + lane * 13 + Math.random() * 18) * ramp,
+      size: 25 + Math.random() * 7,
+      kind: kind,
+      color: FISH_PALETTE[Math.floor(Math.random() * FISH_PALETTE.length)],
+      tag: item.tag,
+      why: item.why,
+      wob: Math.random() * Math.PI * 2
+    });
+  }
+
+  /* ---------- HUD ---------- */
+  function updateHud() {
+    hudScore.textContent = String(score);
+    hudCombo.textContent = 'x' + Math.min(Math.max(combo, 1), 5);
+    var pips = '';
+    for (var i = 0; i < 3; i++) {
+      pips += '<span class="pip' + (i < baits ? '' : ' spent') + '">&#9679;</span>';
+    }
+    hudBaits.innerHTML = pips;
+  }
+
+  function announce(msg) {
+    liveEl.textContent = msg;
+  }
+
+  /* ---------- banner ---------- */
+  function showBanner(verdict, why, good) {
+    bannerVerdict.textContent = verdict;
+    bannerWhy.textContent = why;
+    banner.classList.remove('good', 'bad');
+    banner.classList.add(good ? 'good' : 'bad', 'show');
+    if (bannerTimer) clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function () { banner.classList.remove('show'); }, 1600);
+  }
+
+  /* ---------- catch resolution ---------- */
+  function spawnCatchBubbles(x) {
+    if (reduced()) return;
+    for (var i = 0; i < 12; i++) {
+      particles.push({
+        x: x + (Math.random() * 26 - 13),
+        y: surfaceY + Math.random() * 12,
+        vx: Math.random() * 24 - 12,
+        vy: -(28 + Math.random() * 52),
+        r: 1.5 + Math.random() * 3,
+        life: 0.8 + Math.random() * 0.5,
+        max: 1.3
+      });
+    }
+  }
+
+  function resolveCatch() {
+    var f = hookedFish;
+    hookedFish = null;
+    if (!f) return;
+    if (f.kind === 'phish') {
+      combo += 1;
+      var mult = Math.min(combo, 5);
+      var gain = LANE_SCORES[f.lane] * mult;
+      score += gain;
+      sfx('caught');
+      if (combo >= 2) sfx('combo', combo);
+      showBanner('Phish! +' + gain + (mult > 1 ? ' (x' + mult + ')' : ''), f.why, true);
+      announce('Phish caught for ' + gain + ' points. Score ' + score + '.');
+    } else {
+      combo = 0;
+      score = Math.max(0, score - 50);
+      baits -= 1;
+      sfx('wrong');
+      showBanner('Real mail. -50 and a bait', f.why, false);
+      announce('Real mail hooked. Minus 50. ' + baits + ' baits left.');
+      if (baits <= 0) {
+        updateHud();
+        endRound(true);
+        return;
+      }
+    }
+    spawnCatchBubbles(hook.x);
+    updateHud();
+  }
+
+  /* ---------- round flow ---------- */
+  function startRound() {
+    state = 'playing';
+    score = 0; combo = 0; baits = 3;
+    timeLeft = ROUND_SECONDS; elapsed = 0;
+    fishes.length = 0;
+    particles.length = 0;
+    hookedFish = null;
+    pointerHeld = false; spaceHeld = false; activePointer = null;
+    spawnTimer = 0;
+    lastWarnSecond = -1;
+    lastShownSecond = -1;
+    hook.x = rodX;
+    hook.y = surfaceY - 6;
+    for (var i = 0; i < 5; i++) spawnFish(true);
+    attractEl.classList.add('hidden');
+    overEl.classList.add('hidden');
+    banner.classList.remove('show');
+    updateHud();
+    hudTime.textContent = String(ROUND_SECONDS);
+    announce('Round started. 60 seconds. Hold to drop the hook, release to reel.');
+    sfx('place');
+  }
+
+  function endRound(outOfBait) {
+    state = 'over';
+    pointerHeld = false; spaceHeld = false; activePointer = null;
+    hookedFish = null;
+    var isBest = score > best;
+    if (isBest) {
+      best = score;
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) { /* storage optional */ }
+    }
+    sfx('win');
+    factIndex = (factIndex + 1) % FACTS.length;
+    factText.textContent = FACTS[factIndex];
+    overTitle.textContent = outOfBait ? 'Out of Bait' : "Time's Up";
+    bestLine.textContent = 'BEST ' + best;
+    newBestEl.classList.toggle('hidden', !isBest);
+    overEl.classList.remove('hidden');
+    countUp(score);
+    announce('Round over. Final score ' + score + '. Best ' + best + '.');
+    setTimeout(function () { try { againBtn.focus(); } catch (e) {} }, 60);
+  }
+
+  function countUp(target) {
+    if (reduced()) {
+      finalScoreEl.textContent = String(target);
+      return;
+    }
+    var start = null, dur = 1100;
+    function step(ts) {
+      if (start === null) start = ts;
+      var p = Math.min(1, (ts - start) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      finalScoreEl.textContent = String(Math.round(target * e));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    finalScoreEl.textContent = '0';
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- update ---------- */
+  function update(dt, t) {
+    var noMotion = reduced();
+
+    if (state === 'playing') {
+      elapsed += dt;
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        hudTime.textContent = '0';
+        endRound(false);
+        return;
+      }
+
+      var shown = Math.ceil(timeLeft);
+      if (shown !== lastShownSecond) {
+        lastShownSecond = shown;
+        hudTime.textContent = String(shown);
+      }
+      if (shown <= 5 && shown >= 1 && shown !== lastWarnSecond) {
+        lastWarnSecond = shown;
+        sfx('timeWarn');
+      }
+
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        spawnFish(false);
+        spawnTimer = Math.max(0.55, 1.4 - elapsed * 0.014);
+      }
+    } else if (state === 'attract') {
+      if (fishes.length < 7 && Math.random() < dt * 0.9) spawnFish(false);
+    }
+
+    /* fish swim */
+    var moveFish = (state === 'playing') || (state !== 'playing' && !noMotion);
+    if (moveFish) {
+      for (var i = fishes.length - 1; i >= 0; i--) {
+        var f = fishes[i];
+        f.x += f.dir * f.speed * dt;
+        f.y = lanesY[f.lane] + (noMotion ? 0 : Math.sin(t * 1.6 + f.wob) * 5);
+        if (f.x < -130 || f.x > W + 130) fishes.splice(i, 1);
+      }
+    }
+
+    /* hook physics: eased approach to target depth */
+    if (state === 'playing') {
+      var target, rate;
+      if (hookedFish) {
+        target = surfaceY - 6; rate = 2.3;
+      } else if (holding()) {
+        target = maxDepth; rate = 3.1;
+      } else {
+        target = surfaceY - 6; rate = 3.7;
+      }
+      hook.y += (target - hook.y) * (1 - Math.exp(-rate * dt));
+      hook.x = rodX + ((!hookedFish && !holding() && !noMotion) ? Math.sin(t * 1.3) * 3 : 0);
+
+      if (!hookedFish && hook.y > surfaceY + 36) {
+        for (var k = 0; k < fishes.length; k++) {
+          var ff = fishes[k];
+          if (Math.abs(ff.x - hook.x) < ff.size * 0.85 && Math.abs(ff.y - hook.y) < ff.size * 0.6) {
+            hookedFish = ff;
+            fishes.splice(k, 1);
+            sfx('pop');
+            break;
+          }
+        }
+      }
+
+      if (hookedFish) {
+        hookedFish.x = hook.x;
+        hookedFish.y = hook.y + 16;
+        if (hook.y <= surfaceY + 12) resolveCatch();
+      }
+    }
+
+    /* catch bubble particles */
+    for (var p = particles.length - 1; p >= 0; p--) {
+      var b = particles[p];
+      b.life -= dt;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      if (b.life <= 0) particles.splice(p, 1);
+    }
+
+    /* ambient bubbles */
+    if (!noMotion) {
+      for (var a = 0; a < ambient.length; a++) {
+        var ab = ambient[a];
+        ab.y -= ab.v * dt;
+        if (ab.y < surfaceY + 6) {
+          ab.y = H + 10;
+          ab.x = Math.random() * W;
+        }
+      }
+    }
+  }
+
+  /* ---------- drawing ---------- */
+  function rrect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawFishBody(x, y, dir, s, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(dir, 1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(s * 0.95, 0);
+    ctx.quadraticCurveTo(s * 0.3, -s * 0.44, -s * 0.5, -s * 0.18);
+    ctx.lineTo(-s * 0.95, -s * 0.4);
+    ctx.quadraticCurveTo(-s * 0.68, 0, -s * 0.95, s * 0.4);
+    ctx.lineTo(-s * 0.5, s * 0.18);
+    ctx.quadraticCurveTo(s * 0.3, s * 0.44, s * 0.95, 0);
+    ctx.closePath();
+    ctx.fill();
+    /* dorsal fin */
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.05, -s * 0.36);
+    ctx.lineTo(s * 0.28, -s * 0.62);
+    ctx.lineTo(s * 0.4, -s * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    /* eye */
+    ctx.fillStyle = '#041B26';
+    ctx.beginPath();
+    ctx.arc(s * 0.55, -s * 0.06, Math.max(1.6, s * 0.07), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTag(f) {
+    ctx.font = '600 12px ' + FONT_BODY;
+    var tw = ctx.measureText(f.tag).width;
+    var chipW = tw + 24;
+    var chipH = 20;
+    var chipX = Math.min(Math.max(f.x - chipW / 2, 6), W - chipW - 6);
+    var chipY = f.y - f.size - 32;
+    /* connector */
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(f.x, f.y - f.size * 0.45);
+    ctx.lineTo(f.x, chipY + chipH);
+    ctx.stroke();
+    /* chip */
+    ctx.fillStyle = 'rgba(8, 40, 56, 0.92)';
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.28)';
+    rrect(ctx, chipX, chipY, chipW, chipH, 6);
+    ctx.fill();
+    ctx.stroke();
+    /* tag stud: neutral for every fish, no verdict signal */
+    ctx.fillStyle = 'rgba(201, 191, 168, 0.7)';
+    ctx.beginPath();
+    ctx.arc(chipX + 10, chipY + chipH / 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+    /* text */
+    ctx.fillStyle = '#F4EBD9';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(f.tag, chipX + 18, chipY + chipH / 2 + 0.5);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawBoat(t, bob) {
+    var bx = W / 2;
+    var by = surfaceY + bob - 2;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.85)';
+    /* cabin */
+    ctx.fillStyle = '#0B3348';
+    rrect(ctx, bx - 32, by - 32, 36, 22, 4);
+    ctx.fill();
+    ctx.stroke();
+    /* hull */
+    ctx.beginPath();
+    ctx.moveTo(bx - 60, by - 10);
+    ctx.lineTo(bx + 60, by - 10);
+    ctx.lineTo(bx + 42, by + 12);
+    ctx.quadraticCurveTo(bx, by + 19, bx - 42, by + 12);
+    ctx.closePath();
+    ctx.fillStyle = '#0B3348';
+    ctx.fill();
+    ctx.stroke();
+    /* rod */
+    ctx.strokeStyle = '#F5C15C';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(bx + 16, by - 14);
+    ctx.lineTo(rodX, rodY + bob);
+    ctx.stroke();
+    /* fishing line */
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(rodX, rodY + bob);
+    ctx.lineTo(hook.x, hook.y - 14);
+    ctx.stroke();
+    /* hook: brass with one restrained biolume glow */
+    ctx.save();
+    ctx.strokeStyle = '#F5C15C';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    if (state === 'playing') {
+      ctx.shadowColor = 'rgba(83, 223, 232, 0.55)';
+      ctx.shadowBlur = 7;
+    }
+    ctx.beginPath();
+    ctx.moveTo(hook.x, hook.y - 14);
+    ctx.lineTo(hook.x, hook.y + 2);
+    ctx.arc(hook.x - 6, hook.y + 2, 6, 0, Math.PI * 0.95, false);
+    ctx.lineTo(hook.x - 12, hook.y - 4);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw(t) {
+    var noMotion = reduced();
+    ctx.clearRect(0, 0, W, H);
+
+    /* water */
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0A3247');
+    g.addColorStop(0.45, '#072A3C');
+    g.addColorStop(1, '#02141D');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    /* warm dusk band above the waterline */
+    ctx.fillStyle = 'rgba(245, 193, 92, 0.07)';
+    ctx.fillRect(0, 0, W, surfaceY);
+
+    /* depth lane guides + payout markers */
+    ctx.font = '700 10px ' + FONT_MONO;
+    ctx.textAlign = 'right';
+    for (var i = 0; i < 4; i++) {
+      ctx.strokeStyle = 'rgba(244, 235, 217, 0.06)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 10]);
+      ctx.beginPath();
+      ctx.moveTo(0, lanesY[i]);
+      ctx.lineTo(W, lanesY[i]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(245, 193, 92, 0.42)';
+      ctx.fillText('+' + LANE_SCORES[i], W - 10, lanesY[i] + 3);
+    }
+
+    /* surface line */
+    var bob = noMotion ? 0 : Math.sin(t * 1.4) * 3;
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var x = 0; x <= W; x += 12) {
+      var wy = surfaceY + (noMotion ? 0 : Math.sin(x * 0.045 + t * 1.8) * 2.5);
+      if (x === 0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+    }
+    ctx.stroke();
+
+    /* ambient bubbles */
+    if (!noMotion) {
+      ctx.strokeStyle = 'rgba(83, 223, 232, 0.16)';
+      ctx.lineWidth = 1;
+      for (var a = 0; a < ambient.length; a++) {
+        ctx.beginPath();
+        ctx.arc(ambient[a].x, ambient[a].y, ambient[a].r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    /* fish + tags */
+    for (var fi = 0; fi < fishes.length; fi++) {
+      var f = fishes[fi];
+      drawFishBody(f.x, f.y, f.dir, f.size, f.color);
+      drawTag(f);
+    }
+
+    /* boat, rod, line, hook */
+    drawBoat(t, bob);
+
+    /* hooked fish rides the hook, flashing its verdict color now that it is caught */
+    if (hookedFish) {
+      var wig = noMotion ? 0 : Math.sin(t * 14) * 0.9;
+      var verdictColor = hookedFish.kind === 'phish' ? VERDICT_PHISH : VERDICT_LEGIT;
+      ctx.save();
+      ctx.globalAlpha = noMotion ? 1 : (0.7 + 0.3 * Math.sin(t * 12));
+      drawFishBody(hook.x + wig * 3, hook.y + 16, 1, hookedFish.size, verdictColor);
+      ctx.restore();
+    }
+
+    /* catch bubbles */
+    for (var p = 0; p < particles.length; p++) {
+      var b = particles[p];
+      var alpha = Math.max(0, b.life / b.max) * 0.6;
+      ctx.strokeStyle = 'rgba(83, 223, 232, ' + alpha.toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.textAlign = 'left';
+  }
+
+  /* ---------- main loop ---------- */
+  var lastTs = 0;
+  function frame(ts) {
+    var dt = Math.max(0, Math.min(0.05, (ts - lastTs) / 1000 || 0));
+    lastTs = ts;
+    update(dt, ts / 1000);
+    draw(ts / 1000);
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- input ---------- */
+  canvas.addEventListener('pointerdown', function (e) {
+    if (state !== 'playing') return;
+    if (activePointer !== null) return;
+    activePointer = e.pointerId;
+    pointerHeld = true;
+    e.preventDefault();
+  });
+  function releasePointer(e) {
+    if (activePointer !== null && e.pointerId === activePointer) {
+      activePointer = null;
+      pointerHeld = false;
+    }
+  }
+  window.addEventListener('pointerup', releasePointer);
+  window.addEventListener('pointercancel', releasePointer);
+
+  /* stop iPad scroll and bounce inside the play surface */
+  canvas.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.code !== 'Space') return;
+    if (state === 'playing') {
+      e.preventDefault();
+      if (!e.repeat) spaceHeld = true;
+    }
+  });
+  window.addEventListener('keyup', function (e) {
+    if (e.code === 'Space') spaceHeld = false;
+  });
+
+  playBtn.addEventListener('click', function () { sfx('click'); startRound(); });
+  againBtn.addEventListener('click', function () { sfx('click'); startRound(); });
+
+  /* ---------- decor bubbles ---------- */
+  (function makeDecorBubbles() {
+    var decor = document.querySelector('.decor');
+    if (!decor) return;
+    for (var i = 0; i < 12; i++) {
+      var b = document.createElement('div');
+      b.className = 'bub';
+      var size = 4 + Math.random() * 9;
+      b.style.width = size + 'px';
+      b.style.height = size + 'px';
+      b.style.left = (2 + Math.random() * 96) + '%';
+      b.style.animationDuration = (12 + Math.random() * 14) + 's';
+      b.style.animationDelay = (-Math.random() * 20) + 's';
+      decor.appendChild(b);
+    }
+  })();
+
+  /* ---------- boot ---------- */
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
+
+  resize();
+  updateHud();
+  for (var i = 0; i < 6; i++) spawnFish(true);
+  bestLine.textContent = 'BEST ' + best;
+  try { playBtn.focus(); } catch (e) {}
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
