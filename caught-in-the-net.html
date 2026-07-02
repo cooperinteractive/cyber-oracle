@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Caught in the Net | Cyber Arcade</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* water */
+    --abyss: #041B26;
+    --depth: #072A3C;
+    --panel: #0B3348;
+    --panel-deep: #082838;
+    --line: rgba(244, 235, 217, 0.16);
+    /* ink */
+    --cream: #F4EBD9;
+    --cream-dim: #C9BFA8;
+    /* accents */
+    --lure: #FF7A45;
+    --bobber: #E8564A;
+    --biolume: #53DFE8;
+    --kelp: #4FC98C;
+    --brass: #F5C15C;
+    /* type */
+    --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+    --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+  }
+
+  html, body { min-height: 100%; }
+
+  html { background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%); }
+
+  body {
+    color: var(--cream);
+    font-family: var(--body);
+    padding: 20px 20px 48px;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* ---------- ambient decor ---------- */
+  .sea {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  /* crossed net grid */
+  .sea::before {
+    content: '';
+    position: absolute;
+    inset: -40%;
+    background:
+      repeating-linear-gradient(52deg, var(--line) 0 1px, transparent 1px 76px),
+      repeating-linear-gradient(-52deg, var(--line) 0 1px, transparent 1px 76px);
+    opacity: 0.33;
+  }
+  /* light rays from the surface */
+  .sea::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 40% 0;
+    background:
+      linear-gradient(173deg, rgba(83, 223, 232, 0.07) 0 8%, transparent 8% 20%,
+        rgba(83, 223, 232, 0.05) 20% 26%, transparent 26% 55%,
+        rgba(83, 223, 232, 0.06) 55% 61%, transparent 61%);
+    mix-blend-mode: screen;
+  }
+  .bubble {
+    position: absolute;
+    bottom: -30px;
+    border: 1.5px solid rgba(83, 223, 232, 0.28);
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, rgba(244, 235, 217, 0.14), transparent 55%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .bubble { animation: rise linear infinite; }
+    @keyframes rise {
+      from { transform: translateY(0) translateX(0); opacity: 0; }
+      6%   { opacity: 1; }
+      92%  { opacity: 1; }
+      to   { transform: translateY(-110vh) translateX(24px); opacity: 0; }
+    }
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; }
+
+  /* ---------- poster hero ---------- */
+  .poster {
+    border: 2px solid var(--line);
+    outline: 1px solid rgba(244, 235, 217, 0.07);
+    outline-offset: 6px;
+    border-radius: 18px;
+    padding: clamp(26px, 5vw, 54px) clamp(18px, 4vw, 48px) 0;
+    text-align: center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(83, 223, 232, 0.06), transparent 60%),
+      linear-gradient(180deg, rgba(11, 51, 72, 0.55), rgba(8, 40, 56, 0.2));
+    overflow: hidden;
+    margin-bottom: clamp(28px, 4vw, 44px);
+  }
+
+  .poster .kicker {
+    font-family: var(--display);
+    font-size: clamp(0.7rem, 1.6vw, 0.85rem);
+    letter-spacing: 0.42em;
+    text-indent: 0.42em; /* balance tracking on centered text */
+    color: var(--brass);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 0.98;
+    letter-spacing: 0.06em;
+    font-size: clamp(2.6rem, 9vw, 6rem);
+    color: var(--cream);
+    text-shadow: 0 3px 0 rgba(2, 20, 29, 0.9);
+  }
+  h1 .netword {
+    display: block;
+    color: var(--lure);
+  }
+
+  .poster .sub {
+    margin: 18px auto 6px;
+    color: var(--cream-dim);
+    font-size: clamp(0.85rem, 2vw, 1.05rem);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .rope-rule {
+    width: min(320px, 60%);
+    margin: 18px auto 0;
+    border: 0;
+    border-top: 2px dashed var(--line);
+    position: relative;
+  }
+  .rope-rule::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: -7px;
+    width: 12px; height: 12px;
+    transform: translateX(-50%) rotate(45deg);
+    background: var(--abyss);
+    border: 2px solid var(--brass);
+  }
+
+  /* hero scene: three baited hooks + fish */
+  .scene {
+    position: relative;
+    height: clamp(120px, 20vw, 190px);
+    margin-top: 8px;
+  }
+  .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  @media (prefers-reduced-motion: no-preference) {
+    .scene .fishy   { animation: swim 16s linear infinite; }
+    .scene .fishy2  { animation: swim 23s linear infinite reverse; }
+    .scene .hookline { transform-origin: top center; animation: sway 5.5s ease-in-out infinite alternate; }
+    .scene .hookline.h2 { animation-duration: 7s; }
+    .scene .hookline.h3 { animation-duration: 6.2s; }
+    @keyframes swim { from { transform: translateX(-15%); } to { transform: translateX(115%); } }
+    @keyframes sway { from { transform: rotate(-2.4deg); } to { transform: rotate(2.4deg); } }
+  }
+
+  /* ---------- section header ---------- */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 4px 18px;
+  }
+  .section-head h2 {
+    font-family: var(--display);
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--cream);
+  }
+  .section-head .hint {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--cream-dim);
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- tackle box grid ---------- */
+  .tacklebox {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(14px, 2.4vw, 22px);
+  }
+  @media (min-width: 940px) {
+    .tacklebox { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 178px;
+    padding: 20px 20px 18px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-deep) 100%);
+    color: var(--cream);
+    text-decoration: none;
+    box-shadow: 0 10px 26px rgba(2, 15, 22, 0.5);
+    transition: transform 0.12s ease, border-color 0.12s ease;
+  }
+  .card:active { transform: scale(0.97); }
+  .card:hover, .card:focus-visible { border-color: var(--cream-dim); }
+  .card:focus-visible { outline: 3px solid var(--biolume); outline-offset: 3px; }
+
+  .card .glyph {
+    width: 54px; height: 54px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: rgba(2, 20, 29, 0.45);
+  }
+  .card .glyph svg { width: 34px; height: 34px; }
+
+  .card .toprow { display: flex; align-items: center; gap: 14px; }
+
+  .card h3 {
+    font-family: var(--display);
+    font-size: clamp(1.05rem, 2.2vw, 1.28rem);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .card .tagline {
+    color: var(--cream-dim);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    flex: 1;
+  }
+
+  .card .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .pips { display: flex; gap: 5px; align-items: center; }
+  .pips .pip {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    border: 1.5px solid var(--cream-dim);
+  }
+  .pips .pip.on { background: var(--lure); border-color: var(--lure); }
+  .pips .lab {
+    margin-left: 6px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    color: var(--cream-dim);
+    text-transform: uppercase;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--brass);
+    border: 1.5px solid rgba(245, 193, 92, 0.45);
+    border-radius: 999px;
+    padding: 5px 10px;
+    white-space: nowrap;
+  }
+  .badge.twop { color: var(--biolume); border-color: rgba(83, 223, 232, 0.45); }
+
+  /* wide multiplayer marquee card */
+  .card.marquee { grid-column: 1 / -1; flex-direction: row; align-items: center; min-height: 128px; }
+  .card.marquee .glyph { width: 72px; height: 72px; }
+  .card.marquee .glyph svg { width: 46px; height: 46px; }
+  .card.marquee .mid { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .card.marquee .meta { border: 0; padding: 0; flex-direction: column; align-items: flex-end; gap: 8px; }
+  @media (max-width: 620px) {
+    .card.marquee { flex-direction: column; align-items: flex-start; }
+    .card.marquee .meta { align-items: flex-start; flex-direction: row; }
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: clamp(30px, 5vw, 48px);
+    text-align: center;
+    color: var(--cream-dim);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+  }
+  footer a {
+    color: var(--biolume);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(83, 223, 232, 0.5);
+    padding-bottom: 1px;
+  }
+  footer a:focus-visible { outline: 3px solid var(--biolume); outline-offset: 3px; }
+  footer .fine { margin-top: 10px; font-family: var(--mono); font-size: 0.66rem; opacity: 0.75; }
+
+  /* themed override for the mute toggle injected by sounds.js */
+  #cyber-sound-toggle {
+    background: var(--panel) !important;
+    color: var(--cream) !important;
+    border: 2px solid var(--line) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 16px rgba(2, 15, 22, 0.5) !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="sea" aria-hidden="true" id="sea"></div>
+
+<div class="wrap">
+  <header class="poster">
+    <div class="kicker">Cybersecurity Awareness Month Arcade</div>
+    <h1>Caught<br>in the <span class="netword">Net</span></h1>
+    <p class="sub">Seven games. Big scores. Sharper instincts.</p>
+    <hr class="rope-rule">
+    <div class="scene" aria-hidden="true">
+      <svg viewBox="0 0 1000 190" preserveAspectRatio="xMidYMid slice">
+        <!-- water line -->
+        <path d="M0 14 q25 -8 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0"
+              fill="none" stroke="rgba(83,223,232,0.4)" stroke-width="2"/>
+        <!-- hook 1: baited with padlock -->
+        <g class="hookline h1">
+          <line x1="230" y1="16" x2="230" y2="96" stroke="rgba(244,235,217,0.4)" stroke-width="1.5"/>
+          <path d="M230 96 v18 a14 14 0 1 0 14 -14" fill="none" stroke="#F5C15C" stroke-width="4" stroke-linecap="round"/>
+          <rect x="216" y="128" width="28" height="22" rx="4" fill="#F5C15C"/>
+          <path d="M222 128 v-6 a8 8 0 0 1 16 0 v6" fill="none" stroke="#F5C15C" stroke-width="4"/>
+          <circle cx="230" cy="139" r="3.4" fill="#041B26"/>
+        </g>
+        <!-- hook 2: baited with @ -->
+        <g class="hookline h2">
+          <line x1="500" y1="16" x2="500" y2="72" stroke="rgba(244,235,217,0.4)" stroke-width="1.5"/>
+          <path d="M500 72 v18 a14 14 0 1 0 14 -14" fill="none" stroke="#FF7A45" stroke-width="4" stroke-linecap="round"/>
+          <text x="500" y="126" text-anchor="middle" font-size="34" font-family="Menlo, monospace" fill="#FF7A45">@</text>
+        </g>
+        <!-- hook 3: baited with coin -->
+        <g class="hookline h3">
+          <line x1="770" y1="16" x2="770" y2="106" stroke="rgba(244,235,217,0.4)" stroke-width="1.5"/>
+          <path d="M770 106 v18 a14 14 0 1 0 14 -14" fill="none" stroke="#F5C15C" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="770" cy="146" r="15" fill="none" stroke="#F5C15C" stroke-width="4"/>
+          <text x="770" y="152" text-anchor="middle" font-size="17" font-family="Menlo, monospace" fill="#F5C15C">$</text>
+        </g>
+        <!-- fish silhouettes -->
+        <g class="fishy" opacity="0.85">
+          <g transform="translate(0,158)">
+            <path d="M0 0 q14 -12 34 -12 q22 0 34 12 q-12 12 -34 12 q-20 0 -34 -12 Z M68 0 l16 -11 v22 Z"
+                  transform="translate(-84,0)" fill="#53DFE8"/>
+            <circle cx="-66" cy="-3" r="2.2" fill="#041B26"/>
+          </g>
+        </g>
+        <g class="fishy2" opacity="0.5">
+          <g transform="translate(0,84) scale(0.62)">
+            <path d="M0 0 q14 -12 34 -12 q22 0 34 12 q-12 12 -34 12 q-20 0 -34 -12 Z M68 0 l16 -11 v22 Z"
+                  transform="translate(-84,0)" fill="#C9BFA8"/>
+            <circle cx="-66" cy="-3" r="2.6" fill="#041B26"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </header>
+
+  <div class="section-head">
+    <h2>Pick your game</h2>
+    <span class="hint">tap a crate to play</span>
+  </div>
+
+  <main class="tacklebox">
+
+    <a class="card" href="reel-em-in.html" data-best="citn-reel-best">
+      <div class="toprow">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><path d="M17 3 v13 a8 8 0 1 0 8 -8" fill="none" stroke="#FF7A45" stroke-width="3.4" stroke-linecap="round"/><circle cx="17" cy="3" r="2.4" fill="#F4EBD9"/></svg>
+        </span>
+        <h3>Reel 'Em In</h3>
+      </div>
+      <p class="tagline">Drop the hook, snag the phishing mail, and let the honest fish swim on by.</p>
+      <div class="meta">
+        <span class="pips" aria-label="Difficulty 1 of 3"><span class="pip on"></span><span class="pip"></span><span class="pip"></span><span class="lab">easy</span></span>
+        <span class="badge" data-badge>FIRST CAST</span>
+      </div>
+    </a>
+
+    <a class="card" href="packet-trawler.html" data-best="citn-trawler-best">
+      <div class="toprow">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><path d="M4 10 q13 16 26 0" fill="none" stroke="#53DFE8" stroke-width="3"/><path d="M8 13 v8 M13 16 v9 M17 17 v10 M21 16 v9 M26 13 v8" stroke="rgba(244,235,217,0.7)" stroke-width="1.6"/></svg>
+        </span>
+        <h3>Packet Trawler</h3>
+      </div>
+      <p class="tagline">Your net is the firewall. Scoop the malware, let clean traffic reach the harbor.</p>
+      <div class="meta">
+        <span class="pips" aria-label="Difficulty 2 of 3"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="lab">medium</span></span>
+        <span class="badge" data-badge>FIRST HAUL</span>
+      </div>
+    </a>
+
+    <a class="card" href="sonar-sweep.html" data-best="citn-sonar-best">
+      <div class="toprow">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="4" fill="#53DFE8"/><circle cx="17" cy="17" r="9" fill="none" stroke="rgba(83,223,232,0.7)" stroke-width="2"/><circle cx="17" cy="17" r="14" fill="none" stroke="rgba(83,223,232,0.35)" stroke-width="2"/></svg>
+        </span>
+        <h3>Sonar Sweep</h3>
+      </div>
+      <p class="tagline">Ten lurkers hide in the dark. Ping the quiet water and mark them before you hit one.</p>
+      <div class="meta">
+        <span class="pips" aria-label="Difficulty 2 of 3"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="lab">medium</span></span>
+        <span class="badge" data-badge>FIRST PING</span>
+      </div>
+    </a>
+
+    <a class="card" href="kraken-attack.html" data-best="citn-kraken-best">
+      <div class="toprow">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><path d="M6 30 q4 -14 3 -20 a8 8 0 0 1 16 0 q-1 6 3 20" fill="none" stroke="#E8564A" stroke-width="3.2" stroke-linecap="round"/><circle cx="13" cy="9" r="1.8" fill="#041B26"/><circle cx="21" cy="9" r="1.8" fill="#041B26"/></svg>
+        </span>
+        <h3>Kraken Attack</h3>
+      </div>
+      <p class="tagline">The botnet swarm wants the Catch Locker. Zap tentacles, spare the crew, hold the line.</p>
+      <div class="meta">
+        <span class="pips" aria-label="Difficulty 3 of 3"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="lab">spicy</span></span>
+        <span class="badge" data-badge>FIRST STAND</span>
+      </div>
+    </a>
+
+    <a class="card" href="deep-dive-dash.html" data-best="citn-dash-best">
+      <div class="toprow">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><path d="M4 17 q6 -8 15 -8 q7 0 11 8 q-4 8 -11 8 q-9 0 -15 -8 Z" fill="#FF7A45"/><path d="M30 17 l-6 -5 v10 Z" fill="#FF7A45"/><circle cx="9" cy="15.4" r="1.7" fill="#041B26"/></svg>
+        </span>
+        <h3>Deep Dive Dash</h3>
+      </div>
+      <p class="tagline">One finger, one fish, one precious data parcel. Dodge the hooks and swim forever.</p>
+      <div class="meta">
+        <span class="pips" aria-label="Difficulty 2 of 3"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="lab">medium</span></span>
+        <span class="badge" data-badge>FIRST DIVE</span>
+      </div>
+    </a>
+
+    <a class="card" href="password-slot.html" data-best="citn-slot-best">
+      <div class="toprow">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 34 34"><rect x="4" y="8" width="7.4" height="18" rx="2" fill="none" stroke="#F5C15C" stroke-width="2.2"/><rect x="13.3" y="8" width="7.4" height="18" rx="2" fill="none" stroke="#F5C15C" stroke-width="2.2"/><rect x="22.6" y="8" width="7.4" height="18" rx="2" fill="none" stroke="#F5C15C" stroke-width="2.2"/><text x="17" y="21.4" text-anchor="middle" font-size="10" font-family="Menlo, monospace" fill="#F4EBD9">$#7</text></svg>
+        </span>
+        <h3>Password Slots</h3>
+      </div>
+      <p class="tagline">Spin, lock the good characters, cash out before the crack-bot cracks you.</p>
+      <div class="meta">
+        <span class="pips" aria-label="Difficulty 1 of 3"><span class="pip on"></span><span class="pip"></span><span class="pip"></span><span class="lab">easy</span></span>
+        <span class="badge" data-badge>FIRST SPIN</span>
+      </div>
+    </a>
+
+    <a class="card marquee" href="connect-four.html">
+      <span class="glyph" aria-hidden="true">
+        <svg viewBox="0 0 46 46"><circle cx="14" cy="14" r="7" fill="#FF7A45"/><circle cx="32" cy="14" r="7" fill="#53DFE8"/><circle cx="14" cy="32" r="7" fill="#53DFE8"/><circle cx="32" cy="32" r="7" fill="#FF7A45"/></svg>
+      </span>
+      <span class="mid">
+        <h3>Hook, Line &amp; Sinker</h3>
+        <span class="tagline">Connect Four on a fishing net. Phishers vs. Defenders, with depth charges and tangle nets. Grab a friend.</span>
+      </span>
+      <span class="meta">
+        <span class="badge twop">2 PLAYERS</span>
+        <span class="pips" aria-label="Difficulty 1 of 3"><span class="pip on"></span><span class="pip"></span><span class="pip"></span><span class="lab">easy</span></span>
+      </span>
+    </a>
+
+  </main>
+
+  <footer>
+    <p>Every game ends with a Catch of the Day: one security tip worth keeping.</p>
+    <p class="fine"><a href="games.html">full arcade archive</a> &middot; sound toggle top right &middot; works offline</p>
+  </footer>
+</div>
+
+<script src="sounds.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ambient bubbles
+  var sea = document.getElementById('sea');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) {
+    for (var i = 0; i < 12; i++) {
+      var b = document.createElement('div');
+      b.className = 'bubble';
+      var s = 6 + Math.random() * 16;
+      b.style.width = s + 'px';
+      b.style.height = s + 'px';
+      b.style.left = (Math.random() * 100) + '%';
+      b.style.animationDuration = (14 + Math.random() * 18) + 's';
+      b.style.animationDelay = (-Math.random() * 30) + 's';
+      sea.appendChild(b);
+    }
+  }
+
+  // personal-best badges from localStorage
+  document.querySelectorAll('.card[data-best]').forEach(function (card) {
+    var key = card.getAttribute('data-best');
+    var badge = card.querySelector('[data-badge]');
+    var val = null;
+    try { val = localStorage.getItem(key); } catch (e) {}
+    if (val !== null && badge) {
+      var n = parseInt(val, 10);
+      if (!isNaN(n) && n > 0) badge.textContent = 'BEST ' + n.toLocaleString();
+    }
+  });
+
+  // click sound on card taps
+  document.querySelectorAll('.card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      if (window.CyberSounds) CyberSounds.click();
+    });
+  });
+})();
+</script>
+</body>
+</html>
