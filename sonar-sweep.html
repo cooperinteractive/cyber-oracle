@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Sonar Sweep | Caught in the Net</title>
+<style>
+  :root {
+    /* water */
+    --abyss: #041B26;        /* page background base */
+    --depth: #072A3C;        /* gradient partner */
+    --panel: #0B3348;        /* sign boards / cards */
+    --panel-deep: #082838;   /* inset wells */
+    --line: rgba(244, 235, 217, 0.16);   /* rope hairlines */
+    /* ink */
+    --cream: #F4EBD9;        /* primary text */
+    --cream-dim: #C9BFA8;    /* secondary text */
+    /* accents */
+    --lure: #FF7A45;         /* orange: primary action, player warmth */
+    --bobber: #E8564A;       /* red: danger, phish, enemies */
+    --biolume: #53DFE8;      /* cyan: glow, defense, friendly tech */
+    --kelp: #4FC98C;         /* green: success, safe */
+    --brass: #F5C15C;        /* gold: score, coins, trophies */
+    /* type */
+    --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+    --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+  }
+
+  /* Local shades derived from the canonical palette above */
+  :root {
+    --sand: rgba(244, 235, 217, 0.22);
+    --sand-soft: rgba(244, 235, 217, 0.08);
+    --lure-dim: rgba(255, 122, 69, 0.16);
+    --biolume-dim: rgba(83, 223, 232, 0.2);
+    --bobber-dim: rgba(232, 86, 74, 0.24);
+    --ink-shadow: rgba(0, 0, 0, 0.5);
+    --panel-glass: rgba(8, 40, 56, 0.72);
+    --tile: clamp(56px, min(calc((100vw - 72px) / 8), calc((100vh - 268px) / 8)), 84px);
+    --gap: clamp(4px, 0.7vmin, 7px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+
+  body {
+    font-family: var(--body);
+    color: var(--cream);
+    background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ------- ambient decor ------- */
+  .decor { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .net {
+    position: absolute; inset: -50%;
+    background-image:
+      repeating-linear-gradient(45deg, var(--line) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(-45deg, var(--line) 0 1px, transparent 1px 72px);
+    opacity: 0.35;
+    transform: rotate(3deg);
+  }
+  .rays {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(112deg, transparent 16%, rgba(244, 235, 217, 0.05) 24%, transparent 31%),
+      linear-gradient(104deg, transparent 44%, rgba(244, 235, 217, 0.04) 52%, transparent 59%),
+      linear-gradient(120deg, transparent 68%, rgba(244, 235, 217, 0.05) 76%, transparent 83%);
+  }
+  .bubbles { position: absolute; inset: 0; overflow: hidden; }
+  .bubble {
+    position: absolute; bottom: -40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(83, 223, 232, 0.07);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .bubble { animation-name: rise; animation-timing-function: linear; animation-iteration-count: infinite; }
+    @keyframes rise {
+      0%   { transform: translateY(0); opacity: 0; }
+      10%  { opacity: 0.7; }
+      90%  { opacity: 0.5; }
+      100% { transform: translateY(-115vh); opacity: 0; }
+    }
+    .rays { animation: raydrift 16s ease-in-out infinite alternate; }
+    @keyframes raydrift {
+      from { transform: translateX(-2%); opacity: 0.7; }
+      to   { transform: translateX(2%);  opacity: 1; }
+    }
+    .board.shake { animation: hullshake 0.6s ease-in-out; }
+    @keyframes hullshake {
+      10% { transform: translate(-7px, 2px) rotate(-0.5deg); }
+      30% { transform: translate(6px, -2px) rotate(0.4deg); }
+      50% { transform: translate(-5px, 1px) rotate(-0.3deg); }
+      70% { transform: translate(4px, -1px) rotate(0.2deg); }
+      90% { transform: translate(-2px, 0)  rotate(0deg); }
+    }
+    .chip-huge { animation: chip-pulse 2.4s ease-in-out infinite; }
+    @keyframes chip-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 122, 69, 0.25); }
+      50%      { box-shadow: 0 0 0 12px rgba(255, 122, 69, 0); }
+    }
+  }
+
+  /* ------- home chip ------- */
+  .home-chip {
+    position: fixed; top: 12px; left: 12px; z-index: 400;
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 56px; padding: 0 20px;
+    border: 2px solid var(--cream); border-radius: 14px;
+    background: var(--panel-glass);
+    color: var(--cream); text-decoration: none;
+    font-family: var(--display); font-weight: 700; font-size: 0.9rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .home-chip:active, .home-chip:hover { transform: scale(0.96); background: rgba(11, 51, 72, 0.92); }
+
+  /* ------- boardwalk chips ------- */
+  .chip {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 56px; padding: 0 28px;
+    border: 2px solid var(--cream); border-radius: 14px;
+    background: rgba(8, 40, 56, 0.55); color: var(--cream);
+    font-family: var(--display); font-weight: 700; font-size: 0.95rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .chip:active, .chip:hover { transform: scale(0.96); background: rgba(11, 51, 72, 0.95); }
+  .chip-primary { border-color: var(--lure); background: var(--lure-dim); }
+  .chip-primary:active, .chip-primary:hover { background: rgba(255, 122, 69, 0.35); }
+  .chip-huge { min-height: 76px; padding: 0 54px; font-size: 1.35rem; border-width: 3px; border-radius: 18px; }
+
+  /* ------- layout ------- */
+  .stage {
+    position: relative; z-index: 1;
+    height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: clamp(8px, 1.6vmin, 18px);
+    padding: 10px;
+  }
+
+  .masthead { text-align: center; }
+  .masthead h1 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(1.4rem, 3.4vmin + 0.5rem, 2.4rem);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--cream);
+  }
+  .rope-rule { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 4px; }
+  .rope-rule::before, .rope-rule::after { content: ""; width: 56px; border-top: 2px dashed var(--line); }
+  .rope-rule span { color: var(--cream-dim); font-size: 0.85rem; line-height: 1; }
+  .subtitle {
+    color: var(--cream-dim);
+    font-family: var(--display); font-size: 0.72rem;
+    letter-spacing: 0.22em; text-transform: uppercase;
+  }
+
+  /* ------- HUD ------- */
+  .hud { display: flex; align-items: stretch; justify-content: center; gap: clamp(8px, 1.8vmin, 16px); }
+  .well {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-width: 96px; min-height: 56px; padding: 6px 14px;
+    background: var(--panel-deep);
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  .well-label {
+    font-family: var(--display); font-size: 0.58rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--cream-dim);
+  }
+  .well-value { font-family: var(--mono); font-size: 1.25rem; color: var(--brass); }
+
+  .mode-toggle {
+    display: flex; overflow: hidden;
+    border: 2px solid var(--cream); border-radius: 14px;
+    background: rgba(8, 40, 56, 0.55);
+  }
+  .mode-btn {
+    min-height: 56px; min-width: 104px; padding: 0 18px;
+    border: none; background: transparent;
+    color: var(--cream-dim);
+    font-family: var(--display); font-weight: 700; font-size: 0.85rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .mode-btn:active { transform: scale(0.96); }
+  .mode-btn.is-active {
+    background: var(--biolume-dim);
+    color: var(--biolume);
+    box-shadow: inset 0 0 0 2px var(--biolume);
+  }
+
+  /* ------- board and tiles ------- */
+  .board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, var(--tile));
+    grid-auto-rows: var(--tile);
+    gap: var(--gap);
+    padding: 10px;
+    background: var(--panel);
+    border: 2px solid var(--line); border-radius: 16px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+
+  .tile {
+    position: relative;
+    width: var(--tile); height: var(--tile);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line); border-radius: 8px;
+    color: var(--cream);
+    background-color: var(--panel-deep);
+    background-image:
+      repeating-linear-gradient(45deg, var(--line) 0 1px, transparent 1px 12px),
+      repeating-linear-gradient(-45deg, var(--line) 0 1px, transparent 1px 12px),
+      linear-gradient(180deg, var(--panel), var(--panel-deep));
+    cursor: pointer;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    transition: transform 0.08s ease;
+  }
+  .tile:not(.revealed):active { transform: scale(0.94); }
+
+  .tile.revealed {
+    background-image: linear-gradient(180deg, var(--sand), var(--sand-soft));
+    background-color: var(--panel-deep);
+    box-shadow: inset 0 2px 8px var(--ink-shadow);
+    border-color: rgba(244, 235, 217, 0.1);
+    cursor: default;
+  }
+
+  .num {
+    font-family: var(--display); font-weight: 700;
+    font-size: calc(var(--tile) * 0.42); line-height: 1;
+    text-shadow: 0 1px 2px var(--ink-shadow);
+  }
+  .n1 { color: var(--biolume); }
+  .n2 { color: var(--kelp); }
+  .n3 { color: var(--brass); }
+  .n4, .n5, .n6, .n7, .n8 { color: var(--bobber); }
+
+  .tile.buoyed { border-color: var(--bobber); }
+  .buoy-marker {
+    display: block; width: 56%; height: 56%; border-radius: 50%;
+    background: conic-gradient(var(--bobber) 0 25%, var(--cream) 25% 50%, var(--bobber) 50% 75%, var(--cream) 75% 100%);
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 32%, #000 33%);
+    mask: radial-gradient(circle at 50% 50%, transparent 0 32%, #000 33%);
+    filter: drop-shadow(0 2px 3px var(--ink-shadow));
+  }
+  .tile.buoy-wrong { opacity: 0.55; }
+  .tile.buoy-wrong::after {
+    content: "✕";
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--bobber);
+    font-family: var(--display);
+    font-size: calc(var(--tile) * 0.5);
+  }
+
+  .tile.lurker {
+    background-image: linear-gradient(180deg, var(--bobber-dim), rgba(232, 86, 74, 0.1));
+    border-color: var(--bobber);
+  }
+  .tile.lurker.hit {
+    background-image: linear-gradient(180deg, rgba(232, 86, 74, 0.55), var(--bobber-dim));
+    box-shadow: inset 0 0 0 3px var(--bobber);
+  }
+  .eye {
+    position: relative; display: block;
+    width: 62%; height: 44%; border-radius: 50%;
+    background: radial-gradient(circle at 50% 42%, var(--brass) 0%, var(--bobber) 78%);
+    box-shadow: 0 0 8px rgba(232, 86, 74, 0.6);
+  }
+  .eye::after {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    width: 20%; height: 80%;
+    transform: translate(-50%, -50%);
+    background: var(--abyss); border-radius: 50%;
+  }
+
+  .ripple {
+    position: absolute; left: 50%; top: 50%; z-index: 5;
+    width: calc(var(--tile) * 1.1); height: calc(var(--tile) * 1.1);
+    margin-left: calc(var(--tile) * -0.55); margin-top: calc(var(--tile) * -0.55);
+    border: 2px solid var(--biolume); border-radius: 50%;
+    opacity: 0.8; pointer-events: none;
+    transform: scale(0.2);
+    animation: sonar 0.55s ease-out forwards;
+  }
+  @keyframes sonar { to { transform: scale(2.1); opacity: 0; } }
+
+  .tile.revealed .num { animation: reveal-pop 0.28s ease-out; }
+  @keyframes reveal-pop {
+    from { transform: scale(0.3); opacity: 0.2; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* ------- overlays ------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 150;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    background: linear-gradient(180deg, rgba(7, 42, 60, 0.9), rgba(2, 20, 29, 0.96));
+  }
+  .hidden { display: none !important; }
+
+  .card {
+    width: min(560px, 92vw); max-height: 92vh; overflow: auto;
+    display: flex; flex-direction: column; align-items: center;
+    gap: clamp(10px, 2vmin, 18px);
+    padding: clamp(18px, 4vmin, 36px);
+    background: var(--panel);
+    border: 2px solid var(--line); border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
+  .eyebrow {
+    color: var(--cream-dim);
+    font-family: var(--display); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.24em; text-transform: uppercase;
+  }
+  .big-title {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(2.1rem, 8vmin, 3.4rem);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--cream); line-height: 1.05;
+  }
+  .pitch { color: var(--cream-dim); font-size: 1rem; max-width: 40ch; }
+  .hints { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .hints li { color: var(--cream-dim); font-size: 0.9rem; }
+  .hints li::before { content: "◦ "; color: var(--biolume); }
+
+  .result-title {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(1.8rem, 6.5vmin, 2.8rem);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    line-height: 1.05;
+  }
+  .result-title.is-win  { color: var(--kelp); }
+  .result-title.is-lose { color: var(--bobber); }
+  .result-sub { color: var(--cream-dim); }
+  .wells-row { display: flex; gap: 14px; justify-content: center; }
+  .result-stats { color: var(--cream-dim); font-family: var(--mono); font-size: 0.85rem; }
+  .new-best {
+    color: var(--brass);
+    font-family: var(--display); font-weight: 700; font-size: 0.9rem;
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+
+  .fact-card {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--panel-deep);
+    border: 1px solid var(--line); border-radius: 10px;
+    text-align: left;
+  }
+  .fact-label {
+    color: var(--brass);
+    font-family: var(--display); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .fact-text { color: var(--cream-dim); font-size: 0.92rem; line-height: 1.45; }
+
+  /* ------- a11y ------- */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .tile:focus-visible, .chip:focus-visible, .mode-btn:focus-visible, .home-chip:focus-visible {
+    outline: 3px solid var(--biolume); outline-offset: 2px;
+  }
+
+  /* short landscape iPads: keep everything on one screen */
+  @media (max-height: 840px) {
+    .stage { gap: 8px; }
+    .masthead h1 { font-size: 1.35rem; }
+    .rope-rule { margin: 3px 0 2px; }
+    .rope-rule::before, .rope-rule::after { width: 40px; }
+    .subtitle { font-size: 0.62rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="decor" aria-hidden="true">
+  <div class="rays"></div>
+  <div class="net"></div>
+  <div class="bubbles" id="bubbles"></div>
+</div>
+
+<a class="home-chip" href="caught-in-the-net.html">⌂ ARCADE</a>
+
+<main class="stage">
+  <header class="masthead">
+    <h1>Sonar Sweep</h1>
+    <div class="rope-rule" aria-hidden="true"><span>⚓</span></div>
+    <p class="subtitle">Threat hunt the deep</p>
+  </header>
+
+  <section class="hud" aria-label="Game status">
+    <div class="well">
+      <span class="well-label">Lurkers</span>
+      <span class="well-value" id="lurkerCount">10</span>
+    </div>
+    <div class="mode-toggle" role="group" aria-label="Tap mode">
+      <button type="button" id="modePing" class="mode-btn is-active" aria-pressed="true">◎ Ping</button>
+      <button type="button" id="modeBuoy" class="mode-btn" aria-pressed="false">⚑ Buoy</button>
+    </div>
+    <div class="well">
+      <span class="well-label">Time</span>
+      <span class="well-value" id="timeVal">0:00</span>
+    </div>
+  </section>
+
+  <div class="board" id="board" role="group" aria-label="Sonar grid, 8 rows by 8 columns"></div>
+</main>
+
+<p id="live" class="sr-only" role="status" aria-live="polite"></p>
+
+<div class="overlay" id="attract">
+  <div class="card">
+    <p class="eyebrow">Caught in the Net presents</p>
+    <h2 class="big-title">Sonar Sweep</h2>
+    <div class="rope-rule" aria-hidden="true"><span>⚓</span></div>
+    <p class="pitch">Ten lurkers hide beneath the grid. Ping the water, read the numbers, buoy the threats, clear the deep.</p>
+    <ul class="hints">
+      <li>Tap a tile to ping it</li>
+      <li>Hold half a second to drop a buoy</li>
+      <li>Numbers count lurkers in touching tiles</li>
+      <li>Reveal all 54 safe tiles to win</li>
+    </ul>
+    <div class="well hidden" id="attractBestWell">
+      <span class="well-label">Best</span>
+      <span class="well-value" id="attractBest">0</span>
+    </div>
+    <button type="button" class="chip chip-primary chip-huge" id="playBtn">▶ Play</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="result">
+  <div class="card">
+    <h2 class="result-title is-win" id="resultTitle">All Clear</h2>
+    <p class="result-sub" id="resultSub"></p>
+    <div class="wells-row">
+      <div class="well">
+        <span class="well-label">Score</span>
+        <span class="well-value" id="scoreVal">0</span>
+      </div>
+      <div class="well">
+        <span class="well-label">Best</span>
+        <span class="well-value" id="bestVal">0</span>
+      </div>
+    </div>
+    <p class="result-stats" id="resultStats"></p>
+    <p class="new-best hidden" id="newBest">New best!</p>
+    <div class="fact-card">
+      <p class="fact-label">Catch of the Day</p>
+      <p class="fact-text" id="factText"></p>
+    </div>
+    <button type="button" class="chip chip-primary chip-huge" id="againBtn">↻ Play Again</button>
+  </div>
+</div>
+
+<script src="sounds.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var SIZE = 8;
+  var LURKERS = 10;
+  var SAFE_TILES = SIZE * SIZE - LURKERS;
+  var BEST_KEY = 'citn-sonar-best';
+  var LONG_PRESS_MS = 500;
+
+  var S = window.CyberSounds || null;
+  function snd(name) {
+    try { if (S && S[name]) S[name](); } catch (e) { /* sound is optional */ }
+  }
+
+  var reduceMotion = false;
+  try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* keep default */ }
+
+  var boardEl = document.getElementById('board');
+  var lurkerCountEl = document.getElementById('lurkerCount');
+  var timeValEl = document.getElementById('timeVal');
+  var liveEl = document.getElementById('live');
+  var modePingBtn = document.getElementById('modePing');
+  var modeBuoyBtn = document.getElementById('modeBuoy');
+  var attractEl = document.getElementById('attract');
+  var attractBestWell = document.getElementById('attractBestWell');
+  var attractBestEl = document.getElementById('attractBest');
+  var playBtn = document.getElementById('playBtn');
+  var resultEl = document.getElementById('result');
+  var resultTitleEl = document.getElementById('resultTitle');
+  var resultSubEl = document.getElementById('resultSub');
+  var resultStatsEl = document.getElementById('resultStats');
+  var scoreValEl = document.getElementById('scoreVal');
+  var bestValEl = document.getElementById('bestVal');
+  var newBestEl = document.getElementById('newBest');
+  var factTextEl = document.getElementById('factText');
+  var againBtn = document.getElementById('againBtn');
+
+  var FACTS = [
+    'Threat hunters do not wait for alarms. They sweep quiet systems on purpose, looking for anything that does not belong.',
+    'Logs are sonar for defenders. One odd entry means little. A cluster of odd entries around one host means look closer.',
+    'The numbers on a tile work like log signals. They never name the threat. They only tell you how close you are to one.',
+    'Attackers try hard to stay silent. The giveaway is rarely loud. It is a small, quiet anomaly where nothing should be.',
+    'Marking a suspect is cheap. Acting without proof is not. Good hunters flag first, confirm the signal, then move.'
+  ];
+  var factIdx = Math.floor(Math.random() * FACTS.length);
+
+  var cells = [];
+  var tiles = [];
+  var state = 'attract'; /* attract, playing, ended */
+  var mode = 'ping';
+  var firstPing = true;
+  var revealedCount = 0;
+  var buoyCount = 0;
+  var timerId = null;
+  var startTime = null;
+  var elapsedMs = 0;
+  var lastPop = 0;
+  var lastScore = 0;
+  var lastWrongBuoys = 0;
+
+  /* ---------- helpers ---------- */
+
+  function readBest() {
+    try { return parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; }
+    catch (e) { return 0; }
+  }
+  function writeBest(v) {
+    try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) { /* storage optional */ }
+  }
+
+  function fmtTime(ms) {
+    var s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function announce(msg) { liveEl.textContent = msg; }
+
+  function neighbors(i) {
+    var r = Math.floor(i / SIZE);
+    var c = i % SIZE;
+    var out = [];
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        var nr = r + dr;
+        var nc = c + dc;
+        if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) out.push(nr * SIZE + nc);
+      }
+    }
+    return out;
+  }
+
+  function tileLabel(i) {
+    var r = Math.floor(i / SIZE) + 1;
+    var c = (i % SIZE) + 1;
+    var base = 'row ' + r + ' column ' + c + ', ';
+    var cell = cells[i];
+    if (!cell.revealed) return base + (cell.buoy ? 'buoy marker' : 'hidden');
+    if (cell.mine) return base + 'lurker';
+    return base + (cell.adj === 0 ? 'clear' : cell.adj + ' adjacent');
+  }
+
+  function refreshTile(i) { tiles[i].setAttribute('aria-label', tileLabel(i)); }
+
+  function updateLurkerHud() { lurkerCountEl.textContent = String(LURKERS - buoyCount); }
+
+  function updateTimeDisplay() { timeValEl.textContent = fmtTime(elapsedMs); }
+
+  function popThrottled() {
+    var now = Date.now();
+    if (now - lastPop >= 70) { lastPop = now; snd('pop'); }
+  }
+
+  function spawnRipple(tile) {
+    if (reduceMotion) return;
+    var r = document.createElement('span');
+    r.className = 'ripple';
+    tile.appendChild(r);
+    setTimeout(function () { if (r.parentNode) r.parentNode.removeChild(r); }, 700);
+  }
+
+  function countUp(el, target, dur) {
+    var start = null;
+    function step(ts) {
+      if (start === null) start = ts;
+      var p = Math.min(1, (ts - start) / dur);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- timer ---------- */
+
+  function startTimerIfNeeded() {
+    if (startTime !== null) return;
+    startTime = Date.now();
+    timerId = setInterval(function () {
+      elapsedMs = Date.now() - startTime;
+      updateTimeDisplay();
+    }, 250);
+  }
+
+  function stopTimer() {
+    if (timerId !== null) { clearInterval(timerId); timerId = null; }
+    if (startTime !== null) { elapsedMs = Date.now() - startTime; }
+    updateTimeDisplay();
+  }
+
+  /* ---------- board setup ---------- */
+
+  function buildTiles() {
+    for (var i = 0; i < SIZE * SIZE; i++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile';
+      b.dataset.i = String(i);
+      boardEl.appendChild(b);
+      tiles.push(b);
+    }
+  }
+
+  function computeAdj() {
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i].mine) { cells[i].adj = 0; continue; }
+      var n = neighbors(i);
+      var count = 0;
+      for (var k = 0; k < n.length; k++) if (cells[n[k]].mine) count++;
+      cells[i].adj = count;
+    }
+  }
+
+  function relocateMine(i) {
+    cells[i].mine = false;
+    for (var j = 0; j < cells.length; j++) {
+      if (j !== i && !cells[j].mine) { cells[j].mine = true; break; }
+    }
+    computeAdj();
+  }
+
+  function newGame() {
+    cells = [];
+    for (var i = 0; i < SIZE * SIZE; i++) {
+      cells.push({ mine: false, adj: 0, revealed: false, buoy: false });
+    }
+    var placed = 0;
+    while (placed < LURKERS) {
+      var idx = Math.floor(Math.random() * SIZE * SIZE);
+      if (!cells[idx].mine) { cells[idx].mine = true; placed++; }
+    }
+    computeAdj();
+
+    firstPing = true;
+    revealedCount = 0;
+    buoyCount = 0;
+    elapsedMs = 0;
+    startTime = null;
+    if (timerId !== null) { clearInterval(timerId); timerId = null; }
+    updateTimeDisplay();
+    updateLurkerHud();
+
+    for (i = 0; i < tiles.length; i++) {
+      tiles[i].className = 'tile';
+      tiles[i].innerHTML = '';
+      refreshTile(i);
+    }
+    boardEl.classList.remove('shake');
+    setMode('ping', true);
+    state = 'playing';
+    announce('New sweep started. Ping mode. Ten lurkers hidden in the grid.');
+  }
+
+  /* ---------- gameplay ---------- */
+
+  function showRevealed(idx, depth) {
+    var cell = cells[idx];
+    var t = tiles[idx];
+    t.classList.add('revealed');
+    if (cell.adj > 0) {
+      t.innerHTML = '<span class="num n' + cell.adj + '">' + cell.adj + '</span>';
+    } else {
+      t.innerHTML = '';
+    }
+    refreshTile(idx);
+    if (depth > 0) popThrottled();
+  }
+
+  function floodReveal(origin) {
+    var queue = [[origin, 0]];
+    var seen = {};
+    seen[origin] = true;
+    var batch = [];
+    var maxDepth = 0;
+
+    while (queue.length) {
+      var pair = queue.shift();
+      var idx = pair[0];
+      var depth = pair[1];
+      var cell = cells[idx];
+      if (cell.revealed || cell.buoy || cell.mine) continue;
+      cell.revealed = true;
+      revealedCount++;
+      batch.push([idx, depth]);
+      if (depth > maxDepth) maxDepth = depth;
+      if (cell.adj === 0) {
+        var ns = neighbors(idx);
+        for (var k = 0; k < ns.length; k++) {
+          var n = ns[k];
+          if (!seen[n]) { seen[n] = true; queue.push([n, depth + 1]); }
+        }
+      }
+    }
+
+    for (var b = 0; b < batch.length; b++) {
+      (function (i2, d2) {
+        var delay = reduceMotion ? 0 : d2 * 36;
+        if (delay === 0) showRevealed(i2, d2);
+        else setTimeout(function () { showRevealed(i2, d2); }, delay);
+      })(batch[b][0], batch[b][1]);
+    }
+    return maxDepth;
+  }
+
+  function ping(i) {
+    var cell = cells[i];
+    if (cell.revealed) return;
+    if (cell.buoy) {
+      announce('Tile has a buoy. Long press to remove it first.');
+      return;
+    }
+    if (firstPing) {
+      if (cell.mine) relocateMine(i);
+      firstPing = false;
+      startTimerIfNeeded();
+    }
+    if (cell.mine) { breach(i); return; }
+
+    snd('click');
+    spawnRipple(tiles[i]);
+    var maxDepth = floodReveal(i);
+    var revealedCell = cells[i];
+    announce(revealedCell.adj === 0
+      ? 'Clear water. Open region revealed.'
+      : revealedCell.adj + ' adjacent lurker' + (revealedCell.adj === 1 ? '' : 's') + '.');
+
+    if (revealedCount === SAFE_TILES) winGame(maxDepth);
+  }
+
+  function toggleBuoy(i) {
+    var cell = cells[i];
+    if (cell.revealed) return;
+    cell.buoy = !cell.buoy;
+    var t = tiles[i];
+    if (cell.buoy) {
+      buoyCount++;
+      t.classList.add('buoyed');
+      t.innerHTML = '<span class="buoy-marker" aria-hidden="true"></span>';
+    } else {
+      buoyCount--;
+      t.classList.remove('buoyed');
+      t.innerHTML = '';
+    }
+    snd('place');
+    updateLurkerHud();
+    refreshTile(i);
+    announce((cell.buoy ? 'Buoy placed. ' : 'Buoy removed. ') + (LURKERS - buoyCount) + ' lurkers unmarked.');
+  }
+
+  function breach(pingedIdx) {
+    state = 'ended';
+    stopTimer();
+    snd('breach');
+    if (!reduceMotion) {
+      boardEl.classList.add('shake');
+      setTimeout(function () { boardEl.classList.remove('shake'); }, 700);
+    }
+    var delay = 0;
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i].mine) {
+        (function (idx, d) {
+          setTimeout(function () {
+            cells[idx].revealed = true;
+            var t = tiles[idx];
+            t.classList.add('revealed', 'lurker');
+            if (idx === pingedIdx) t.classList.add('hit');
+            t.innerHTML = '<span class="eye" aria-hidden="true"></span>';
+            refreshTile(idx);
+          }, reduceMotion ? 0 : d);
+        })(i, delay);
+        delay += 70;
+      } else if (cells[i].buoy) {
+        tiles[i].classList.add('buoy-wrong');
+      }
+    }
+    announce('Hull breach. You pinged a lurker. Game over.');
+    setTimeout(function () { showResult(false); }, reduceMotion ? 400 : delay + 800);
+  }
+
+  function winGame(maxDepth) {
+    state = 'ended';
+    stopTimer();
+    snd('win');
+    var seconds = Math.floor(elapsedMs / 1000);
+    var wrongBuoys = 0;
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i].buoy && !cells[i].mine) wrongBuoys++;
+    }
+    lastWrongBuoys = wrongBuoys;
+    lastScore = Math.max(0, 1000 - seconds * 10 - wrongBuoys * 25);
+    announce('All clear. You win. Score ' + lastScore + '.');
+    var wait = reduceMotion ? 250 : 500 + maxDepth * 36;
+    setTimeout(function () { showResult(true); }, wait);
+  }
+
+  function showResult(won) {
+    var best = readBest();
+    var isNewBest = false;
+    var score = won ? lastScore : 0;
+    if (won && score > best) {
+      best = score;
+      writeBest(best);
+      isNewBest = true;
+    }
+    resultTitleEl.textContent = won ? 'All Clear' : 'Hull Breach';
+    resultTitleEl.classList.toggle('is-win', won);
+    resultTitleEl.classList.toggle('is-lose', !won);
+    resultSubEl.textContent = won
+      ? 'The water is quiet again. Every safe tile swept.'
+      : 'A lurker took the hull. The sweep is lost.';
+    resultStatsEl.textContent = 'Time ' + fmtTime(elapsedMs) + (won ? ', wrong buoys ' + lastWrongBuoys : '');
+    bestValEl.textContent = String(best);
+    newBestEl.classList.toggle('hidden', !isNewBest);
+
+    factIdx = (factIdx + 1) % FACTS.length;
+    factTextEl.textContent = FACTS[factIdx];
+
+    resultEl.classList.remove('hidden');
+    if (won && !reduceMotion && score > 0) {
+      scoreValEl.textContent = '0';
+      countUp(scoreValEl, score, 900);
+    } else {
+      scoreValEl.textContent = String(score);
+    }
+    againBtn.focus();
+  }
+
+  /* ---------- mode toggle ---------- */
+
+  function setMode(m, silent) {
+    mode = m;
+    modePingBtn.classList.toggle('is-active', m === 'ping');
+    modeBuoyBtn.classList.toggle('is-active', m === 'buoy');
+    modePingBtn.setAttribute('aria-pressed', m === 'ping' ? 'true' : 'false');
+    modeBuoyBtn.setAttribute('aria-pressed', m === 'buoy' ? 'true' : 'false');
+    if (!silent) {
+      snd('click');
+      announce(m === 'ping' ? 'Ping mode. Taps ping tiles.' : 'Buoy mode. Taps place buoy markers.');
+    }
+  }
+
+  modePingBtn.addEventListener('click', function () { if (mode !== 'ping') setMode('ping'); });
+  modeBuoyBtn.addEventListener('click', function () { if (mode !== 'buoy') setMode('buoy'); });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'b' || e.key === 'B') && state === 'playing') {
+      setMode(mode === 'ping' ? 'buoy' : 'ping');
+    }
+  });
+
+  /* ---------- input: tap, long press, keyboard ---------- */
+
+  var pressTimer = null;
+  var suppressClick = false;
+  var pressStartX = 0;
+  var pressStartY = 0;
+
+  function handleTap(i) {
+    if (state !== 'playing') return;
+    if (mode === 'ping') ping(i);
+    else toggleBuoy(i);
+  }
+
+  function longPress(i) {
+    if (state !== 'playing') return;
+    toggleBuoy(i);
+  }
+
+  boardEl.addEventListener('pointerdown', function (e) {
+    suppressClick = false;
+    var t = e.target.closest('.tile');
+    if (!t || state !== 'playing') return;
+    var idx = parseInt(t.dataset.i, 10);
+    pressStartX = e.clientX;
+    pressStartY = e.clientY;
+    if (pressTimer !== null) clearTimeout(pressTimer);
+    pressTimer = setTimeout(function () {
+      pressTimer = null;
+      suppressClick = true;
+      longPress(idx);
+    }, LONG_PRESS_MS);
+  });
+
+  boardEl.addEventListener('pointermove', function (e) {
+    if (pressTimer === null) return;
+    if (Math.abs(e.clientX - pressStartX) > 12 || Math.abs(e.clientY - pressStartY) > 12) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  });
+
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+    boardEl.addEventListener(ev, function () {
+      if (pressTimer !== null) { clearTimeout(pressTimer); pressTimer = null; }
+    });
+  });
+
+  boardEl.addEventListener('click', function (e) {
+    var t = e.target.closest('.tile');
+    if (!t) return;
+    if (suppressClick) { suppressClick = false; return; }
+    handleTap(parseInt(t.dataset.i, 10));
+  });
+
+  boardEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  /* ---------- overlays ---------- */
+
+  function refreshAttractBest() {
+    var best = readBest();
+    if (best > 0) {
+      attractBestEl.textContent = String(best);
+      attractBestWell.classList.remove('hidden');
+    }
+  }
+
+  playBtn.addEventListener('click', function () {
+    snd('click');
+    attractEl.classList.add('hidden');
+    resultEl.classList.add('hidden');
+    newGame();
+    tiles[0].focus();
+  });
+
+  againBtn.addEventListener('click', function () {
+    snd('click');
+    resultEl.classList.add('hidden');
+    newGame();
+    tiles[0].focus();
+  });
+
+  /* ---------- ambient bubbles ---------- */
+
+  (function buildBubbles() {
+    var wrap = document.getElementById('bubbles');
+    if (!wrap) return;
+    for (var i = 0; i < 12; i++) {
+      var b = document.createElement('span');
+      b.className = 'bubble';
+      var size = 4 + Math.random() * 10;
+      b.style.width = size + 'px';
+      b.style.height = size + 'px';
+      b.style.left = (Math.random() * 100) + '%';
+      b.style.animationDuration = (9 + Math.random() * 14) + 's';
+      b.style.animationDelay = (Math.random() * -20) + 's';
+      wrap.appendChild(b);
+    }
+  })();
+
+  /* ---------- boot ---------- */
+
+  buildTiles();
+  cells = [];
+  for (var i0 = 0; i0 < SIZE * SIZE; i0++) {
+    cells.push({ mine: false, adj: 0, revealed: false, buoy: false });
+  }
+  for (var i1 = 0; i1 < tiles.length; i1++) refreshTile(i1);
+  refreshAttractBest();
+  playBtn.focus();
+})();
+</script>
+</body>
+</html>

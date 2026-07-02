@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Deep Dive Dash | Caught in the Net</title>
+<style>
+:root {
+  /* water */
+  --abyss: #041B26;        /* page background base */
+  --depth: #072A3C;        /* gradient partner */
+  --panel: #0B3348;        /* sign boards / cards */
+  --panel-deep: #082838;   /* inset wells */
+  --line: rgba(244, 235, 217, 0.16);   /* rope hairlines */
+  /* ink */
+  --cream: #F4EBD9;        /* primary text */
+  --cream-dim: #C9BFA8;    /* secondary text */
+  /* accents */
+  --lure: #FF7A45;         /* orange: primary action, player warmth */
+  --bobber: #E8564A;       /* red: danger, phish, enemies */
+  --biolume: #53DFE8;      /* cyan: glow, defense, friendly tech */
+  --kelp: #4FC98C;         /* green: success, safe */
+  --brass: #F5C15C;        /* gold: score, coins, trophies */
+  /* type */
+  --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%);
+  font-family: var(--body);
+  color: var(--cream);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- ambient decor (net grid, rays, bubbles) ---------- */
+.decor { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.decor::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background:
+    repeating-linear-gradient(52deg, var(--line) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(-52deg, var(--line) 0 1px, transparent 1px 72px);
+  opacity: 0.35;
+}
+.decor .rays {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(112deg, transparent 28%, rgba(244, 235, 217, 0.05) 33%, transparent 40%),
+    linear-gradient(100deg, transparent 54%, rgba(244, 235, 217, 0.04) 60%, transparent 67%);
+}
+.decor .bub {
+  position: absolute;
+  bottom: -26px;
+  border-radius: 50%;
+  border: 1px solid rgba(83, 223, 232, 0.28);
+  background: rgba(83, 223, 232, 0.05);
+  opacity: 0;
+}
+.decor .bub:nth-of-type(2)  { left: 6%;  width: 8px;  height: 8px; }
+.decor .bub:nth-of-type(3)  { left: 15%; width: 14px; height: 14px; }
+.decor .bub:nth-of-type(4)  { left: 24%; width: 6px;  height: 6px; }
+.decor .bub:nth-of-type(5)  { left: 36%; width: 11px; height: 11px; }
+.decor .bub:nth-of-type(6)  { left: 47%; width: 7px;  height: 7px; }
+.decor .bub:nth-of-type(7)  { left: 58%; width: 13px; height: 13px; }
+.decor .bub:nth-of-type(8)  { left: 67%; width: 9px;  height: 9px; }
+.decor .bub:nth-of-type(9)  { left: 76%; width: 6px;  height: 6px; }
+.decor .bub:nth-of-type(10) { left: 85%; width: 12px; height: 12px; }
+.decor .bub:nth-of-type(11) { left: 93%; width: 8px;  height: 8px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .decor .bub { animation: rise linear infinite; }
+  .decor .bub:nth-of-type(2)  { animation-duration: 13s; animation-delay: 0s; }
+  .decor .bub:nth-of-type(3)  { animation-duration: 17s; animation-delay: 2.2s; }
+  .decor .bub:nth-of-type(4)  { animation-duration: 11s; animation-delay: 4.5s; }
+  .decor .bub:nth-of-type(5)  { animation-duration: 15s; animation-delay: 1.1s; }
+  .decor .bub:nth-of-type(6)  { animation-duration: 12s; animation-delay: 6s; }
+  .decor .bub:nth-of-type(7)  { animation-duration: 18s; animation-delay: 3.4s; }
+  .decor .bub:nth-of-type(8)  { animation-duration: 14s; animation-delay: 7.8s; }
+  .decor .bub:nth-of-type(9)  { animation-duration: 10s; animation-delay: 5.2s; }
+  .decor .bub:nth-of-type(10) { animation-duration: 16s; animation-delay: 0.8s; }
+  .decor .bub:nth-of-type(11) { animation-duration: 12.5s; animation-delay: 8.6s; }
+  @keyframes rise {
+    0%   { transform: translateY(0); opacity: 0; }
+    8%   { opacity: 0.7; }
+    92%  { opacity: 0.5; }
+    100% { transform: translateY(-115vh); opacity: 0; }
+  }
+  .decor .rays { animation: raysway 9s ease-in-out infinite alternate; }
+  @keyframes raysway {
+    from { transform: translateX(-14px); }
+    to   { transform: translateX(14px); }
+  }
+}
+
+/* ---------- game canvas ---------- */
+#sea {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---------- boardwalk chips ---------- */
+.home-chip {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  min-width: 56px;
+  padding: 0 20px;
+  border: 2px solid var(--cream);
+  border-radius: 14px;
+  background: rgba(8, 40, 56, 0.72);
+  color: var(--cream);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.home-chip:active { transform: scale(0.96); background: rgba(11, 51, 72, 0.92); }
+
+.chip {
+  min-height: 56px;
+  padding: 14px 34px;
+  border: 2px solid var(--cream);
+  border-radius: 14px;
+  background: rgba(8, 40, 56, 0.55);
+  color: var(--cream);
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.95rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:active { transform: scale(0.96); background: rgba(11, 51, 72, 0.95); }
+.chip-primary {
+  border-color: var(--lure);
+  color: var(--lure);
+  background: rgba(255, 122, 69, 0.10);
+  font-size: clamp(1.2rem, 3.4vw, 1.5rem);
+  padding: 18px 48px;
+}
+.chip-primary:active { background: rgba(255, 122, 69, 0.24); }
+@media (hover: hover) {
+  .chip:hover { background: rgba(11, 51, 72, 0.95); }
+  .chip-primary:hover { background: rgba(255, 122, 69, 0.24); }
+}
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--biolume);
+  outline-offset: 3px;
+}
+
+/* ---------- HUD wells ---------- */
+.hud {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+  pointer-events: none;
+}
+.well {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 88px;
+  padding: 6px 12px;
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.well .lbl {
+  font-family: var(--display);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+.well .val {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--brass);
+}
+#hudShield.on  { color: var(--biolume); }
+#hudShield.off { color: var(--cream-dim); }
+
+/* ---------- overlays ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 27, 38, 0.45);
+}
+.overlay.hidden { display: none; }
+.panel {
+  width: min(560px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 20px;
+  padding: clamp(18px, 4vh, 40px) clamp(16px, 4vw, 44px);
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+.kicker {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--lure);
+  font-size: 0.78rem;
+  margin: 0 0 4px;
+}
+h1, h2 {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: var(--cream);
+  margin: 6px 0 10px;
+}
+h1 { font-size: clamp(2rem, 6vw, 3.1rem); }
+h2 { font-size: clamp(1.5rem, 4.6vw, 2.2rem); }
+.rope-rule {
+  position: relative;
+  border-top: 2px dashed var(--line);
+  margin: 14px auto 18px;
+  width: 70%;
+}
+.rope-rule span {
+  position: absolute;
+  top: -0.85em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  padding: 0 10px;
+  color: var(--cream-dim);
+  font-size: 0.95rem;
+}
+.sub { color: var(--cream-dim); margin: 0 0 22px; }
+.hint { color: var(--cream-dim); font-size: 0.9rem; margin: 16px 0 0; }
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px 0 4px;
+}
+.new-best {
+  display: none;
+  margin: 8px auto 0;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+  color: var(--kelp);
+}
+.new-best.show { display: block; }
+
+.fact-card {
+  margin: 18px auto;
+  padding: 14px 18px;
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  text-align: left;
+  max-width: 440px;
+}
+.fact-title {
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--brass);
+  font-size: 0.72rem;
+  margin: 0 0 6px;
+}
+.fact-text {
+  color: var(--cream);
+  margin: 0;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<div class="decor" aria-hidden="true">
+  <div class="rays"></div>
+  <span class="bub"></span><span class="bub"></span><span class="bub"></span>
+  <span class="bub"></span><span class="bub"></span><span class="bub"></span>
+  <span class="bub"></span><span class="bub"></span><span class="bub"></span>
+  <span class="bub"></span>
+</div>
+
+<canvas id="sea"></canvas>
+
+<a class="home-chip" href="caught-in-the-net.html">⌂ ARCADE</a>
+
+<div class="hud">
+  <div class="well"><span class="lbl">Dist</span><span class="val" id="hudDist">0 m</span></div>
+  <div class="well"><span class="lbl">Best</span><span class="val" id="hudBest">0</span></div>
+  <div class="well"><span class="lbl">Shield</span><span class="val off" id="hudShield">OFF</span></div>
+</div>
+
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+
+<div class="overlay" id="titleOverlay">
+  <div class="panel">
+    <p class="kicker">Caught in the Net</p>
+    <h1>Deep Dive Dash</h1>
+    <div class="rope-rule" aria-hidden="true"><span>&#9875;</span></div>
+    <p class="sub">Courier fish. Precious cargo. Keep it moving.</p>
+    <button type="button" id="playBtn" class="chip chip-primary">&#9654; PLAY</button>
+    <p class="hint">Hold anywhere to dive. Release to float up.</p>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overOverlay">
+  <div class="panel">
+    <p class="kicker">Snagged</p>
+    <h2>Run Over</h2>
+    <div class="rope-rule" aria-hidden="true"><span>&#9875;</span></div>
+    <div class="stats">
+      <div class="well"><span class="lbl">Distance</span><span class="val" id="ovDist">0 m</span></div>
+      <div class="well"><span class="lbl">Padlocks</span><span class="val" id="ovLocks">0</span></div>
+      <div class="well"><span class="lbl">Score</span><span class="val" id="ovScore">0</span></div>
+      <div class="well"><span class="lbl">Best</span><span class="val" id="ovBest">0</span></div>
+    </div>
+    <p class="new-best" id="newBest">New best catch!</p>
+    <div class="fact-card">
+      <p class="fact-title">Catch of the Day</p>
+      <p class="fact-text" id="factText"></p>
+    </div>
+    <button type="button" id="againBtn" class="chip chip-primary">&#9654; PLAY AGAIN</button>
+    <p class="hint">Hold to dive. Release to rise.</p>
+  </div>
+</div>
+
+<script src="sounds.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- setup ---------- */
+  var canvas = document.getElementById('sea');
+  var ctx = canvas.getContext('2d');
+  var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var css = getComputedStyle(document.documentElement);
+  function tok(name) { return css.getPropertyValue(name).trim(); }
+  var C = {
+    abyss: tok('--abyss'),
+    cream: tok('--cream'),
+    creamDim: tok('--cream-dim'),
+    lure: tok('--lure'),
+    bobber: tok('--bobber'),
+    biolume: tok('--biolume'),
+    brass: tok('--brass')
+  };
+
+  var BEST_KEY = 'citn-dash-best';
+  var PX_PER_M = 50;
+
+  function sfx(name, arg) {
+    try {
+      if (window.CyberSounds && window.CyberSounds[name]) window.CyberSounds[name](arg);
+    } catch (e) { /* sound is optional */ }
+  }
+
+  function loadBest() {
+    try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; }
+    catch (e) { return 0; }
+  }
+  function saveBest(v) {
+    try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) { /* private mode */ }
+  }
+
+  /* ---------- DOM refs ---------- */
+  var hudDist = document.getElementById('hudDist');
+  var hudBest = document.getElementById('hudBest');
+  var hudShield = document.getElementById('hudShield');
+  var liveEl = document.getElementById('live');
+  var titleOverlay = document.getElementById('titleOverlay');
+  var overOverlay = document.getElementById('overOverlay');
+  var playBtn = document.getElementById('playBtn');
+  var againBtn = document.getElementById('againBtn');
+  var ovDist = document.getElementById('ovDist');
+  var ovLocks = document.getElementById('ovLocks');
+  var ovScore = document.getElementById('ovScore');
+  var ovBest = document.getElementById('ovBest');
+  var newBestEl = document.getElementById('newBest');
+  var factText = document.getElementById('factText');
+
+  /* ---------- facts: encryption in transit, VPNs, public Wi-Fi ---------- */
+  var FACTS = [
+    'Encryption in transit scrambles your data while it travels. A snagged packet is unreadable gibberish without the key.',
+    'The padlock in the address bar means the connection is encrypted. It does not promise the site itself is honest.',
+    'Public Wi-Fi is open water. Anyone nearby can read unencrypted traffic, so stick to HTTPS sites.',
+    'A VPN wraps all of your traffic in one encrypted tunnel. It is a smart move on networks you do not own.',
+    'Skip banking and logins on free hotspot Wi-Fi. If you cannot wait, switch on a VPN first.'
+  ];
+  var factIdx = Math.floor(Math.random() * FACTS.length);
+
+  /* ---------- state ---------- */
+  var state = 'attract';   /* attract, playing, over */
+  var W = 0, H = 0, dpr = 1;
+  var surfaceY = 90, floorY = 600;
+  var time = 0;
+  var elapsed = 0;
+  var worldX = 0;
+  var speed = 0;
+  var distancePx = 0;
+  var lastMeters = -1;
+  var locksCaught = 0;
+  var best = loadBest();
+  var holding = false;
+  var spawnT = 1.0;
+  var camY = 0;
+  var shakeT = 0;
+  var lastTick = -10;
+  var overAt = -10;
+
+  var player = {
+    x: 200, y: 300, vy: 0, tilt: 0,
+    r: 16, shield: false, invuln: 0
+  };
+
+  var hooks = [];
+  var jellies = [];
+  var locks = [];
+  var bubbles = [];
+  var trailT = 0;
+
+  /* parallax layer data */
+  var kelp = [], rocks = [], specks = [];
+  var tileW = 1000;
+
+  /* ---------- sizing ---------- */
+  function buildParallax() {
+    tileW = Math.max(W, 700) + 240;
+    kelp = [];
+    var x = 30 + Math.random() * 60;
+    while (x < tileW) {
+      kelp.push({
+        x: x,
+        h: 60 + Math.random() * (H * 0.22),
+        w: 9 + Math.random() * 13,
+        ph: Math.random() * 6.28
+      });
+      x += 90 + Math.random() * 140;
+    }
+    rocks = [];
+    x = Math.random() * 120;
+    while (x < tileW) {
+      rocks.push({ x: x, r: 26 + Math.random() * 60 });
+      x += 150 + Math.random() * 220;
+    }
+    specks = [];
+    for (var i = 0; i < 26; i++) {
+      specks.push({
+        x: Math.random() * tileW,
+        y: Math.random(),
+        r: 0.8 + Math.random() * 1.8,
+        a: 0.08 + Math.random() * 0.14
+      });
+    }
+  }
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    surfaceY = Math.max(86, H * 0.11);
+    floorY = H - Math.max(24, H * 0.045);
+    player.x = Math.round(W * 0.3);
+    player.y = clamp(player.y, surfaceY + 20, floorY - 14);
+    buildParallax();
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 60); });
+
+  /* ---------- helpers ---------- */
+  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
+  function segDist(px, py, ax, ay, bx, by) {
+    var dx = bx - ax, dy = by - ay;
+    var L2 = dx * dx + dy * dy;
+    var t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0;
+    t = clamp(t, 0, 1);
+    var cx = ax + dx * t, cy = ay + dy * t;
+    return Math.hypot(px - cx, py - cy);
+  }
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function tickNearMiss() {
+    if (time - lastTick > 0.18) {
+      lastTick = time;
+      sfx('tick');
+    }
+  }
+
+  /* ---------- game flow ---------- */
+  function updateShieldHud() {
+    hudShield.textContent = player.shield ? 'ON' : 'OFF';
+    hudShield.className = 'val ' + (player.shield ? 'on' : 'off');
+  }
+
+  function startGame() {
+    state = 'playing';
+    hooks = [];
+    jellies = [];
+    locks = [];
+    bubbles = [];
+    elapsed = 0;
+    distancePx = 0;
+    lastMeters = -1;
+    locksCaught = 0;
+    spawnT = 0.9;
+    holding = false;
+    camY = 0;
+    shakeT = 0;
+    player.y = (surfaceY + floorY) / 2;
+    player.vy = 0;
+    player.tilt = 0;
+    player.shield = false;
+    player.invuln = 0;
+    titleOverlay.classList.add('hidden');
+    overOverlay.classList.add('hidden');
+    updateShieldHud();
+    hudDist.textContent = '0 m';
+    hudBest.textContent = String(best);
+    liveEl.textContent = 'Run started. Hold to dive, release to float.';
+    sfx('click');
+  }
+
+  function countUp(el, target) {
+    var t0 = performance.now();
+    var dur = 900;
+    function step(now) {
+      var p = Math.min(1, (now - t0) / dur);
+      var v = Math.round(target * (1 - Math.pow(1 - p, 3)));
+      el.textContent = String(v);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function gameOver() {
+    state = 'over';
+    overAt = time;
+    holding = false;
+    sfx('lose');
+    var meters = Math.floor(distancePx / PX_PER_M);
+    var score = meters + locksCaught * 25;
+    var isNewBest = score > best;
+    if (isNewBest) {
+      best = score;
+      saveBest(best);
+    }
+    hudBest.textContent = String(best);
+    ovDist.textContent = meters + ' m';
+    ovLocks.textContent = String(locksCaught);
+    ovBest.textContent = String(best);
+    newBestEl.className = 'new-best' + (isNewBest ? ' show' : '');
+    factIdx = (factIdx + 1) % FACTS.length;
+    factText.textContent = FACTS[factIdx];
+    ovScore.textContent = '0';
+    overOverlay.classList.remove('hidden');
+    countUp(ovScore, score);
+    liveEl.textContent = 'Run over. Distance ' + meters + ' meters. Score ' + score + '. Best ' + best + '.';
+    if (shakeT < 0.35) shakeT = 0.35;
+    try { againBtn.focus(); } catch (e) { /* focus is best-effort */ }
+  }
+
+  /* ---------- spawning ---------- */
+  function spawn() {
+    var band = floorY - surfaceY;
+    var roll = Math.random();
+    if (roll < 0.42) {
+      hooks.push({
+        x: W + 90,
+        len: band * (0.16 + Math.random() * 0.46),
+        amp: RM ? 0 : (Math.random() < 0.5 ? 0 : 0.03 + Math.random() * 0.09),
+        f: 0.7 + Math.random() * 0.9,
+        ph: Math.random() * 6.28,
+        hx: 0, hy: 0,
+        passed: false,
+        minD: 1e9
+      });
+    } else if (roll < 0.80) {
+      jellies.push({
+        x: W + 90,
+        y0: surfaceY + band * (0.30 + Math.random() * 0.55),
+        r: 15 + Math.random() * 14,
+        ph: Math.random() * 6.28,
+        vx: Math.random() * 24 - 12,
+        passed: false,
+        minD: 1e9
+      });
+    } else {
+      locks.push({
+        x: W + 70,
+        y: surfaceY + band * (0.15 + Math.random() * 0.7),
+        ph: Math.random() * 6.28
+      });
+    }
+  }
+
+  /* ---------- update ---------- */
+  function update(dt) {
+    time += dt;
+    if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+
+    if (state === 'playing') {
+      elapsed += dt;
+      speed = Math.max(200, W * 0.24) + elapsed * 6;
+      worldX += speed * dt;
+      distancePx += speed * dt;
+
+      /* buoyancy physics: accelerate down while holding, up while released */
+      var maxVy = H * 0.62;
+      var accel = holding ? H * 1.7 : -(H * 1.35);
+      player.vy += accel * dt;
+      player.vy -= player.vy * 0.25 * dt; /* mild water drag */
+      player.vy = clamp(player.vy, -maxVy, maxVy);
+      player.y += player.vy * dt;
+      if (player.y < surfaceY + 16) { player.y = surfaceY + 16; player.vy = Math.max(player.vy, 0); }
+      if (player.y > floorY - 12) { player.y = floorY - 12; player.vy = Math.min(player.vy, 0); }
+      var tiltTarget = clamp(player.vy / maxVy, -1, 1) * 0.5;
+      player.tilt += (tiltTarget - player.tilt) * Math.min(1, dt * 10);
+
+      if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - dt);
+
+      /* bubble trail while diving */
+      if (holding) {
+        trailT -= dt;
+        if (trailT <= 0) {
+          trailT = 0.035;
+          bubbles.push({
+            x: player.x - 22,
+            y: player.y + (Math.random() * 10 - 5),
+            r: 1.6 + Math.random() * 3,
+            vy: 26 + Math.random() * 34,
+            vx: -10 - Math.random() * 20,
+            life: 0.9,
+            max: 0.9
+          });
+        }
+      }
+
+      /* spawn cadence ramps with the run */
+      spawnT -= dt;
+      if (spawnT <= 0) {
+        spawn();
+        var base = Math.max(0.6, 1.3 - elapsed * 0.011);
+        spawnT = base * (0.75 + Math.random() * 0.5);
+      }
+
+      var i, d;
+
+      /* hooks: dangle from the surface, some sway */
+      for (i = hooks.length - 1; i >= 0; i--) {
+        var hk = hooks[i];
+        hk.x -= speed * dt;
+        hk.hx = hk.x + Math.sin(time * hk.f + hk.ph) * hk.amp * hk.len;
+        hk.hy = surfaceY + hk.len;
+        if (hk.x < -160) { hooks.splice(i, 1); continue; }
+        /* hazard: the line segment plus the barb circle */
+        var dLine = segDist(player.x, player.y, hk.x, surfaceY, hk.hx, hk.hy);
+        var dBarb = Math.hypot(player.x - (hk.hx - 6), player.y - (hk.hy + 10));
+        d = Math.min(dLine, dBarb - 6);
+        if (!hk.passed) {
+          if (d < hk.minD) hk.minD = d;
+          if (d < player.r + 5) {
+            hk.passed = true;
+            onHit();
+          } else if (hk.hx < player.x - 30) {
+            hk.passed = true;
+            if (hk.minD < player.r + 42) tickNearMiss();
+          }
+        }
+      }
+
+      /* jellyfish botnets: drift in open water */
+      for (i = jellies.length - 1; i >= 0; i--) {
+        var j = jellies[i];
+        j.x -= (speed - j.vx) * dt;
+        j.y = j.y0 + (RM ? 0 : Math.sin(time * 0.8 + j.ph) * 12);
+        if (j.x < -120) { jellies.splice(i, 1); continue; }
+        d = Math.hypot(player.x - j.x, player.y - j.y) - j.r * 0.85;
+        if (!j.passed) {
+          if (d < j.minD) j.minD = d;
+          if (d < player.r) {
+            j.passed = true;
+            onHit();
+          } else if (j.x < player.x - 34) {
+            j.passed = true;
+            if (j.minD < player.r + 36) tickNearMiss();
+          }
+        }
+      }
+
+      /* padlock pickups: encryption shield */
+      for (i = locks.length - 1; i >= 0; i--) {
+        var lk = locks[i];
+        lk.x -= speed * dt;
+        if (lk.x < -80) { locks.splice(i, 1); continue; }
+        var ly = lk.y + (RM ? 0 : Math.sin(time * 1.3 + lk.ph) * 6);
+        if (Math.hypot(player.x - lk.x, player.y - ly) < player.r + 17) {
+          locks.splice(i, 1);
+          locksCaught++;
+          player.shield = true;
+          updateShieldHud();
+          sfx('pop');
+          for (var b = 0; b < 6; b++) {
+            bubbles.push({
+              x: lk.x + Math.random() * 16 - 8,
+              y: ly + Math.random() * 16 - 8,
+              r: 1.5 + Math.random() * 2.5,
+              vy: 30 + Math.random() * 40,
+              vx: Math.random() * 30 - 15,
+              life: 0.7,
+              max: 0.7
+            });
+          }
+        }
+      }
+
+      /* HUD distance */
+      var meters = Math.floor(distancePx / PX_PER_M);
+      if (meters !== lastMeters) {
+        lastMeters = meters;
+        hudDist.textContent = meters + ' m';
+      }
+    } else {
+      /* attract and over: gentle ambient drift */
+      var ambient = RM ? 0 : (state === 'attract' ? 30 : 18);
+      worldX += ambient * dt;
+      if (state === 'attract') {
+        var mid = (surfaceY + floorY) / 2;
+        player.y = mid + (RM ? 0 : Math.sin(time * 1.1) * 12);
+        player.tilt = RM ? 0 : Math.sin(time * 1.1 + 1) * 0.06;
+        player.shield = false;
+        player.invuln = 0;
+      }
+      if (!RM && state === 'over') {
+        for (var k = hooks.length - 1; k >= 0; k--) {
+          hooks[k].x -= 40 * dt;
+          hooks[k].hx = hooks[k].x;
+          if (hooks[k].x < -160) hooks.splice(k, 1);
+        }
+        for (var m = jellies.length - 1; m >= 0; m--) {
+          jellies[m].x -= 40 * dt;
+          if (jellies[m].x < -120) jellies.splice(m, 1);
+        }
+        for (var n = locks.length - 1; n >= 0; n--) {
+          locks[n].x -= 40 * dt;
+          if (locks[n].x < -80) locks.splice(n, 1);
+        }
+      }
+    }
+
+    /* bubbles always settle out */
+    for (var q = bubbles.length - 1; q >= 0; q--) {
+      var bb = bubbles[q];
+      bb.life -= dt;
+      bb.y -= bb.vy * dt;
+      bb.x += bb.vx * dt;
+      if (bb.life <= 0) bubbles.splice(q, 1);
+    }
+
+    /* camera hint: slight vertical lag toward the fish */
+    var camTarget = state === 'playing'
+      ? clamp((player.y - (surfaceY + floorY) / 2) * 0.08, -22, 22)
+      : 0;
+    camY += (camTarget - camY) * Math.min(1, dt * 4);
+  }
+
+  function onHit() {
+    if (player.invuln > 0) return;
+    if (player.shield) {
+      player.shield = false;
+      player.invuln = 1.2;
+      updateShieldHud();
+      sfx('miss');
+      if (!RM) shakeT = 0.25;
+    } else {
+      gameOver();
+    }
+  }
+
+  /* ---------- drawing ---------- */
+  function wrapSX(x, f) {
+    var sx = (x - worldX * f) % tileW;
+    sx = ((sx % tileW) + tileW) % tileW;
+    return sx - 120;
+  }
+
+  function drawParallax() {
+    var i, sx;
+    /* distant kelp */
+    ctx.lineCap = 'round';
+    for (i = 0; i < kelp.length; i++) {
+      var kp = kelp[i];
+      sx = wrapSX(kp.x, RM ? 0 : 0.25);
+      if (sx < -60 || sx > W + 60) continue;
+      var sway = RM ? 0 : Math.sin(time * 0.5 + kp.ph) * 10;
+      ctx.strokeStyle = 'rgba(38, 94, 82, 0.35)';
+      ctx.lineWidth = kp.w;
+      ctx.beginPath();
+      ctx.moveTo(sx, floorY + 6);
+      ctx.quadraticCurveTo(sx + sway * 0.4, floorY - kp.h * 0.55, sx + sway, floorY - kp.h);
+      ctx.stroke();
+    }
+    /* mid rocks */
+    ctx.fillStyle = 'rgba(6, 30, 42, 0.85)';
+    for (i = 0; i < rocks.length; i++) {
+      var rk = rocks[i];
+      sx = wrapSX(rk.x, RM ? 0 : 0.55);
+      if (sx < -140 || sx > W + 140) continue;
+      ctx.beginPath();
+      ctx.ellipse(sx, floorY + rk.r * 0.25, rk.r, rk.r * 0.62, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+    }
+    /* sea floor */
+    ctx.fillStyle = '#02141D';
+    ctx.fillRect(-10, floorY, W + 20, H - floorY + 60);
+  }
+
+  function drawSpecks() {
+    /* near particulate layer */
+    for (var i = 0; i < specks.length; i++) {
+      var s = specks[i];
+      var sx = wrapSX(s.x, RM ? 0 : 1.25);
+      if (sx < -10 || sx > W + 10) continue;
+      var sy = surfaceY + s.y * (floorY - surfaceY);
+      ctx.fillStyle = 'rgba(244, 235, 217, ' + s.a.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawSurface() {
+    /* light band above the waterline */
+    ctx.fillStyle = 'rgba(83, 223, 232, 0.06)';
+    ctx.fillRect(-10, -60, W + 20, surfaceY + 60);
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    var step = 24;
+    for (var x = -step; x <= W + step; x += step) {
+      var y = surfaceY + (RM ? 0 : Math.sin(x * 0.02 + time * 1.4) * 3);
+      if (x === -step) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function drawHook(hk) {
+    /* fishing line */
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(hk.x, surfaceY - 4);
+    ctx.quadraticCurveTo(hk.x, surfaceY + hk.len * 0.55, hk.hx, hk.hy);
+    ctx.stroke();
+    /* bobber float at the waterline */
+    ctx.fillStyle = C.bobber;
+    ctx.beginPath();
+    ctx.arc(hk.x, surfaceY - 4, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = C.cream;
+    ctx.beginPath();
+    ctx.arc(hk.x, surfaceY - 4, 7, 0, Math.PI);
+    ctx.fill();
+    /* the hook itself */
+    ctx.strokeStyle = C.bobber;
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(hk.hx, hk.hy);
+    ctx.lineTo(hk.hx, hk.hy + 10);
+    ctx.arc(hk.hx - 6, hk.hy + 10, 6, 0, Math.PI, false);
+    ctx.lineTo(hk.hx - 12, hk.hy + 4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(hk.hx - 12, hk.hy + 4);
+    ctx.lineTo(hk.hx - 16, hk.hy + 7);
+    ctx.stroke();
+  }
+
+  function drawJelly(j) {
+    var pr = j.r * (RM ? 1 : (1 + 0.09 * Math.sin(time * 2.4 + j.ph)));
+    /* tentacles */
+    ctx.strokeStyle = 'rgba(232, 86, 74, 0.35)';
+    ctx.lineWidth = 2;
+    for (var t = 0; t < 4; t++) {
+      var tx = j.x - pr * 0.6 + t * pr * 0.4;
+      var wob = RM ? 0 : Math.sin(time * 3 + j.ph + t) * 6;
+      ctx.beginPath();
+      ctx.moveTo(tx, j.y + pr * 0.2);
+      ctx.quadraticCurveTo(tx + wob, j.y + pr * 1.0, tx - wob * 0.6, j.y + pr * 1.7);
+      ctx.stroke();
+    }
+    /* translucent bell */
+    ctx.beginPath();
+    ctx.arc(j.x, j.y, pr, Math.PI, Math.PI * 2);
+    ctx.quadraticCurveTo(j.x + pr * 0.5, j.y + pr * 0.4, j.x, j.y + pr * 0.3);
+    ctx.quadraticCurveTo(j.x - pr * 0.5, j.y + pr * 0.4, j.x - pr, j.y);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(232, 86, 74, 0.30)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 122, 69, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    /* inner glow dome */
+    ctx.beginPath();
+    ctx.arc(j.x, j.y, pr * 0.55, Math.PI, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 122, 69, 0.22)';
+    ctx.fill();
+  }
+
+  function drawLock(lk) {
+    var y = lk.y + (RM ? 0 : Math.sin(time * 1.3 + lk.ph) * 6);
+    /* soft halo */
+    ctx.fillStyle = 'rgba(245, 193, 92, 0.10)';
+    ctx.beginPath();
+    ctx.arc(lk.x, y + 2, 22, 0, Math.PI * 2);
+    ctx.fill();
+    /* shackle */
+    ctx.strokeStyle = C.brass;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(lk.x, y - 5, 7, Math.PI, Math.PI * 2);
+    ctx.stroke();
+    /* body */
+    ctx.fillStyle = C.brass;
+    rrect(lk.x - 11, y - 5, 22, 17, 4);
+    ctx.fill();
+    /* keyhole */
+    ctx.fillStyle = C.abyss;
+    ctx.beginPath();
+    ctx.arc(lk.x, y + 1, 2.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(lk.x - 1, y + 2, 2, 5);
+  }
+
+  function drawFish() {
+    var blink = player.invuln > 0 && Math.floor(time * 14) % 2 === 0;
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.tilt);
+    if (blink) ctx.globalAlpha = 0.3;
+    ctx.fillStyle = C.lure;
+    /* tail */
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.lineTo(-30, -11);
+    ctx.lineTo(-26, 0);
+    ctx.lineTo(-30, 11);
+    ctx.closePath();
+    ctx.fill();
+    /* body silhouette */
+    ctx.beginPath();
+    ctx.moveTo(24, 0);
+    ctx.quadraticCurveTo(12, -13, -6, -10);
+    ctx.quadraticCurveTo(-18, -7, -18, 0);
+    ctx.quadraticCurveTo(-18, 7, -6, 10);
+    ctx.quadraticCurveTo(12, 13, 24, 0);
+    ctx.fill();
+    /* dorsal fin */
+    ctx.beginPath();
+    ctx.moveTo(-2, -10);
+    ctx.lineTo(4, -17);
+    ctx.lineTo(9, -9);
+    ctx.closePath();
+    ctx.fill();
+    /* eye */
+    ctx.fillStyle = C.abyss;
+    ctx.beginPath();
+    ctx.arc(15, -3, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    /* tiny parcel strapped under the belly */
+    ctx.fillStyle = C.cream;
+    rrect(-8, 6, 14, 11, 2);
+    ctx.fill();
+    ctx.strokeStyle = C.brass;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-1, 6);
+    ctx.lineTo(-1, 17);
+    ctx.moveTo(-8, 11.5);
+    ctx.lineTo(6, 11.5);
+    ctx.stroke();
+    ctx.restore();
+    /* encryption shield: biolume bubble around the fish */
+    if (player.shield) {
+      var pulse = RM ? 0 : Math.sin(time * 3) * 2;
+      var sr = 30 + pulse;
+      ctx.fillStyle = 'rgba(83, 223, 232, 0.10)';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, sr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(83, 223, 232, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(244, 235, 217, 0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, sr - 5, -1.9, -1.1);
+      ctx.stroke();
+    }
+  }
+
+  function drawBubbles() {
+    for (var i = 0; i < bubbles.length; i++) {
+      var b = bubbles[i];
+      var a = Math.max(0, b.life / b.max) * 0.5;
+      ctx.strokeStyle = 'rgba(83, 223, 232, ' + a.toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    var shakeX = 0, shakeY = 0;
+    if (shakeT > 0 && !RM) {
+      shakeX = (Math.random() * 2 - 1) * 7 * shakeT;
+      shakeY = (Math.random() * 2 - 1) * 7 * shakeT;
+    }
+    ctx.translate(shakeX, shakeY - camY);
+
+    drawParallax();
+    drawSurface();
+
+    var i;
+    for (i = 0; i < locks.length; i++) drawLock(locks[i]);
+    for (i = 0; i < hooks.length; i++) drawHook(hooks[i]);
+    for (i = 0; i < jellies.length; i++) drawJelly(jellies[i]);
+    drawBubbles();
+    drawFish();
+    drawSpecks();
+
+    ctx.restore();
+  }
+
+  /* ---------- main loop ---------- */
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- input ---------- */
+  canvas.addEventListener('pointerdown', function () {
+    if (state === 'playing') holding = true;
+  });
+  window.addEventListener('pointerup', function () { holding = false; });
+  window.addEventListener('pointercancel', function () { holding = false; });
+  window.addEventListener('blur', function () { holding = false; });
+
+  /* iOS: stop scroll and bounce on the game surface */
+  canvas.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    if (state === 'playing') holding = true;
+  }, { passive: false });
+  canvas.addEventListener('touchend', function (e) {
+    e.preventDefault();
+    holding = false;
+  }, { passive: false });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.code !== 'Space') return;
+    var t = e.target;
+    if (t && (t.tagName === 'BUTTON' || t.tagName === 'A')) return; /* native activation */
+    e.preventDefault();
+    if (e.repeat) return;
+    if (state === 'playing') {
+      holding = true;
+    } else if (state === 'attract') {
+      startGame();
+    } else if (state === 'over' && time - overAt > 0.4) {
+      startGame();
+    }
+  });
+  window.addEventListener('keyup', function (e) {
+    if (e.code === 'Space') holding = false;
+  });
+
+  playBtn.addEventListener('click', startGame);
+  againBtn.addEventListener('click', startGame);
+
+  /* ---------- go ---------- */
+  hudBest.textContent = String(best);
+  updateShieldHud();
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

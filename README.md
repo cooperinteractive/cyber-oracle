@@ -18,7 +18,7 @@ A collection of interactive cybersecurity and quantum-learning web toys. Each pa
 | `honeypot.html` | **Game.** Place traps (firewall, tarpit, sandbox, canary) to catch attackers approaching a fake server. Threat-intel feed shows TTPs. |
 | `prompt-injection.html` | **Game.** Five-level chatbot challenge teaching the most common prompt injection techniques (direct, override, roleplay, smuggling, multi-turn). |
 | `decryption-race.html` | **Game.** Side-by-side classical vs. quantum cracking of an RSA key. Pick from RSA-128 to RSA-4096. Quantum always wins. |
-| `password-slot.html` | **Game.** Slot machine for password entropy and crack-time intuition. |
+| `password-slot.html` | **Game.** Push-your-luck password slots (see Caught in the Net section below). |
 | `incident-response.html` | **Game.** Pager-driven incident response scenarios with consequences. |
 | `social-engineering.html` | **Game.** Branching dialogue about persuasion, pressure, and refusal. |
 | `build-your-stack.html` | **Game.** Spend a limited security budget across layered defenses. |
@@ -28,11 +28,26 @@ A collection of interactive cybersecurity and quantum-learning web toys. Each pa
 | `shadow-it.html` | **Game.** Audit departments for unsanctioned SaaS and risky workflows. |
 | `attack-surface.html` | **Game.** Visualize exposed assets and hidden external risk. |
 | `insider-threat-bingo.html` | **Game.** Match insider-risk indicators against employee profiles. |
-| `connect-four.html` | **Game.** Local multiplayer red-team vs. blue-team Connect Four. |
+| `connect-four.html` | **Game.** Hook, Line and Sinker: Connect Four with power chips (see below). |
 | `permission-panic.html` | **Game.** Consent prompt triage for least-privilege app permissions. |
 | `backup-blaster.html` | **Game.** Ransomware recovery drill for clean snapshots, isolation, and RPO tradeoffs. |
 | `zero-trust-gatekeeper.html` | **Game.** Context-based access decisions: allow, challenge, or block. |
 | `assets/cyber-arcade-banner.png` | Generated hub banner art for the game arcade. |
+
+## Caught in the Net (kiosk arcade)
+
+A second, self-contained arcade built for the Cybersecurity Awareness Month wall installation. Fishing themed ("Caught in the Net"), designed for offline iPads in kiosk mounts: touch-first, short rounds, localStorage high scores, one "Catch of the Day" security tip per game over. Design spec: `docs/superpowers/specs/2026-07-02-caught-in-the-net-arcade-design.md`.
+
+| File | What it is |
+|---|---|
+| `caught-in-the-net.html` | **Arcade hub.** Poster-style table of contents for the seven kiosk games. |
+| `reel-em-in.html` | **Game.** Drop the hook and snag phishing emails; let the honest fish swim by. |
+| `packet-trawler.html` | **Game.** Drag the firewall net: catch malware, let clean packets reach the harbor. |
+| `sonar-sweep.html` | **Game.** Threat-hunt minesweeper: ping tiles, read the signals, buoy the lurkers. |
+| `kraken-attack.html` | **Game.** Multi-touch defense: zap the botnet swarm before it reaches the Catch Locker. |
+| `deep-dive-dash.html` | **Game.** One-touch endless swimmer: dodge hooks and jellyfish, grab encryption shields. |
+| `password-slot.html` | **Game.** Reinvented push-your-luck slots: spin, lock reels, beat the crack-bot. |
+| `connect-four.html` | **Game.** Reinvented as Hook, Line and Sinker: 2-player Connect Four with power chips. |
 
 ## Accessibility
 

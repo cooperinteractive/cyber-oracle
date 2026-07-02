@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Kraken Attack | Caught in the Net</title>
+<style>
+:root {
+  /* water */
+  --abyss: #041B26;        /* page background base */
+  --depth: #072A3C;        /* gradient partner */
+  --panel: #0B3348;        /* sign boards / cards */
+  --panel-deep: #082838;   /* inset wells */
+  --line: rgba(244, 235, 217, 0.16);   /* rope hairlines */
+  /* ink */
+  --cream: #F4EBD9;        /* primary text */
+  --cream-dim: #C9BFA8;    /* secondary text */
+  /* accents */
+  --lure: #FF7A45;         /* orange: primary action, player warmth */
+  --bobber: #E8564A;       /* red: danger, phish, enemies */
+  --biolume: #53DFE8;      /* cyan: glow, defense, friendly tech */
+  --kelp: #4FC98C;         /* green: success, safe */
+  --brass: #F5C15C;        /* gold: score, coins, trophies */
+  /* type */
+  --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%);
+  color: var(--cream);
+  font-family: var(--body);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: fixed;
+  inset: 0;
+}
+
+/* ---------- ambient decor (behind the canvas) ---------- */
+.decor {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.decor .net {
+  position: absolute;
+  inset: -45%;
+  background:
+    repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 72px);
+  transform: rotate(24deg);
+  opacity: 0.35;
+}
+.decor .rays {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(112deg, rgba(244, 235, 217, 0.05) 0%, transparent 26%),
+    linear-gradient(96deg, transparent 34%, rgba(83, 223, 232, 0.05) 46%, transparent 60%);
+}
+.decor .bubbles i {
+  position: absolute;
+  bottom: -40px;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  border: 1px solid rgba(83, 223, 232, 0.35);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .decor .bubbles i {
+    animation: rise var(--d) linear infinite;
+    animation-delay: var(--delay);
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0); opacity: 0; }
+    12%  { opacity: 0.5; }
+    88%  { opacity: 0.35; }
+    100% { transform: translateY(-112vh); opacity: 0; }
+  }
+  .decor .rays { animation: raysway 14s ease-in-out infinite alternate; }
+  @keyframes raysway {
+    from { transform: translateX(-1.5%); }
+    to   { transform: translateX(1.5%); }
+  }
+}
+
+/* ---------- game canvas ---------- */
+#game {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---------- chips (boardwalk buttons) ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 12px 28px;
+  border: 2px solid var(--cream);
+  border-radius: 14px;
+  background: rgba(8, 40, 56, 0.72);
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+.chip:active, .chip:hover {
+  transform: scale(0.96);
+  background: rgba(11, 51, 72, 0.95);
+}
+.chip:focus-visible {
+  outline: 3px solid var(--biolume);
+  outline-offset: 3px;
+}
+.chip-primary {
+  border-color: var(--lure);
+  background: rgba(255, 122, 69, 0.16);
+}
+.chip-primary:active, .chip-primary:hover {
+  background: rgba(255, 122, 69, 0.32);
+}
+.chip-huge {
+  min-height: 72px;
+  padding: 18px 60px;
+  font-size: 1.35rem;
+}
+
+.home-chip {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 150;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  min-width: 56px;
+  padding: 10px 18px;
+  border: 2px solid var(--cream);
+  border-radius: 14px;
+  background: rgba(8, 40, 56, 0.72);
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+.home-chip:active, .home-chip:hover {
+  transform: scale(0.96);
+  background: rgba(11, 51, 72, 0.95);
+}
+.home-chip:focus-visible {
+  outline: 3px solid var(--biolume);
+  outline-offset: 3px;
+}
+
+/* restyle the injected sound toggle toward the boardwalk theme */
+#cyber-sound-toggle {
+  background: var(--panel-deep) !important;
+  color: var(--cream) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- HUD ---------- */
+.hud {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.well {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 96px;
+  padding: 8px 14px;
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.well-label {
+  font-family: var(--display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--cream-dim);
+  text-transform: uppercase;
+}
+.well-value {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  color: var(--brass);
+}
+.locks {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.pip {
+  position: relative;
+  width: 16px;
+  height: 13px;
+  background: var(--brass);
+  border-radius: 3px;
+}
+.pip::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 3px;
+  width: 10px;
+  height: 9px;
+  border: 2.5px solid var(--brass);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+}
+.pip.lost { background: rgba(244, 235, 217, 0.14); }
+.pip.lost::before { border-color: rgba(244, 235, 217, 0.14); }
+
+/* ---------- wave banner ---------- */
+.wave-banner {
+  position: fixed;
+  top: 32%;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.wave-banner.show { opacity: 1; }
+.wave-banner-main {
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream);
+  text-shadow: 0 3px 0 rgba(2, 12, 18, 0.6);
+}
+.wave-banner-sub {
+  margin-top: 6px;
+  font-family: var(--display);
+  font-size: clamp(0.9rem, 2.6vw, 1.2rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bobber);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wave-banner.show { animation: bannerpop 0.45s ease-out; }
+  @keyframes bannerpop {
+    0%   { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+}
+
+/* ---------- friendly flash ---------- */
+.friendly-flash {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  padding: 14px 34px;
+  border: 2px solid var(--cream);
+  border-radius: 14px;
+  background: var(--bobber);
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 4.5vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.friendly-flash.show { opacity: 1; }
+
+/* ---------- overlays ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 27, 38, 0.82);
+}
+.sign {
+  width: min(560px, 94vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: clamp(22px, 4vw, 40px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+.eyebrow {
+  font-family: var(--display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+  margin-bottom: 8px;
+}
+.sign h1 {
+  font-family: var(--display);
+  font-size: clamp(2.1rem, 7vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+}
+.sign h2 {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+}
+.rope-rule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px auto 16px;
+  max-width: 320px;
+  color: var(--cream-dim);
+  font-size: 1rem;
+}
+.rope-rule::before, .rope-rule::after {
+  content: '';
+  flex: 1;
+  border-top: 2px dashed var(--line);
+}
+.subtitle {
+  color: var(--cream-dim);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.howto {
+  list-style: none;
+  text-align: left;
+  margin: 0 auto 18px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.howto li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: var(--cream);
+  line-height: 1.35;
+}
+.dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.dot-enemy  { background: var(--bobber); }
+.dot-friend { background: var(--biolume); }
+.dot-lock   { background: var(--brass); }
+.dot-multi  { background: var(--lure); }
+.best-line {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--brass);
+  margin-bottom: 18px;
+  min-height: 1em;
+}
+
+.stat-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px auto;
+  max-width: 380px;
+}
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.stat-row .label {
+  font-family: var(--display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+.stat-row .value {
+  font-family: var(--mono);
+  font-size: 1.3rem;
+  color: var(--brass);
+}
+.new-best {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: var(--kelp);
+  color: var(--abyss);
+  font-family: var(--display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.fact-card {
+  margin: 6px auto 20px;
+  max-width: 420px;
+  padding: 14px 18px;
+  background: var(--panel-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+}
+.fact-head {
+  font-family: var(--display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 6px;
+}
+.fact-body {
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--cream);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="decor" aria-hidden="true">
+  <div class="net"></div>
+  <div class="rays"></div>
+  <div class="bubbles">
+    <i style="--x:6%;  --s:7px;  --d:12s; --delay:0s"></i>
+    <i style="--x:14%; --s:5px;  --d:16s; --delay:3s"></i>
+    <i style="--x:23%; --s:9px;  --d:11s; --delay:6s"></i>
+    <i style="--x:31%; --s:4px;  --d:18s; --delay:1s"></i>
+    <i style="--x:44%; --s:6px;  --d:14s; --delay:8s"></i>
+    <i style="--x:52%; --s:8px;  --d:13s; --delay:4s"></i>
+    <i style="--x:61%; --s:5px;  --d:17s; --delay:9s"></i>
+    <i style="--x:69%; --s:10px; --d:12s; --delay:2s"></i>
+    <i style="--x:77%; --s:6px;  --d:15s; --delay:7s"></i>
+    <i style="--x:85%; --s:4px;  --d:19s; --delay:5s"></i>
+    <i style="--x:92%; --s:8px;  --d:13s; --delay:10s"></i>
+    <i style="--x:97%; --s:5px;  --d:16s; --delay:0.5s"></i>
+  </div>
+</div>
+
+<canvas id="game"></canvas>
+
+<a class="home-chip" href="caught-in-the-net.html">⌂ ARCADE</a>
+
+<div class="hud" id="hud" hidden>
+  <div class="well">
+    <span class="well-label">Haul</span>
+    <span class="well-value" id="scoreVal">0</span>
+  </div>
+  <div class="locks" id="locks" aria-label="Locker locks remaining">
+    <span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span>
+  </div>
+  <div class="well">
+    <span class="well-label">Wave</span>
+    <span class="well-value" id="waveVal">1</span>
+  </div>
+</div>
+
+<div class="wave-banner" id="waveBanner" aria-hidden="true">
+  <div class="wave-banner-main" id="waveBannerMain"></div>
+  <div class="wave-banner-sub" id="waveBannerSub"></div>
+</div>
+
+<div class="friendly-flash" id="friendlyFlash" aria-hidden="true">FRIENDLY!</div>
+
+<div class="overlay" id="titleOverlay">
+  <div class="sign">
+    <p class="eyebrow">Caught in the Net presents</p>
+    <h1>Kraken Attack</h1>
+    <div class="rope-rule" aria-hidden="true"><span>⚓</span></div>
+    <p class="subtitle">Defend the Catch Locker from the swarm</p>
+    <ul class="howto">
+      <li><span class="dot dot-enemy" aria-hidden="true"></span>Tap tentacles and bot-fish to zap them.</li>
+      <li><span class="dot dot-friend" aria-hidden="true"></span>Never tap the blue crew divers. They are on your side.</li>
+      <li><span class="dot dot-lock" aria-hidden="true"></span>The locker holds 5 locks. Lose them all and the kraken wins.</li>
+      <li><span class="dot dot-multi" aria-hidden="true"></span>Multi-touch ready. Bring extra fingers, or a friend.</li>
+    </ul>
+    <p class="best-line" id="titleBest"></p>
+    <button type="button" class="chip chip-primary chip-huge" id="playBtn">PLAY</button>
+  </div>
+</div>
+
+<div class="overlay" id="gameoverOverlay" hidden>
+  <div class="sign">
+    <p class="eyebrow">The kraken took the locker</p>
+    <h2>Game Over</h2>
+    <div class="rope-rule" aria-hidden="true"><span>⚓</span></div>
+    <div class="stat-rows">
+      <div class="stat-row">
+        <span class="label">Final haul</span>
+        <span class="value"><span id="finalScore">0</span><span class="new-best" id="newBestBadge" hidden>NEW BEST</span></span>
+      </div>
+      <div class="stat-row">
+        <span class="label">Wave reached</span>
+        <span class="value" id="finalWave">1</span>
+      </div>
+      <div class="stat-row">
+        <span class="label">Best haul</span>
+        <span class="value" id="bestScore">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="label">Best wave</span>
+        <span class="value" id="bestWave">0</span>
+      </div>
+    </div>
+    <div class="fact-card">
+      <p class="fact-head">🐟 Catch of the Day</p>
+      <p class="fact-body" id="factBody"></p>
+    </div>
+    <button type="button" class="chip chip-primary chip-huge" id="againBtn">PLAY AGAIN</button>
+  </div>
+</div>
+
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+
+<script src="sounds.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var TAU = Math.PI * 2;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var COL = {
+    abyss: '#041B26',
+    panel: '#0B3348',
+    panelDeep: '#082838',
+    cream: '#F4EBD9',
+    creamDim: '#C9BFA8',
+    lure: '#FF7A45',
+    bobber: '#E8564A',
+    biolume: '#53DFE8',
+    kelp: '#4FC98C',
+    brass: '#F5C15C'
+  };
+
+  var BEST_KEY = 'citn-kraken-best';
+  var WAVE_KEY = 'citn-kraken-wave';
+
+  var FACTS = [
+    'Botnets are swarms of hijacked gadgets. One attacker can command thousands of them at once, like a kraken with far too many arms.',
+    'A DDoS attack floods a site with junk traffic until real visitors cannot get through. The flood itself is the weapon.',
+    'Zombie devices look normal to their owners. Weak or default passwords are how cameras, routers, and smart toasters get recruited. Change yours.',
+    'Rate limiting works like a bouncer for servers. It caps how many requests one source can send, which blunts a traffic flood.',
+    'False alarms cost defenders too. Zapping a friendly diver hurts, and so does blocking legitimate traffic. Verify before you act.'
+  ];
+
+  var S = window.CyberSounds || null;
+  function snd(name, arg) {
+    if (S && typeof S[name] === 'function') {
+      try { S[name](arg); } catch (e) { /* audio is optional */ }
+    }
+  }
+
+  /* ---------- DOM handles ---------- */
+  var hudEl = document.getElementById('hud');
+  var scoreEl = document.getElementById('scoreVal');
+  var waveEl = document.getElementById('waveVal');
+  var locksEl = document.getElementById('locks');
+  var pipEls = locksEl.querySelectorAll('.pip');
+  var bannerEl = document.getElementById('waveBanner');
+  var bannerMainEl = document.getElementById('waveBannerMain');
+  var bannerSubEl = document.getElementById('waveBannerSub');
+  var friendlyEl = document.getElementById('friendlyFlash');
+  var titleOverlay = document.getElementById('titleOverlay');
+  var titleBestEl = document.getElementById('titleBest');
+  var gameoverOverlay = document.getElementById('gameoverOverlay');
+  var finalScoreEl = document.getElementById('finalScore');
+  var finalWaveEl = document.getElementById('finalWave');
+  var bestScoreEl = document.getElementById('bestScore');
+  var bestWaveEl = document.getElementById('bestWave');
+  var newBestBadge = document.getElementById('newBestBadge');
+  var factBodyEl = document.getElementById('factBody');
+  var playBtn = document.getElementById('playBtn');
+  var againBtn = document.getElementById('againBtn');
+  var liveEl = document.getElementById('live');
+
+  /* ---------- sizing ---------- */
+  var W = 0, H = 0, DPR = 1, unit = 1;
+  var cx = 0, cy = 0, lockerR = 46;
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    unit = Math.max(0.85, Math.min(1.4, Math.min(W, H) / 768));
+    cx = W / 2;
+    cy = H * 0.53;
+    lockerR = Math.max(44, 50 * unit);
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
+  resize();
+
+  /* ---------- helpers ---------- */
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+
+  function edgePoint() {
+    var m = 60;
+    var side = Math.floor(Math.random() * 4);
+    if (side === 0) return { x: rand(0, W), y: -m };
+    if (side === 1) return { x: W + m, y: rand(0, H) };
+    if (side === 2) return { x: rand(0, W), y: H + m };
+    return { x: -m, y: rand(0, H) };
+  }
+
+  function loadBest() {
+    var score = 0, wave = 0;
+    try {
+      /* plain integers so the arcade hub badge can read the score directly */
+      score = Math.max(0, parseInt(localStorage.getItem(BEST_KEY), 10) || 0);
+      wave = Math.max(0, parseInt(localStorage.getItem(WAVE_KEY), 10) || 0);
+    } catch (e) { /* corrupted or unavailable storage */ }
+    return { score: score, wave: wave };
+  }
+  function saveBest(b) {
+    try {
+      localStorage.setItem(BEST_KEY, String(b.score | 0));
+      localStorage.setItem(WAVE_KEY, String(b.wave | 0));
+    } catch (e) { /* ignore */ }
+  }
+
+  function announce(msg) { liveEl.textContent = msg; }
+
+  /* ---------- game state ---------- */
+  var state = 'title';   // title | playing | gameover
+  var score = 0;
+  var wave = 0;
+  var hp = 5;
+  var entities = [];
+  var particles = [];
+  var popups = [];
+  var ripples = [];
+  var spawnQueue = [];
+  var waveT = 0;
+  var hitStopUntil = 0;
+  var shakeT = 0, shakeDur = 0, shakeMag = 0;
+  var lockerWob = 0;
+  var lockerFlash = 0;
+  var bannerTimer = null;
+  var friendlyTimer = null;
+  var factIdx = Math.floor(Math.random() * FACTS.length);
+  var ambientPhase = Math.random() * TAU;
+
+  function shake(mag, dur) {
+    if (reduceMotion) return;
+    shakeMag = mag;
+    shakeDur = dur;
+    shakeT = dur;
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = String(score);
+    waveEl.textContent = String(wave);
+    for (var i = 0; i < pipEls.length; i++) {
+      pipEls[i].classList.toggle('lost', i >= hp);
+    }
+  }
+
+  function showBanner(main, sub) {
+    bannerMainEl.textContent = main;
+    bannerSubEl.textContent = sub || '';
+    bannerEl.classList.remove('show');
+    void bannerEl.offsetWidth;
+    bannerEl.classList.add('show');
+    if (bannerTimer) clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function () { bannerEl.classList.remove('show'); }, 1500);
+  }
+
+  function flashFriendly() {
+    friendlyEl.classList.remove('show');
+    void friendlyEl.offsetWidth;
+    friendlyEl.classList.add('show');
+    if (friendlyTimer) clearTimeout(friendlyTimer);
+    friendlyTimer = setTimeout(function () { friendlyEl.classList.remove('show'); }, 750);
+  }
+
+  /* ---------- waves ---------- */
+  function buildWave(n) {
+    var q = [];
+    var boss = (n % 5 === 0);
+    var tCount = 4 + Math.round(n * 1.5);
+    var fCount = n >= 2 ? Math.round(n * 0.9) : 0;
+    var dCount = Math.min(1 + Math.floor(n / 2), 4);
+    var gap = Math.max(1350 - n * 65, 480);
+    var t = 900;
+    var i;
+    for (i = 0; i < tCount; i++) {
+      q.push({ t: t + rand(-180, 180), kind: 'tentacle' });
+      t += gap;
+    }
+    var span = Math.max(3200, t - 400);
+    for (i = 0; i < fCount; i++) q.push({ t: rand(1400, span), kind: 'fish' });
+    for (i = 0; i < dCount; i++) q.push({ t: rand(1800, span), kind: 'diver' });
+    if (boss) q.push({ t: 1600, kind: 'boss' });
+    q.sort(function (a, b) { return a.t - b.t; });
+    return q;
+  }
+
+  function speedMult(n) { return Math.min(1 + (n - 1) * 0.07, 2.1); }
+
+  function spawn(kind) {
+    var p, e;
+    var mult = speedMult(wave) * unit;
+    if (kind === 'tentacle' || kind === 'boss') {
+      p = edgePoint();
+      e = {
+        type: 'tentacle',
+        boss: kind === 'boss',
+        ox: p.x, oy: p.y,
+        x: p.x, y: p.y,
+        r: (kind === 'boss' ? 40 : 24) * unit,
+        speed: (kind === 'boss' ? 26 : 40) * (kind === 'boss' ? unit : mult),
+        hp: kind === 'boss' ? 5 : 1,
+        maxHp: kind === 'boss' ? 5 : 1,
+        phase: Math.random() * TAU
+      };
+      if (kind === 'boss') snd('alert');
+      entities.push(e);
+    } else if (kind === 'fish') {
+      p = edgePoint();
+      e = {
+        type: 'fish',
+        ox: p.x, oy: p.y,
+        x: p.x, y: p.y,
+        d: 0,
+        r: 20 * unit,
+        speed: 95 * mult,
+        hp: 1, maxHp: 1,
+        phase: Math.random() * TAU,
+        ang: 0
+      };
+      entities.push(e);
+    } else if (kind === 'diver') {
+      var fromLeft = Math.random() < 0.5;
+      e = {
+        type: 'diver',
+        x: fromLeft ? -70 : W + 70,
+        y: rand(H * 0.22, H * 0.8),
+        baseY: 0,
+        vx: (fromLeft ? 1 : -1) * rand(46, 74) * unit,
+        r: 26 * unit,
+        phase: Math.random() * TAU,
+        fleeing: false
+      };
+      e.baseY = e.y;
+      entities.push(e);
+    }
+  }
+
+  function startWave(n) {
+    wave = n;
+    spawnQueue = buildWave(n);
+    waveT = 0;
+    var boss = (n % 5 === 0);
+    showBanner('WAVE ' + n, boss ? 'BOSS TENTACLE RISES' : '');
+    if (n > 1) snd('levelUp');
+    announce(boss ? 'Wave ' + n + '. Boss tentacle incoming.' : 'Wave ' + n + ' starting.');
+    updateHUD();
+  }
+
+  /* ---------- effects ---------- */
+  function splat(x, y, big) {
+    var n = big ? 24 : 13;
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * TAU;
+      var sp = rand(40, big ? 280 : 190);
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        r: rand(3, big ? 10 : 7) * unit,
+        life: rand(0.35, 0.7),
+        t: 0,
+        ink: Math.random() < 0.68
+      });
+    }
+  }
+
+  function popup(x, y, text, color) {
+    popups.push({ x: x, y: y, text: text, color: color, t: 0, life: 0.9 });
+  }
+
+  function ripple(x, y) {
+    ripples.push({ x: x, y: y, t: 0, life: 0.4 });
+  }
+
+  /* ---------- taps ---------- */
+  function zap(e, tx, ty) {
+    e.hp -= 1;
+    snd('whack');
+    splat(e.x, e.y, e.boss && e.hp <= 0);
+    if (e.boss) {
+      hitStopUntil = performance.now() + 30;
+      if (e.hp > 0) {
+        score += 50;
+        popup(tx, ty, '+50', COL.brass);
+      } else {
+        score += 500;
+        popup(e.x, e.y - 20, 'BOSS +500', COL.brass);
+      }
+    } else if (e.type === 'fish') {
+      score += 150;
+      popup(tx, ty, '+150', COL.brass);
+    } else {
+      score += 100;
+      popup(tx, ty, '+100', COL.brass);
+    }
+    if (e.hp <= 0) {
+      var idx = entities.indexOf(e);
+      if (idx !== -1) entities.splice(idx, 1);
+    }
+    updateHUD();
+  }
+
+  function hitDiver(e) {
+    if (e.fleeing) return;
+    e.fleeing = true;
+    e.vx = (e.vx >= 0 ? 1 : -1) * 260 * unit;
+    score = Math.max(0, score - 200);
+    snd('wrong');
+    shake(6, 0.3);
+    flashFriendly();
+    popup(e.x, e.y - 30, '-200', COL.bobber);
+    updateHUD();
+  }
+
+  function pointerTap(x, y) {
+    if (state !== 'playing') return;
+    var best = null, bestD = Infinity;
+    for (var i = 0; i < entities.length; i++) {
+      var e = entities[i];
+      if (e.type === 'diver' && e.fleeing) continue;
+      var hr = Math.max(e.r + 30, 48);
+      var d = Math.hypot(x - e.x, y - e.y);
+      if (d < hr && d < bestD) { best = e; bestD = d; }
+    }
+    if (!best) { ripple(x, y); return; }
+    if (best.type === 'diver') hitDiver(best);
+    else zap(best, x, y);
+  }
+
+  canvas.addEventListener('touchstart', function (ev) {
+    ev.preventDefault();
+    for (var i = 0; i < ev.changedTouches.length; i++) {
+      var t = ev.changedTouches[i];
+      pointerTap(t.clientX, t.clientY);
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', function (ev) { ev.preventDefault(); }, { passive: false });
+
+  canvas.addEventListener('mousedown', function (ev) {
+    pointerTap(ev.clientX, ev.clientY);
+  });
+
+  /* ---------- breach / game over ---------- */
+  function breachHit(e) {
+    var idx = entities.indexOf(e);
+    if (idx !== -1) entities.splice(idx, 1);
+    hp -= 1;
+    snd('breach');
+    lockerWob = 1;
+    lockerFlash = 1;
+    shake(4, 0.2);
+    splat(cx, cy - lockerR, false);
+    updateHUD();
+    if (hp <= 0) gameOver();
+  }
+
+  function countUp(el, target) {
+    if (reduceMotion) { el.textContent = String(target); return; }
+    var start = performance.now();
+    var dur = 900;
+    function step(now) {
+      var f = Math.min(1, (now - start) / dur);
+      var eased = 1 - Math.pow(1 - f, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (f < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function gameOver() {
+    state = 'gameover';
+    snd('lose');
+    spawnQueue = [];
+    var prev = loadBest();
+    var isNewBest = score > prev.score;
+    var best = {
+      score: Math.max(prev.score, score),
+      wave: Math.max(prev.wave, wave)
+    };
+    saveBest(best);
+    factIdx = (factIdx + 1) % FACTS.length;
+    factBodyEl.textContent = FACTS[factIdx];
+    finalWaveEl.textContent = String(wave);
+    bestScoreEl.textContent = String(best.score);
+    bestWaveEl.textContent = String(best.wave);
+    newBestBadge.hidden = !isNewBest;
+    announce('Game over. Final score ' + score + '. Wave reached ' + wave + '.');
+    setTimeout(function () {
+      if (state !== 'gameover') return;
+      gameoverOverlay.hidden = false;
+      finalScoreEl.textContent = '0';
+      countUp(finalScoreEl, score);
+      againBtn.focus();
+    }, 650);
+  }
+
+  /* ---------- start ---------- */
+  function startGame() {
+    score = 0;
+    hp = 5;
+    entities = [];
+    particles = [];
+    popups = [];
+    ripples = [];
+    lockerWob = 0;
+    lockerFlash = 0;
+    shakeT = 0;
+    state = 'playing';
+    titleOverlay.hidden = true;
+    gameoverOverlay.hidden = true;
+    hudEl.hidden = false;
+    startWave(1);
+  }
+
+  playBtn.addEventListener('click', startGame);
+  againBtn.addEventListener('click', startGame);
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.code !== 'Space' && ev.code !== 'Enter') return;
+    if (ev.target && (ev.target.tagName === 'BUTTON' || ev.target.tagName === 'A')) return;
+    if (state === 'title' || state === 'gameover') {
+      ev.preventDefault();
+      startGame();
+    }
+  });
+
+  function refreshTitleBest() {
+    var b = loadBest();
+    titleBestEl.textContent = b.score > 0
+      ? 'BEST HAUL ' + b.score + ' | BEST WAVE ' + b.wave
+      : 'No catches logged yet. Be the first.';
+  }
+  refreshTitleBest();
+
+  /* ---------- update ---------- */
+  function update(dt, t) {
+    if (state === 'playing') {
+      waveT += dt * 1000;
+      while (spawnQueue.length && spawnQueue[0].t <= waveT) {
+        spawn(spawnQueue.shift().kind);
+      }
+
+      var enemiesAlive = 0;
+      for (var i = entities.length - 1; i >= 0; i--) {
+        var e = entities[i];
+        if (e.type === 'diver') {
+          e.x += e.vx * dt;
+          e.y = e.baseY + Math.sin(t * 1.5 + e.phase) * 14 * unit;
+          if (e.x < -120 || e.x > W + 120) entities.splice(i, 1);
+          continue;
+        }
+        enemiesAlive++;
+        if (e.type === 'fish') {
+          var fdx = cx - e.ox, fdy = cy - e.oy;
+          var fl = Math.hypot(fdx, fdy) || 1;
+          var fux = fdx / fl, fuy = fdy / fl;
+          e.d += e.speed * dt;
+          var lateral = Math.sin(e.d * 0.045 + e.phase) * 13 * unit;
+          e.x = e.ox + fux * e.d - fuy * lateral;
+          e.y = e.oy + fuy * e.d + fux * lateral;
+          e.ang = Math.atan2(cy - e.y, cx - e.x);
+        } else {
+          var dx = cx - e.x, dy = cy - e.y;
+          var l = Math.hypot(dx, dy) || 1;
+          e.x += (dx / l) * e.speed * dt;
+          e.y += (dy / l) * e.speed * dt;
+        }
+        if (Math.hypot(e.x - cx, e.y - cy) < lockerR + 6) {
+          breachHit(e);
+          if (state !== 'playing') return;
+        }
+      }
+
+      if (spawnQueue.length === 0 && enemiesAlive === 0) {
+        startWave(wave + 1);
+      }
+    }
+
+    lockerWob = Math.max(0, lockerWob - dt * 2.2);
+    lockerFlash = Math.max(0, lockerFlash - dt * 2.6);
+    if (shakeT > 0) shakeT -= dt;
+
+    var j;
+    for (j = particles.length - 1; j >= 0; j--) {
+      var p = particles[j];
+      p.t += dt;
+      if (p.t >= p.life) { particles.splice(j, 1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= (1 - 2.4 * dt);
+      p.vy *= (1 - 2.4 * dt);
+    }
+    for (j = popups.length - 1; j >= 0; j--) {
+      popups[j].t += dt;
+      if (popups[j].t >= popups[j].life) popups.splice(j, 1);
+    }
+    for (j = ripples.length - 1; j >= 0; j--) {
+      ripples[j].t += dt;
+      if (ripples[j].t >= ripples[j].life) ripples.splice(j, 1);
+    }
+  }
+
+  /* ---------- drawing ---------- */
+  function drawLocker(t) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (lockerWob > 0.01) ctx.rotate(Math.sin(t * 28) * 0.06 * lockerWob);
+    var s = lockerR;
+
+    // shadow
+    ctx.fillStyle = 'rgba(2, 12, 18, 0.5)';
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.78, s * 1.15, s * 0.28, 0, 0, TAU);
+    ctx.fill();
+
+    // lid arch
+    ctx.fillStyle = COL.panel;
+    ctx.strokeStyle = COL.cream;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-s, -s * 0.5);
+    ctx.quadraticCurveTo(0, -s * 1.2, s, -s * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // body
+    rr(-s, -s * 0.5, s * 2, s * 1.2, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // brass bands
+    ctx.fillStyle = COL.brass;
+    ctx.fillRect(-s * 0.62, -s * 0.98, s * 0.16, s * 1.68);
+    ctx.fillRect(s * 0.46, -s * 0.98, s * 0.16, s * 1.68);
+
+    // hinge seam
+    ctx.strokeStyle = COL.creamDim;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-s, -s * 0.5);
+    ctx.lineTo(s, -s * 0.5);
+    ctx.stroke();
+
+    // padlock
+    var pw = s * 0.42, ph = s * 0.36;
+    ctx.strokeStyle = COL.brass;
+    ctx.lineWidth = Math.max(3, s * 0.08);
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.02, pw * 0.34, Math.PI, 0);
+    ctx.stroke();
+    ctx.fillStyle = COL.brass;
+    rr(-pw / 2, -s * 0.02, pw, ph, 5);
+    ctx.fill();
+    ctx.fillStyle = COL.abyss;
+    ctx.beginPath();
+    ctx.arc(0, s * 0.12, s * 0.05, 0, TAU);
+    ctx.fill();
+    ctx.fillRect(-s * 0.02, s * 0.12, s * 0.04, s * 0.12);
+
+    // damage flash ring
+    if (lockerFlash > 0.01) {
+      ctx.strokeStyle = 'rgba(232, 86, 74, ' + (lockerFlash * 0.9).toFixed(3) + ')';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 0, s * 1.3, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTentacle(e, t) {
+    var dx = e.x - e.ox, dy = e.y - e.oy;
+    var L = Math.hypot(dx, dy) || 1;
+    var ux = dx / L, uy = dy / L;
+    var px = -uy, py = ux;
+    var segs = e.boss ? 26 : 20;
+    var baseR = (e.boss ? 24 : 13) * unit;
+    var tipR = (e.boss ? 7 : 4) * unit;
+    var amp = Math.min(L * 0.14, (e.boss ? 30 : 18) * unit);
+    var pass, i, f, wob, sx, sy, r;
+
+    for (pass = 0; pass < 2; pass++) {
+      ctx.fillStyle = pass === 0 ? 'rgba(2, 12, 18, 0.45)' : COL.bobber;
+      for (i = 0; i <= segs; i++) {
+        f = i / segs;
+        wob = Math.sin(f * 5 + e.phase + t * 3.2) * amp * Math.sin(f * Math.PI);
+        sx = e.ox + ux * L * f + px * wob;
+        sy = e.oy + uy * L * f + py * wob;
+        r = baseR + (tipR - baseR) * f;
+        if (pass === 0) { sx += 3; sy += 4; }
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.max(1, r), 0, TAU);
+        ctx.fill();
+      }
+    }
+
+    // suckers near the tip
+    ctx.fillStyle = COL.creamDim;
+    for (i = 0; i < 3; i++) {
+      f = 0.72 + i * 0.11;
+      wob = Math.sin(f * 5 + e.phase + t * 3.2) * amp * Math.sin(f * Math.PI);
+      sx = e.ox + ux * L * f + px * wob;
+      sy = e.oy + uy * L * f + py * wob;
+      ctx.beginPath();
+      ctx.arc(sx, sy, (e.boss ? 3.4 : 2.2) * unit, 0, TAU);
+      ctx.fill();
+    }
+
+    if (e.boss) {
+      // brass band near the base, marks the boss
+      ctx.strokeStyle = COL.brass;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(e.ox + ux * L * 0.12, e.oy + uy * L * 0.12, baseR * 0.95, 0, TAU);
+      ctx.stroke();
+      // HP arc above the head
+      var frac = Math.max(0, e.hp / e.maxHp);
+      var ar = e.r + 18;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = 'rgba(244, 235, 217, 0.25)';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, ar, -Math.PI * 0.5 - 1.1, -Math.PI * 0.5 + 1.1);
+      ctx.stroke();
+      ctx.strokeStyle = COL.brass;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, ar, -Math.PI * 0.5 - 1.1, -Math.PI * 0.5 - 1.1 + 2.2 * frac);
+      ctx.stroke();
+    }
+  }
+
+  function drawFish(e, t) {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.rotate(e.ang);
+    var s = e.r;
+    var flap = Math.sin(t * 11 + e.phase) * 0.45;
+
+    // tail
+    ctx.fillStyle = COL.bobber;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.7, 0);
+    ctx.lineTo(-s * 1.35, -s * 0.5 + flap * s * 0.35);
+    ctx.lineTo(-s * 1.35, s * 0.5 + flap * s * 0.35);
+    ctx.closePath();
+    ctx.fill();
+
+    // body
+    ctx.fillStyle = COL.lure;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s, s * 0.6, 0, 0, TAU);
+    ctx.fill();
+
+    // bot seam line
+    ctx.strokeStyle = 'rgba(4, 27, 38, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.5, -s * 0.4);
+    ctx.lineTo(-s * 0.5, s * 0.4);
+    ctx.stroke();
+
+    // antenna
+    ctx.strokeStyle = COL.bobber;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(s * 0.12, -s * 0.5);
+    ctx.lineTo(s * 0.3, -s * 0.95);
+    ctx.stroke();
+    ctx.fillStyle = COL.bobber;
+    ctx.beginPath();
+    ctx.arc(s * 0.3, -s * 0.95, 2.6, 0, TAU);
+    ctx.fill();
+
+    // square bot eye
+    ctx.fillStyle = COL.cream;
+    ctx.fillRect(s * 0.32, -s * 0.24, s * 0.3, s * 0.3);
+    ctx.fillStyle = COL.abyss;
+    ctx.fillRect(s * 0.4, -s * 0.16, s * 0.15, s * 0.15);
+
+    ctx.restore();
+  }
+
+  function drawDiver(e, t) {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    var s = e.r;
+    var face = e.vx >= 0 ? 1 : -1;
+
+    // friendly halo
+    ctx.strokeStyle = 'rgba(83, 223, 232, 0.35)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, s + 12, 0, TAU);
+    ctx.stroke();
+
+    ctx.scale(face, 1);
+
+    // rising breath bubbles
+    ctx.strokeStyle = 'rgba(83, 223, 232, 0.55)';
+    ctx.lineWidth = 1.5;
+    for (var b = 0; b < 3; b++) {
+      var bt = (t * 0.9 + e.phase + b * 0.4) % 1;
+      ctx.beginPath();
+      ctx.arc(s * 0.35, -s * 0.8 - bt * s * 1.4, 2.5 + b * 1.4, 0, TAU);
+      ctx.stroke();
+    }
+
+    // suit body
+    ctx.fillStyle = 'rgba(83, 223, 232, 0.22)';
+    ctx.strokeStyle = COL.biolume;
+    ctx.lineWidth = 2.5;
+    rr(-s * 0.55, s * 0.12, s * 1.1, s * 0.95, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // waving arm (clearly friendly)
+    ctx.beginPath();
+    ctx.moveTo(s * 0.5, s * 0.35);
+    ctx.lineTo(s * 0.95, -s * 0.25);
+    ctx.stroke();
+    ctx.fillStyle = COL.biolume;
+    ctx.beginPath();
+    ctx.arc(s * 0.98, -s * 0.32 + Math.sin(t * 6 + e.phase) * 3, s * 0.14, 0, TAU);
+    ctx.fill();
+    // other arm
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.5, s * 0.35);
+    ctx.lineTo(-s * 0.8, s * 0.75);
+    ctx.stroke();
+
+    // dive helmet
+    ctx.fillStyle = COL.panelDeep;
+    ctx.strokeStyle = COL.cream;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.28, s * 0.62, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+
+    // helmet bolts
+    ctx.fillStyle = COL.cream;
+    for (var k = 0; k < 4; k++) {
+      var ba = -Math.PI * 0.85 + k * (Math.PI * 0.57);
+      ctx.beginPath();
+      ctx.arc(Math.cos(ba) * s * 0.62, -s * 0.28 + Math.sin(ba) * s * 0.62, 2.2, 0, TAU);
+      ctx.fill();
+    }
+
+    // visor
+    ctx.fillStyle = 'rgba(83, 223, 232, 0.5)';
+    ctx.beginPath();
+    ctx.arc(s * 0.08, -s * 0.28, s * 0.34, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(244, 235, 217, 0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(s * 0.02, -s * 0.36, s * 0.18, Math.PI * 1.1, Math.PI * 1.6);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawEffects(t) {
+    var i, p;
+    for (i = 0; i < particles.length; i++) {
+      p = particles[i];
+      var a = 1 - p.t / p.life;
+      if (p.ink) ctx.fillStyle = 'rgba(3, 16, 22, ' + (a * 0.85).toFixed(3) + ')';
+      else ctx.fillStyle = (Math.floor(p.r) % 2 === 0)
+        ? 'rgba(232, 86, 74, ' + a.toFixed(3) + ')'
+        : 'rgba(245, 193, 92, ' + a.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.5, p.r * a), 0, TAU);
+      ctx.fill();
+    }
+    for (i = 0; i < ripples.length; i++) {
+      p = ripples[i];
+      var rf = p.t / p.life;
+      ctx.strokeStyle = 'rgba(83, 223, 232, ' + ((1 - rf) * 0.6).toFixed(3) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 10 + rf * 34, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.textAlign = 'center';
+    ctx.font = '700 ' + Math.round(17 * unit) + 'px Menlo, "SF Mono", ui-monospace, "Courier New", monospace';
+    for (i = 0; i < popups.length; i++) {
+      p = popups[i];
+      var pf = p.t / p.life;
+      ctx.globalAlpha = 1 - pf;
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.text, p.x, p.y - pf * 44);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawAmbient(t) {
+    // slow decorative tentacles on the attract screen
+    ctx.globalAlpha = 0.3;
+    for (var i = 0; i < 3; i++) {
+      var bx = W * (0.2 + i * 0.3);
+      var fake = {
+        ox: bx, oy: H + 40,
+        x: bx + Math.sin(t * 0.4 + ambientPhase + i * 2.1) * 60 * unit,
+        y: H * 0.62 + Math.sin(t * 0.3 + i * 1.7) * 30 * unit,
+        r: 24 * unit,
+        boss: false,
+        phase: ambientPhase + i * 2.3,
+        hp: 1, maxHp: 1
+      };
+      drawTentacle(fake, t * 0.5);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function render(t) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if (shakeT > 0 && shakeDur > 0) {
+      var k = shakeMag * (shakeT / shakeDur);
+      ctx.translate((Math.random() * 2 - 1) * k, (Math.random() * 2 - 1) * k);
+    }
+    if (state === 'title') {
+      if (!reduceMotion) drawAmbient(t);
+    } else {
+      drawLocker(t);
+      var i, e;
+      for (i = 0; i < entities.length; i++) {
+        e = entities[i];
+        if (e.type === 'tentacle') drawTentacle(e, t);
+      }
+      for (i = 0; i < entities.length; i++) {
+        e = entities[i];
+        if (e.type === 'fish') drawFish(e, t);
+      }
+      for (i = 0; i < entities.length; i++) {
+        e = entities[i];
+        if (e.type === 'diver') drawDiver(e, t);
+      }
+      drawEffects(t);
+    }
+    ctx.restore();
+  }
+
+  /* ---------- main loop ---------- */
+  var last = performance.now();
+  function loop(now) {
+    var dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (now < hitStopUntil) dt = 0;
+    update(dt, now / 1000);
+    render(now / 1000);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
