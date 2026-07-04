@@ -43,11 +43,14 @@ A second, self-contained arcade built for the Cybersecurity Awareness Month wall
 | `caught-in-the-net.html` | **Arcade hub.** Poster-style table of contents for the seven kiosk games. |
 | `reel-em-in.html` | **Game.** Drop the hook and snag phishing emails; let the honest fish swim by. Illustrated linocut fish, embedded offline as webp. |
 | `packet-trawler.html` | **Game.** Drag the firewall net: catch malware, let clean packets reach the harbor. |
+| `packet-trawler-v2.html` | **Game (cinematic).** Same game as Packet Trawler, rebuilt with a rendered harbor background, glowing sprites, a catch-streak multiplier, and more juice. |
 | `sonar-sweep.html` | **Game.** Threat-hunt minesweeper: ping tiles, read the signals, buoy the lurkers. |
 | `kraken-attack.html` | **Game.** Multi-touch defense: zap the botnet swarm before it reaches the Catch Locker. |
 | `deep-dive-dash.html` | **Game.** One-touch endless swimmer: dodge hooks and jellyfish, grab encryption shields. |
 | `password-slot.html` | **Game.** Reinvented push-your-luck slots: spin, lock reels, beat the crack-bot. |
 | `connect-four.html` | **Game.** Reinvented as Hook, Line and Sinker: 2-player Connect Four with power chips. |
+| `leaderboard.html` | **Hall of Fame.** Shows every game's local top-eight board. Linked from the hub. |
+| `leaderboard.js` | Shared local leaderboard engine (per-game top-8, touch initials entry). Each game records to it at game over. |
 
 ## Accessibility
 
