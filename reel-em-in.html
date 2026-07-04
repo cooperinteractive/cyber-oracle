@@ -333,6 +333,7 @@ a:focus-visible, button:focus-visible {
 <div class="sr-status" role="status" aria-live="polite" id="live"></div>
 
 <script src="sounds.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (function () {
   'use strict';
@@ -689,6 +690,7 @@ a:focus-visible, button:focus-visible {
     countUp(score);
     announce('Round over. Final score ' + score + '. Best ' + best + '.');
     setTimeout(function () { try { againBtn.focus(); } catch (e) {} }, 60);
+    if (window.CyberLeaderboard) CyberLeaderboard.record({ game: 'reel', title: "Reel 'Em In", unit: 'pts', score: score, onDone: function () { try { againBtn.focus(); } catch (e) {} } });
   }
 
   function countUp(target) {

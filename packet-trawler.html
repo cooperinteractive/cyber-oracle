@@ -399,6 +399,7 @@ button:focus-visible, a:focus-visible {
 <div id="live" class="sr-only" role="status" aria-live="polite"></div>
 
 <script src="sounds.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (function () {
   'use strict';
@@ -703,6 +704,7 @@ button:focus-visible, a:focus-visible {
     if (isBest) sfx('win');
     announce('Game over. Final score ' + score + '. Best ' + best + '.');
     try { btnAgain.focus({ preventScroll: true }); } catch (e) { /* fine */ }
+    if (window.CyberLeaderboard) CyberLeaderboard.record({ game: 'trawler', title: 'Packet Trawler', unit: 'pts', score: score, onDone: function () { try { btnAgain.focus(); } catch (e) {} } });
   }
 
   /* ---------- update ---------- */

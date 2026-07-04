@@ -391,6 +391,7 @@ h2 { font-size: clamp(1.5rem, 4.6vw, 2.2rem); }
 </div>
 
 <script src="sounds.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (function () {
   'use strict';
@@ -639,6 +640,7 @@ h2 { font-size: clamp(1.5rem, 4.6vw, 2.2rem); }
     liveEl.textContent = 'Run over. Distance ' + meters + ' meters. Score ' + score + '. Best ' + best + '.';
     if (shakeT < 0.35) shakeT = 0.35;
     try { againBtn.focus(); } catch (e) { /* focus is best-effort */ }
+    if (window.CyberLeaderboard) CyberLeaderboard.record({ game: 'dash', title: 'Deep Dive Dash', unit: 'm', score: score, onDone: function () { try { againBtn.focus(); } catch (e) {} } });
   }
 
   /* ---------- spawning ---------- */

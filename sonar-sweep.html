@@ -484,6 +484,7 @@
 </div>
 
 <script src="sounds.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (function () {
   'use strict';
@@ -870,6 +871,7 @@
       scoreValEl.textContent = String(score);
     }
     againBtn.focus();
+    if (won && window.CyberLeaderboard) CyberLeaderboard.record({ game: 'sonar', title: 'Sonar Sweep', unit: 'pts', score: lastScore, onDone: function () { try { againBtn.focus(); } catch (e) {} } });
   }
 
   /* ---------- mode toggle ---------- */
