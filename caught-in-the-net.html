@@ -364,8 +364,9 @@
           <text x="770" y="152" text-anchor="middle" font-size="17" font-family="Menlo, monospace" fill="#F5C15C">$</text>
         </g>
         <!-- fish silhouettes -->
+        <!-- this fish drifts left to right, so it is mirrored to face right (head first) -->
         <g class="fishy" opacity="0.85">
-          <g transform="translate(0,158)">
+          <g transform="translate(0,158) scale(-1,1)">
             <path d="M0 0 q14 -12 34 -12 q22 0 34 12 q-12 12 -34 12 q-20 0 -34 -12 Z M68 0 l16 -11 v22 Z"
                   transform="translate(-84,0)" fill="#53DFE8"/>
             <circle cx="-66" cy="-3" r="2.2" fill="#041B26"/>
