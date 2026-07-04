@@ -131,6 +131,15 @@
     display: block;
     color: var(--lure);
   }
+  /* gentle wave: each letter is wrapped in .wv by script and offset in phase */
+  h1 .wv { display: inline-block; will-change: transform; }
+  @media (prefers-reduced-motion: no-preference) {
+    h1 .wv { animation: titleWave 2.6s ease-in-out infinite; }
+    @keyframes titleWave {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-0.11em); }
+    }
+  }
 
   .poster .sub {
     margin: 18px auto 6px;
@@ -334,7 +343,7 @@
 <div class="wrap">
   <header class="poster">
     <div class="kicker">Cybersecurity Awareness Month Arcade</div>
-    <h1>Caught<br>in the <span class="netword">Net</span></h1>
+    <h1 id="heroTitle">Caught<br>in the <span class="netword">Net</span></h1>
     <p class="sub">Seven games. Big scores. Sharper instincts.</p>
     <hr class="rope-rule">
     <div class="scene" aria-hidden="true">
@@ -530,6 +539,32 @@
       sea.appendChild(b);
     }
   }
+
+  // gentle wave across the hero title: wrap each letter, stagger the phase
+  (function waveTitle() {
+    var title = document.getElementById('heroTitle');
+    if (!title) return;
+    var idx = 0;
+    (function wrap(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+        if (n.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          n.textContent.split('').forEach(function (ch) {
+            if (ch === ' ') { frag.appendChild(document.createTextNode(' ')); return; }
+            var s = document.createElement('span');
+            s.className = 'wv';
+            s.textContent = ch;
+            s.style.animationDelay = (idx * -0.07).toFixed(2) + 's';
+            idx++;
+            frag.appendChild(s);
+          });
+          node.replaceChild(frag, n);
+        } else if (n.nodeType === 1 && n.tagName !== 'BR') {
+          wrap(n);
+        }
+      });
+    })(title);
+  })();
 
   // personal-best badges from localStorage
   document.querySelectorAll('.card[data-best]').forEach(function (card) {
