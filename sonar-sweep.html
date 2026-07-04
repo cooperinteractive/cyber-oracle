@@ -391,6 +391,15 @@
     .rope-rule::before, .rope-rule::after { width: 40px; }
     .subtitle { font-size: 0.62rem; }
   }
+
+  /* themed override for the mute toggle injected by sounds.js */
+  #cyber-sound-toggle {
+    background: var(--panel) !important;
+    color: var(--cream) !important;
+    border: 2px solid var(--line) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 16px rgba(2, 15, 22, 0.5) !important;
+  }
 </style>
 </head>
 <body>
@@ -580,7 +589,7 @@
 
   function refreshTile(i) { tiles[i].setAttribute('aria-label', tileLabel(i)); }
 
-  function updateLurkerHud() { lurkerCountEl.textContent = String(LURKERS - buoyCount); }
+  function updateLurkerHud() { lurkerCountEl.textContent = String(Math.max(0, LURKERS - buoyCount)); }
 
   function updateTimeDisplay() { timeValEl.textContent = fmtTime(elapsedMs); }
 
@@ -782,7 +791,7 @@
     snd('place');
     updateLurkerHud();
     refreshTile(i);
-    announce((cell.buoy ? 'Buoy placed. ' : 'Buoy removed. ') + (LURKERS - buoyCount) + ' lurkers unmarked.');
+    announce((cell.buoy ? 'Buoy placed. ' : 'Buoy removed. ') + Math.max(0, LURKERS - buoyCount) + ' lurkers unmarked.');
   }
 
   function breach(pingedIdx) {

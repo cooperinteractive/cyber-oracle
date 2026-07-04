@@ -325,6 +325,15 @@ h2 { font-size: clamp(1.5rem, 4.6vw, 2.2rem); }
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+  /* themed override for the mute toggle injected by sounds.js */
+  #cyber-sound-toggle {
+    background: var(--panel) !important;
+    color: var(--cream) !important;
+    border: 2px solid var(--line) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 16px rgba(2, 15, 22, 0.5) !important;
+  }
 </style>
 </head>
 <body>
@@ -605,6 +614,7 @@ h2 { font-size: clamp(1.5rem, 4.6vw, 2.2rem); }
   }
 
   function gameOver() {
+    if (state === 'over') return;
     state = 'over';
     overAt = time;
     holding = false;
