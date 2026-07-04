@@ -41,8 +41,7 @@ A second, self-contained arcade built for the Cybersecurity Awareness Month wall
 | File | What it is |
 |---|---|
 | `caught-in-the-net.html` | **Arcade hub.** Poster-style table of contents for the seven kiosk games. |
-| `reel-em-in.html` | **Game.** Drop the hook and snag phishing emails; let the honest fish swim by. |
-| `reel-em-in-v2.html` | **Game (deluxe art).** Same as Reel 'Em In, with illustrated linocut fish embedded as offline webp. The original is untouched. |
+| `reel-em-in.html` | **Game.** Drop the hook and snag phishing emails; let the honest fish swim by. Illustrated linocut fish, embedded offline as webp. |
 | `packet-trawler.html` | **Game.** Drag the firewall net: catch malware, let clean packets reach the harbor. |
 | `sonar-sweep.html` | **Game.** Threat-hunt minesweeper: ping tiles, read the signals, buoy the lurkers. |
 | `kraken-attack.html` | **Game.** Multi-touch defense: zap the botnet swarm before it reaches the Catch Locker. |

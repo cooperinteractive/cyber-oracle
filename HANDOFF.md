@@ -14,8 +14,7 @@ Design spec: `docs/superpowers/specs/2026-07-02-caught-in-the-net-arcade-design.
 
 Inventory (all at repo root):
 - `caught-in-the-net.html`: the new arcade hub / table of contents (poster hero + 7 game cards with best-score badges).
-- `reel-em-in.html`: phishing fishing (hold to drop hook, read the tag, snag phish).
-- `reel-em-in-v2.html`: **deluxe-art variant** of Reel 'Em In (see Open decisions).
+- `reel-em-in.html`: phishing fishing (hold to drop hook, read the tag, snag phish). Ships with illustrated linocut fish (offline webp).
 - `packet-trawler.html`: firewall net catcher.
 - `sonar-sweep.html`: threat-hunt minesweeper.
 - `kraken-attack.html`: multi-touch botnet defense.
@@ -36,11 +35,11 @@ Static files. Serve the folder and open the hub:
 ## Deploy to the kiosks
 Copy the repo files to each iPad (or host on the local network) and open `caught-in-the-net.html` full-screen (Guided Access recommended). No internet needed. To pre-warm high-score badges, nothing is required; they populate as people play.
 
-## The Reel 'Em In v2 fish art (how it was made)
-The v2 fish are illustrated linocut/screenprint sprites generated via the Magnific image connector (Recraft V4.1), background-removed and defringed locally, downscaled, and encoded as alpha **webp** embedded as base64 data URIs so the page stays fully offline. Sprites are assigned to fish independently of phish/legit, so the picture never signals the answer; the red/green verdict shows only as an after-catch glow. Source assets and the build script live in this session's scratchpad (not committed): `.../scratchpad/fish/`. The final file is `reel-em-in-v2.html` (~447 KB self-contained).
+## The Reel 'Em In fish art (how it was made)
+The fish are illustrated linocut/screenprint sprites generated via the Magnific image connector (Recraft V4.1), background-removed and defringed locally, downscaled, and encoded as alpha **webp** embedded as base64 data URIs so the page stays fully offline. Sprites are assigned to fish independently of phish/legit, so the picture never signals the answer; the red/green verdict shows only as an after-catch glow. Source assets and the build script live in this session's scratchpad (not committed): `.../scratchpad/fish/`. It is now the live `reel-em-in.html` (~447 KB self-contained); the fish were sized down 15% per feedback and the standalone v2 file was merged in and removed.
 
 ## Open decisions / next steps
-1. **Promote v2?** `reel-em-in-v2.html` is a standalone so the working original is not disturbed. If it is approved, the swap is: point the hub's Reel 'Em In card at `reel-em-in-v2.html` (or overwrite `reel-em-in.html` with the v2 contents and delete v2). Same art treatment could then be rolled to the other games (each currently uses canvas/SVG art, which already looks good).
+1. **Done: the illustrated version is live.** It is now the canonical `reel-em-in.html`. Optional next: roll the same illustrated-fish treatment out to the other games (each currently uses canvas/SVG art, which already looks good).
 2. **Merge to main.** Work is on branch `claude/mystifying-lalande-811d3d` (a worktree). Fast-forward or PR into `main` when ready.
 3. Optional: add the new arcade to `games.html` or cross-link the two hubs.
 
