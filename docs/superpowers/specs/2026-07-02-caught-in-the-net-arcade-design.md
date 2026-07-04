@@ -1,4 +1,4 @@
-# Caught in the Net — Kiosk Arcade Design
+# Caught in the Net: Kiosk Arcade Design
 
 Date: 2026-07-02. Status: approved for build (autonomous session; user request is the mandate).
 
@@ -106,7 +106,7 @@ Score readouts: `--mono`, `--brass`, in small inset wells (`--panel-deep`,
 
 ## Per-game specs
 
-### 1. Reel 'Em In (`reel-em-in.html`) — canvas
+### 1. Reel 'Em In (`reel-em-in.html`): canvas
 Boat on the surface, hook on a line. Press-and-hold anywhere: hook drops.
 Release: hook reels back up, catching the first fish it touches. Fish swim
 horizontally at 4 depth lanes carrying short email-subject tags. Red-flagged
@@ -117,7 +117,7 @@ combo multiplier for consecutive phish. Speed and fish density ramp. Catch
 banner shows WHY the catch was phish/legit (the 20%). Sounds: `caught`,
 `wrong`, `combo`, `win`.
 
-### 2. Packet Trawler (`packet-trawler.html`) — canvas
+### 2. Packet Trawler (`packet-trawler.html`): canvas
 You drag a trawl net (follows finger x, eased) above the harbor floor. Malware
 mines (spiky, red) sink from the surface; clean packets (cyan envelope bubbles)
 sink too. Catch malware in the net: +75. Let clean packets pass below into the
@@ -126,7 +126,7 @@ malware reaching the harbor = breach (lose 1 of 3 harbor lights). Waves speed
 up; occasional gold "zero-day" worth 300. Teaches firewall filtering and false
 positives. Sounds: `caught`, `breach`, `miss`, `win`.
 
-### 3. Sonar Sweep (`sonar-sweep.html`) — DOM grid
+### 3. Sonar Sweep (`sonar-sweep.html`): DOM grid
 Threat-hunt minesweeper, 8x8 with 10 lurkers. Tap = ping a tile (reveals count
 of adjacent lurkers as sonar ring styling; flood-fill zeros). Toggle chip
 switches to BUOY mode to mark suspected lurkers (long-press also works). Ping
@@ -135,7 +135,7 @@ win; score = time + wrong-buoy penalty. Numbers colored on a cyan-to-red ramp.
 Teaches threat hunting: "quiet signals around a threat" fact card. Sounds:
 `click` (ping), `place` (buoy), `breach`, `win`.
 
-### 4. Kraken Attack (`kraken-attack.html`) — canvas, multi-touch
+### 4. Kraken Attack (`kraken-attack.html`): canvas, multi-touch
 The Catch Locker (server chest) sits center. Kraken tentacles + bot-fish swarm
 inward from screen edges in waves. Tap them to zap (multi-touch: several
 fingers at once, two-player-friendly). Blue crew divers occasionally drift in;
@@ -144,7 +144,7 @@ tapping crew = -200 and screen shake (insider false-alarm lesson). Locker has
 5th wave. Score + best wave. Teaches botnets/DDoS. Sounds: `whack`, `alert`,
 `breach`, `levelUp`, `lose`.
 
-### 5. Deep Dive Dash (`deep-dive-dash.html`) — canvas
+### 5. Deep Dive Dash (`deep-dive-dash.html`): canvas
 One-touch endless swimmer. You are a courier data-packet fish. Hold to dive,
 release to float up (buoyancy). Dodge dangling phish hooks (from above) and
 jellyfish botnets (drifting). Collect padlock pickups = encryption shield
@@ -152,7 +152,7 @@ jellyfish botnets (drifting). Collect padlock pickups = encryption shield
 speed ramps forever. Teaches "encrypted in transit survives a snag". Sounds:
 `pop` (pickup), `miss` (hit), `tick`, `lose`.
 
-### 6. Password Slot Machine (`password-slot.html`) — DOM reels, full rewrite
+### 6. Password Slot Machine (`password-slot.html`): DOM reels, full rewrite
 Push-your-luck slots, 5 rounds, bankroll of coins.
 Round loop: PULL spins 6 reels (each lands one character). Between pulls, tap
 reels to LOCK them. 3 pulls max, or CASH OUT early for a x1.5 multiplier after
@@ -166,7 +166,7 @@ coins. Occasionally a TEMPTATION lever appears: "Add 'password' to the end?"
 halves the payout (the lesson, played as a trap). Best bankroll saved.
 Sounds: `click`, `place` (lock), `crackTick`, `crackWin`, `win`, `lose`.
 
-### 7. Hook, Line & Sinker (`connect-four.html`) — DOM board, full rewrite
+### 7. Hook, Line & Sinker (`connect-four.html`): DOM board, full rewrite
 Connect Four on a rope-net 7x6 grid. Local 2-player: PHISHERS (orange hook
 chips) vs DEFENDERS (cyan shield chips). Tap a column to drop; chip falls with
 bubble trail and splash. Each player holds 2 one-shot power chips:
