@@ -46,6 +46,7 @@ A second, self-contained arcade built for the Cybersecurity Awareness Month wall
 | `packet-trawler-v2.html` | **Game (cinematic).** Same game as Packet Trawler, rebuilt with a rendered harbor background, glowing sprites, a catch-streak multiplier, and more juice. |
 | `sonar-sweep.html` | **Game.** Threat-hunt minesweeper: ping tiles, read the signals, buoy the lurkers. |
 | `kraken-attack.html` | **Game.** Multi-touch defense: zap the botnet swarm before it reaches the Catch Locker. |
+| `kraken-attack-v2.html` | **Game (cinematic).** Same game as Kraken Attack, rebuilt with a rendered abyssal background and sprite enemies. The friendly crew diver is kept as-is. |
 | `deep-dive-dash.html` | **Game.** One-touch endless swimmer: dodge hooks and jellyfish, grab encryption shields. |
 | `password-slot.html` | **Game.** Reinvented push-your-luck slots: spin, lock reels, beat the crack-bot. |
 | `connect-four.html` | **Game.** Reinvented as Hook, Line and Sinker: 2-player Connect Four with power chips. |

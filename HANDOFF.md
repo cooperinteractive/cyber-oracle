@@ -19,6 +19,7 @@ Inventory (all at repo root):
 - `packet-trawler-v2.html`: cinematic rebuild of Packet Trawler (rendered harbor art, glowing sprites, streak multiplier). Standalone; see Open decisions.
 - `sonar-sweep.html`: threat-hunt minesweeper.
 - `kraken-attack.html`: multi-touch botnet defense.
+- `kraken-attack-v2.html`: cinematic rebuild of Kraken Attack (rendered abyssal background, sprite tentacles, bot-fish, boss, and treasure locker). The friendly crew diver is deliberately kept as the original canvas mascot. Standalone; see Open decisions.
 - `deep-dive-dash.html`: one-touch endless swimmer.
 - `password-slot.html`: **reinvented** push-your-luck password slots (was the old entropy console).
 - `connect-four.html`: **reinvented** as "Hook, Line & Sinker": 2-player net-board Connect Four with Depth Charge and Tangle Net power chips.
@@ -45,10 +46,11 @@ Shared `leaderboard.js` gives every scored game a local per-game top-8 board (ke
 
 ## Open decisions / next steps
 1. **Done: the illustrated version is live.** It is now the canonical `reel-em-in.html`. Optional next: roll the same illustrated-fish treatment out to the other games (each currently uses canvas/SVG art, which already looks good).
-2. **Promote Packet Trawler v2?** `packet-trawler-v2.html` is standalone (the original is untouched). If approved, point the hub's Packet Trawler card at it or overwrite `packet-trawler.html` with the v2 contents, the same way Reel 'Em In was promoted.
+2. **Promote the v2 games?** `packet-trawler-v2.html` and `kraken-attack-v2.html` are standalone (originals untouched). If approved, point the hub cards at them or overwrite the originals, the same way Reel 'Em In was promoted.
 3. **Merge to main.** Work is on branch `claude/mystifying-lalande-811d3d` (a worktree). Fast-forward or PR into `main` when ready.
 4. Optional: add the new arcade to `games.html` or cross-link the two hubs.
 
 ## Notes
 - A multi-agent review pass (offline safety, sound-API validity, game logic, accessibility, theme) ran over all 8 pages; its confirmed findings are fixed (themed the injected mute toggle everywhere, clamped the sonar counter, guarded a double game-over, enlarged the Depth Charge tap target, locked slot-page scroll).
+- The hub hero title has a gentle per-letter wave animation (respects reduced motion).
 - Writing-style rule holds throughout: no em/en dashes anywhere (verified by scan).
