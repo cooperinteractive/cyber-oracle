@@ -54,8 +54,10 @@ Shared `leaderboard.js` gives every scored game a local per-game top-8 board (ke
 Design plan + $30K budget + prop sourcing list: `docs/installation/caught-in-the-net-wall.md`.
 Four rendered concept mockups (Zeke mascot in the mural, three iPad kiosks) live in
 `assets/wall-mockups/` (bait shop storefront, abyss hero mural, boardwalk pier,
-poster gallery triptych). Next step: user picks a concept, then we regenerate the
-clean banner key art at print aspect and AI-upscale it for the print vendor.
+poster gallery triptych). Clean full-bleed banner key art for ALL FOUR concepts is
+generated and upscaled: working files in `assets/banner-art/`, print files in
+`assets/banner-art/print/`, full 4x masters in the Magnific account library.
+Next step: user picks the concept to produce; vendor crops 21:9 art to the 20x8 ft frame.
 
 ## Notes
 - A multi-agent review pass (offline safety, sound-API validity, game logic, accessibility, theme) ran over all 8 pages; its confirmed findings are fixed (themed the injected mute toggle everywhere, clamped the sonar counter, guarded a double game-over, enlarged the Depth Charge tap target, locked slot-page scroll).

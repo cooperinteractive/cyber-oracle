@@ -86,10 +86,26 @@ inflatable ($2,500 to $3,500, saves ~$4K), or shrink the backdrop to 16 ft.
   supply or Facebook Marketplace.
 - Lighting: any AV rental house (wash bars + water gobo are stock items).
 
-## Print-file pipeline
+## Print files (generated)
 
-1. Pick a concept; we regenerate the final key art clean (no kiosks or room,
-   just the wall graphic) at the banner's aspect ratio.
-2. AI-upscale to print resolution, then vendor color proof.
-3. Kiosk wraps and the floor decal are cropped from the same art so everything
-   matches.
+Clean full-bleed key art for all four concepts is done and AI-upscaled
+(precision mode, lettering preserved). Working files in `assets/banner-art/`
+(1584x672 banners, 848x1264 posters) and upscaled print files in
+`assets/banner-art/print/`:
+
+- `banner-a-bait-shop-print.jpg` (3168x1344): tackle-shop facade, Zeke fishing
+  a padlock from the shop window.
+- `banner-b-abyss-print.jpg` (3168x1344): abyss hero mural, Zeke tangled in the
+  golden net, quiet zones left mid-wall for porthole kiosks.
+- `banner-c-pier-print.jpg` (3168x1344): dusk pier, Zeke reeling an
+  envelope-fish, hanging sign.
+- `poster-d1-reel-em-in-print.jpg`, `poster-d2-kraken-attack-print.jpg`,
+  `poster-d3-packet-trawler-print.jpg` (1696x2528 each): the WPA poster
+  triptych for concept D.
+
+Full-resolution 4x masters (6336x2688 banners, 3392x5056 posters) are saved in
+the Magnific account library (same titles); download from there for the print
+vendor. Banners were generated at 21:9; the vendor crops or extends the
+painted edges to the exact 20x8 ft (5:2) frame. Vendor does final color proof.
+Kiosk wraps and the floor decal are cropped from the same art so everything
+matches.
