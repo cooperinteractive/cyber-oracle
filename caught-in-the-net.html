@@ -462,9 +462,9 @@
         </span>
         <h3>Deep Dive Dash</h3>
       </div>
-      <p class="tagline">One finger, one fish, one precious data parcel. Dodge the hooks and swim forever.</p>
+      <p class="tagline">Deliver the root key through phishing hooks, botnet swarms, and the Zero-Day Leviathan.</p>
       <div class="meta">
-        <span class="pips" aria-label="Difficulty 2 of 3"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span><span class="lab">medium</span></span>
+        <span class="pips" aria-label="Difficulty 3 of 3"><span class="pip on"></span><span class="pip on"></span><span class="pip on"></span><span class="lab">mission</span></span>
         <span class="badge" data-badge>FIRST DIVE</span>
       </div>
     </a>
@@ -565,6 +565,13 @@
       });
     })(title);
   })();
+
+  // Promote any best score earned in the approved standalone prototype.
+  try {
+    var legacyDashBest = parseInt(localStorage.getItem('citn-dash-v2-best') || '0', 10) || 0;
+    var canonicalDashBest = parseInt(localStorage.getItem('citn-dash-best') || '0', 10) || 0;
+    if (legacyDashBest > canonicalDashBest) localStorage.setItem('citn-dash-best', String(legacyDashBest));
+  } catch (e) {}
 
   // personal-best badges from localStorage
   document.querySelectorAll('.card[data-best]').forEach(function (card) {

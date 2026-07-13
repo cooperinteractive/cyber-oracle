@@ -1,6 +1,6 @@
 # Cyber Oracle
 
-A collection of interactive cybersecurity and quantum-learning web toys. Each page is a self-contained HTML file with no build step and no dependencies. Drop them on any static host (GitHub Pages, Netlify, your own site, a SharePoint embed) and they work.
+A collection of interactive cybersecurity and quantum-learning web toys. There is no build step or network dependency. Most pages are self-contained HTML files; premium 3D prototypes load only local files from `assets/`. Drop the folder on any static host (GitHub Pages, Netlify, your own site, a SharePoint embed) and it works.
 
 ## Pages
 
@@ -42,12 +42,13 @@ A second, self-contained arcade built for the Cybersecurity Awareness Month wall
 |---|---|
 | `caught-in-the-net.html` | **Arcade hub.** Poster-style table of contents for the seven kiosk games. |
 | `reel-em-in.html` | **Game.** Drop the hook and snag phishing emails; let the honest fish swim by. Illustrated linocut fish, embedded offline as webp. |
+| `reel-em-in-v2.html` | **Game (3D review fork).** Ghost Net Protocol rebuild with a full-screen Three.js ocean, animated water and caustics, local illustrated fish, signal labels, four threat sectors, difficulty modes, a whaling boss, catch analysis, grading, and responsive kiosk controls. The original remains canonical pending approval. |
 | `packet-trawler.html` | **Game.** Drag the firewall net: catch malware, let clean packets reach the harbor. |
 | `packet-trawler-v2.html` | **Game (cinematic).** Same game as Packet Trawler, rebuilt with a rendered harbor background, glowing sprites, a catch-streak multiplier, and more juice. |
 | `sonar-sweep.html` | **Game.** Threat-hunt minesweeper: ping tiles, read the signals, buoy the lurkers. |
 | `kraken-attack.html` | **Game.** Multi-touch defense: zap the botnet swarm before it reaches the Catch Locker. |
 | `kraken-attack-v2.html` | **Game (cinematic).** Same game as Kraken Attack, rebuilt with a rendered abyssal background and sprite enemies. The friendly crew diver is kept as-is. |
-| `deep-dive-dash.html` | **Game.** One-touch endless swimmer: dodge hooks and jellyfish, grab encryption shields. |
+| `deep-dive-dash.html` | **Game.** Deep Dive Dash: Blackwater Protocol, a three-sector courier mission with adaptive cyber threats, encryption and integrity systems, combo scoring, a charged disruption pulse, and a Zero-Day Leviathan boss. |
 | `password-slot.html` | **Game.** Reinvented push-your-luck slots: spin, lock reels, beat the crack-bot. |
 | `connect-four.html` | **Game.** Reinvented as Hook, Line and Sinker: 2-player Connect Four with power chips. |
 | `leaderboard.html` | **Hall of Fame.** Shows every game's local top-eight board. Linked from the hub. |

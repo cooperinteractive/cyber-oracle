@@ -1,0 +1,2860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#083A45">
+<title>Reel 'Em In: Ghost Net Protocol | Caught in the Net</title>
+<style>
+:root {
+  --abyss: #083B47;
+  --depth: #0C5865;
+  --panel: #12586A;
+  --panel-deep: #0B4656;
+  --line: rgba(244, 235, 217, 0.18);
+  --cream: #F4EBD9;
+  --cream-dim: #C9BFA8;
+  --lure: #FF7A45;
+  --bobber: #E8564A;
+  --biolume: #53DFE8;
+  --kelp: #4FC98C;
+  --brass: #F5C15C;
+  --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+  --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; }
+body {
+  margin: 0;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #083A45;
+  color: var(--cream);
+  font-family: var(--body);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button, a { font: inherit; }
+button { color: inherit; }
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--biolume);
+  outline-offset: 3px;
+}
+
+#viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #083A45;
+}
+#viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.scene-grade,
+.scene-noise,
+.scene-scan {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+.scene-grade {
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(5, 42, 50, 0.16), transparent 22%, transparent 76%, rgba(5, 42, 50, 0.18)),
+    linear-gradient(180deg, rgba(255, 222, 166, 0.04), transparent 60%, rgba(5, 39, 47, 0.24));
+  box-shadow: inset 0 0 110px rgba(2, 24, 30, 0.22);
+}
+.scene-noise {
+  z-index: 3;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");
+}
+.scene-scan {
+  z-index: 4;
+  opacity: 0.035;
+  background: repeating-linear-gradient(180deg, transparent 0 3px, rgba(83, 223, 232, 0.12) 3px 4px);
+  mix-blend-mode: screen;
+}
+
+.home-chip,
+.icon-btn {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  z-index: 90;
+  min-width: 56px;
+  height: 56px;
+  border: 1px solid rgba(244, 235, 217, 0.5);
+  border-radius: 6px;
+  background: rgba(8, 54, 64, 0.8);
+  color: var(--cream);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: var(--display);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.home-chip {
+  left: max(14px, env(safe-area-inset-left));
+  padding: 0 18px;
+}
+.icon-btn {
+  right: calc(max(14px, env(safe-area-inset-right)) + 64px);
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 80ms ease, background-color 120ms ease;
+}
+.icon-btn.active { opacity: 1; pointer-events: auto; }
+.home-chip:active,
+.icon-btn:active {
+  transform: scale(0.96);
+  background: rgba(11, 51, 72, 0.95);
+}
+
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+#hud.active { opacity: 1; }
+.hud-top {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 340px));
+  min-width: 410px;
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(220px, 1.5fr) minmax(130px, 1fr);
+  gap: 8px;
+}
+.hud-cell {
+  height: 56px;
+  border: 1px solid rgba(244, 235, 217, 0.2);
+  border-radius: 6px;
+  background: rgba(8, 49, 59, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 7px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.hud-cell.center { text-align: center; align-items: center; }
+.hud-cell.right { text-align: right; align-items: flex-end; }
+.hud-label {
+  color: var(--cream-dim);
+  font-family: var(--display);
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.hud-value {
+  color: var(--brass);
+  font-family: var(--mono);
+  font-size: clamp(0.84rem, 1.5vw, 1.08rem);
+  font-weight: 900;
+  line-height: 1.42;
+  white-space: nowrap;
+}
+.hud-sub {
+  color: var(--biolume);
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.meter {
+  width: 100%;
+  height: 5px;
+  margin-top: 2px;
+  overflow: hidden;
+  background: rgba(244, 235, 217, 0.12);
+}
+.meter > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+#integrityFill { background: var(--kelp); }
+#operationFill { background: var(--biolume); }
+
+#depthRail {
+  position: absolute;
+  right: max(20px, env(safe-area-inset-right));
+  top: 50%;
+  transform: translateY(-50%);
+  width: 58px;
+  height: min(350px, 50vh);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.depth-label {
+  color: var(--cream-dim);
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.depth-track {
+  position: relative;
+  flex: 1;
+  width: 3px;
+  margin: 8px 0;
+  background: rgba(244, 235, 217, 0.18);
+}
+.depth-track::before,
+.depth-track::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  width: 17px;
+  height: 1px;
+  background: rgba(244, 235, 217, 0.34);
+}
+.depth-track::before { top: 0; }
+.depth-track::after { bottom: 0; }
+#depthMarker {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 17px;
+  height: 17px;
+  border: 2px solid var(--brass);
+  border-radius: 50%;
+  background: var(--abyss);
+  transform: translate(-50%, -50%);
+  transition: top 80ms linear;
+  box-shadow: 0 0 16px rgba(245, 193, 92, 0.34);
+}
+#depthValue {
+  color: var(--brass);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+#feed {
+  position: absolute;
+  left: max(18px, env(safe-area-inset-left));
+  bottom: max(22px, env(safe-area-inset-bottom));
+  width: min(390px, calc(100vw - 170px));
+  padding: 9px 14px;
+  border-left: 3px solid var(--biolume);
+  background: linear-gradient(90deg, rgba(8, 49, 59, 0.88), rgba(8, 49, 59, 0));
+  opacity: 0;
+  transform: translateX(-14px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+#feed.show { opacity: 1; transform: translateX(0); }
+#feed.alert { border-color: var(--bobber); }
+#feed.good { border-color: var(--kelp); }
+.feed-kicker {
+  color: var(--cream-dim);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.feed-text {
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: clamp(0.78rem, 1.4vw, 1rem);
+  font-weight: 900;
+  line-height: 1.18;
+  text-transform: uppercase;
+}
+
+#lineState {
+  position: fixed;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 34;
+  min-width: 150px;
+  min-height: 44px;
+  padding: 7px 18px;
+  border: 1px solid rgba(244, 235, 217, 0.28);
+  border-radius: 6px;
+  background: rgba(8, 49, 59, 0.84);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--cream-dim);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 200ms ease, color 160ms ease, border-color 160ms ease;
+  pointer-events: none;
+}
+#lineState.active { opacity: 1; }
+#lineState.drop { color: var(--biolume); border-color: rgba(83, 223, 232, 0.5); }
+#lineState.reel { color: var(--brass); border-color: rgba(245, 193, 92, 0.5); }
+
+#labels {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  pointer-events: none;
+  overflow: hidden;
+}
+.signal-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: min(260px, 42vw);
+  min-height: 28px;
+  padding: 6px 10px 6px 23px;
+  border: 1px solid rgba(244, 235, 217, 0.34);
+  border-radius: 5px;
+  background: rgba(6, 43, 53, 0.9);
+  color: var(--cream);
+  font-family: var(--body);
+  font-size: clamp(0.64rem, 1.25vw, 0.78rem);
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: translate(-50%, -100%);
+  transform-origin: center bottom;
+  opacity: 0;
+  transition: opacity 100ms linear, border-color 140ms ease, background-color 140ms ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.signal-tag::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cream-dim);
+  transform: translateY(-50%);
+  box-shadow: 0 0 8px rgba(201, 191, 168, 0.42);
+}
+.signal-tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 1px;
+  height: 10px;
+  background: rgba(244, 235, 217, 0.3);
+}
+.signal-tag.visible { opacity: 1; }
+.signal-tag.boss {
+  min-height: 34px;
+  border-color: rgba(245, 193, 92, 0.72);
+  color: var(--brass);
+  font-size: clamp(0.72rem, 1.5vw, 0.92rem);
+  font-family: var(--display);
+  font-weight: 900;
+}
+.signal-tag.boss::before { background: var(--brass); box-shadow: 0 0 12px rgba(245, 193, 92, 0.65); }
+
+#catchCard {
+  position: fixed;
+  z-index: 52;
+  right: max(18px, env(safe-area-inset-right));
+  top: 50%;
+  width: min(380px, calc(100vw - 36px));
+  padding: 16px 18px;
+  border: 1px solid rgba(244, 235, 217, 0.28);
+  border-left: 4px solid var(--biolume);
+  border-radius: 7px;
+  background: rgba(8, 46, 57, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  transform: translate(120%, -50%);
+  opacity: 0;
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease;
+  pointer-events: none;
+}
+#catchCard.show { transform: translate(0, -50%); opacity: 1; }
+#catchCard.good { border-left-color: var(--kelp); }
+#catchCard.bad { border-left-color: var(--bobber); }
+.catch-kicker {
+  color: var(--biolume);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+#catchCard.good .catch-kicker { color: var(--kelp); }
+#catchCard.bad .catch-kicker { color: var(--bobber); }
+.catch-title {
+  margin-top: 3px;
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: clamp(1rem, 2.4vw, 1.35rem);
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+.catch-subject {
+  margin-top: 9px;
+  color: var(--brass);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.catch-reason {
+  margin-top: 7px;
+  color: var(--cream-dim);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(88px, calc(env(safe-area-inset-top) + 74px)) 24px max(22px, env(safe-area-inset-bottom));
+  background: rgba(6, 42, 50, 0.13);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  opacity: 1;
+  transition: opacity 280ms ease, visibility 280ms ease;
+}
+.screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.screen-content {
+  width: min(900px, 100%);
+  text-align: center;
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--lure);
+  font-family: var(--display);
+  font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+h1, h2 {
+  margin: 0;
+  color: var(--cream);
+  font-family: var(--display);
+  font-weight: 900;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+h1 {
+  font-size: clamp(3.2rem, 9vw, 7.8rem);
+  text-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+}
+h2 { font-size: clamp(2.2rem, 6vw, 4.8rem); }
+.subtitle {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 13px;
+  border-top: 1px solid rgba(244, 235, 217, 0.42);
+  border-bottom: 1px solid rgba(244, 235, 217, 0.42);
+  color: var(--biolume);
+  font-family: var(--mono);
+  font-size: clamp(0.68rem, 1.4vw, 0.9rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.mission-strip {
+  width: min(700px, 100%);
+  margin: clamp(22px, 4vh, 38px) auto 17px;
+  padding: 14px 8px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+}
+.mission-cell { min-width: 0; }
+.mission-cell:first-child { text-align: right; }
+.mission-cell:last-child { text-align: left; }
+.mission-label {
+  color: var(--cream-dim);
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.mission-value {
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: clamp(0.76rem, 1.6vw, 1rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.mission-mark {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--brass);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--brass);
+  font-family: var(--mono);
+  font-weight: 900;
+}
+.difficulty {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 49, 59, 0.78);
+}
+.difficulty button {
+  min-width: 112px;
+  min-height: 46px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--cream-dim);
+  font-family: var(--display);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.difficulty button[aria-pressed="true"] {
+  border-color: rgba(83, 223, 232, 0.5);
+  background: rgba(83, 223, 232, 0.13);
+  color: var(--cream);
+}
+.primary-btn,
+.secondary-btn {
+  min-height: 58px;
+  border-radius: 6px;
+  padding: 0 34px;
+  font-family: var(--display);
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.primary-btn {
+  margin-top: 16px;
+  border: 2px solid var(--lure);
+  background: rgba(255, 122, 69, 0.17);
+  color: var(--cream);
+  font-size: 1rem;
+}
+.primary-btn:disabled { opacity: 0.48; cursor: wait; }
+.primary-btn:not(:disabled):active {
+  transform: scale(0.97);
+  background: rgba(255, 122, 69, 0.31);
+}
+.secondary-btn {
+  border: 1px solid rgba(244, 235, 217, 0.45);
+  background: rgba(8, 49, 59, 0.74);
+  color: var(--cream);
+  font-size: 0.82rem;
+}
+.secondary-btn:active { transform: scale(0.97); background: rgba(11, 51, 72, 0.92); }
+.control-runes {
+  margin: 18px auto 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  color: var(--cream-dim);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.rune { display: flex; align-items: center; gap: 7px; }
+.rune-mark {
+  width: 27px;
+  height: 27px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--biolume);
+  font-weight: 900;
+}
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: #0B4654;
+  opacity: 1;
+  transition: opacity 420ms ease, visibility 420ms ease;
+}
+#loading.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.loading-lockup { width: min(380px, 76vw); text-align: center; }
+.loading-mark {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 17px;
+  border: 2px solid rgba(83, 223, 232, 0.22);
+  border-top-color: var(--biolume);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.loading-title {
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.loading-line {
+  width: 100%;
+  height: 3px;
+  margin-top: 12px;
+  overflow: hidden;
+  background: rgba(244, 235, 217, 0.1);
+}
+.loading-line::after {
+  content: "";
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: var(--biolume);
+  animation: loadline 1.4s ease-in-out infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes loadline {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(340%); }
+}
+
+.cinematic {
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.cinematic.show { opacity: 1; }
+.cinematic::before,
+.cinematic::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 11vh;
+  background: #020d13;
+  transform: scaleY(0);
+  transition: transform 260ms ease;
+}
+.cinematic::before { top: 0; transform-origin: top; }
+.cinematic::after { bottom: 0; transform-origin: bottom; }
+.cinematic.show::before,
+.cinematic.show::after { transform: scaleY(1); }
+.cinematic-copy {
+  position: relative;
+  padding: 18px;
+  text-align: center;
+  text-shadow: 0 8px 26px rgba(0, 0, 0, 0.75);
+}
+.cinematic-kicker {
+  color: var(--lure);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.cinematic-title {
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 7vw, 5.2rem);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.cinematic-sub {
+  margin-top: 7px;
+  color: var(--cream-dim);
+  font-size: clamp(0.7rem, 1.8vw, 0.98rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pause-panel,
+.result-panel {
+  width: min(650px, 100%);
+  padding: clamp(18px, 4vw, 38px);
+  border: 1px solid rgba(244, 235, 217, 0.28);
+  border-radius: 8px;
+  background: rgba(8, 46, 57, 0.95);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.5);
+}
+.pause-actions,
+.result-actions {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.rank {
+  width: 76px;
+  height: 76px;
+  margin: 17px auto 0;
+  border: 2px solid var(--brass);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--brass);
+  font-family: var(--display);
+  font-size: 2.4rem;
+  font-weight: 900;
+}
+.result-grid {
+  margin: 23px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.result-stat {
+  padding: 14px 6px;
+  border-right: 1px solid var(--line);
+}
+.result-stat:last-child { border-right: 0; }
+.result-stat b {
+  display: block;
+  color: var(--brass);
+  font-family: var(--mono);
+  font-size: clamp(1rem, 2.7vw, 1.65rem);
+}
+.result-stat span {
+  color: var(--cream-dim);
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.fact {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-left: 3px solid var(--biolume);
+  background: rgba(83, 223, 232, 0.08);
+  text-align: left;
+}
+.fact b {
+  display: block;
+  color: var(--biolume);
+  font-family: var(--display);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+.fact span {
+  color: var(--cream-dim);
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+.damage-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  box-shadow: inset 0 0 110px rgba(232, 86, 74, 0);
+  transition: box-shadow 100ms ease;
+}
+.damage-flash.on { box-shadow: inset 0 0 130px rgba(232, 86, 74, 0.62); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+#cyber-sound-toggle {
+  width: 56px !important;
+  height: 56px !important;
+  top: max(14px, env(safe-area-inset-top)) !important;
+  right: max(14px, env(safe-area-inset-right)) !important;
+  border-radius: 6px !important;
+  background: rgba(4, 27, 38, 0.72) !important;
+  color: var(--cream) !important;
+  border: 1px solid rgba(244, 235, 217, 0.5) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+@media (max-width: 860px) {
+  .hud-top {
+    top: calc(max(14px, env(safe-area-inset-top)) + 64px);
+    width: calc(100vw - 28px);
+    min-width: 0;
+    grid-template-columns: 1fr 1.35fr 1fr;
+  }
+  .hud-cell { height: 50px; padding: 6px 8px; }
+  .home-chip { width: 56px; padding: 0; font-size: 0; }
+  .home-chip::after { content: "HOME"; font-size: 0.58rem; }
+  #depthRail { right: 9px; top: 55%; height: 42vh; }
+  #catchCard { top: auto; bottom: 92px; transform: translate(120%, 0); }
+  #catchCard.show { transform: translate(0, 0); }
+}
+
+@media (max-width: 620px) {
+  .screen { padding-left: 14px; padding-right: 14px; }
+  .mission-strip { gap: 8px; }
+  .difficulty { width: 100%; }
+  .difficulty button { min-width: 0; font-size: 0.6rem; }
+  .control-runes { gap: 10px; }
+  .rune { gap: 4px; font-size: 0.52rem; }
+  .result-grid { grid-template-columns: repeat(2, 1fr); }
+  .result-stat:nth-child(2) { border-right: 0; }
+  .result-stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  #lineState { bottom: 16px; min-width: 126px; font-size: 0.58rem; }
+  #feed { bottom: 76px; width: calc(100vw - 36px); }
+  #catchCard { bottom: 148px; }
+  #depthRail { display: none; }
+  .signal-tag { max-width: 48vw; font-size: 0.58rem; }
+}
+
+@media (max-height: 720px) {
+  h1 { font-size: clamp(2.8rem, 9vw, 5.4rem); }
+  .mission-strip { margin-top: 13px; margin-bottom: 10px; padding: 8px; }
+  .primary-btn { margin-top: 10px; min-height: 52px; }
+  .control-runes { margin-top: 9px; }
+  .rank { width: 58px; height: 58px; font-size: 1.9rem; margin-top: 9px; }
+  .result-grid { margin: 11px 0; }
+  .fact { margin-top: 9px; padding: 9px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0.001ms !important;
+  }
+  .scene-scan { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="viewport" aria-label="Reel Em In 3D game field"></div>
+<div id="labels" aria-hidden="true"></div>
+<div class="scene-grade" aria-hidden="true"></div>
+<div class="scene-noise" aria-hidden="true"></div>
+<div class="scene-scan" aria-hidden="true"></div>
+
+<a class="home-chip" href="caught-in-the-net.html" aria-label="Return to Caught in the Net arcade">Arcade</a>
+<button class="icon-btn" id="pauseButton" type="button" title="Pause" aria-label="Pause game" disabled>II</button>
+
+<header id="hud" aria-label="Mission status" aria-hidden="true">
+  <div class="hud-top">
+    <div class="hud-cell">
+      <span class="hud-label">Signal integrity</span>
+      <span class="hud-value" id="integrityValue">100%</span>
+      <span class="meter"><span id="integrityFill"></span></span>
+    </div>
+    <div class="hud-cell center">
+      <span class="hud-label" id="sectorLabel">Inbox Reef</span>
+      <span class="hud-value" id="timeValue">01:30</span>
+      <span class="meter"><span id="operationFill"></span></span>
+    </div>
+    <div class="hud-cell right">
+      <span class="hud-label">Threat score</span>
+      <span class="hud-value" id="scoreValue">000000</span>
+      <span class="hud-sub" id="comboValue">CHAIN X1</span>
+    </div>
+  </div>
+  <div id="depthRail" aria-hidden="true">
+    <span class="depth-label">Surface</span>
+    <span class="depth-track"><span id="depthMarker"></span></span>
+    <span class="depth-label">Abyss</span>
+    <span id="depthValue">0 M</span>
+  </div>
+  <div id="feed" role="status" aria-live="polite">
+    <div class="feed-kicker" id="feedKicker">Threat intel</div>
+    <div class="feed-text" id="feedText">Patrol ready</div>
+  </div>
+</header>
+
+<div id="lineState" aria-hidden="true">Line ready</div>
+
+<aside id="catchCard" aria-hidden="true">
+  <div class="catch-kicker" id="catchKicker">Threat intercepted</div>
+  <div class="catch-title" id="catchTitle">Phishing signal captured</div>
+  <div class="catch-subject" id="catchSubject">Subject</div>
+  <div class="catch-reason" id="catchReason">Reason</div>
+</aside>
+
+<section class="screen" id="titleScreen" aria-labelledby="gameTitle">
+  <div class="screen-content">
+    <p class="eyebrow">Caught in the Net presents</p>
+    <h1 id="gameTitle">Reel 'Em In</h1>
+    <div class="subtitle">Ghost Net Protocol</div>
+    <div class="mission-strip" aria-label="Mission briefing">
+      <div class="mission-cell">
+        <div class="mission-label">Directive</div>
+        <div class="mission-value">Intercept malicious mail</div>
+      </div>
+      <div class="mission-mark" aria-hidden="true">GN</div>
+      <div class="mission-cell">
+        <div class="mission-label">Constraint</div>
+        <div class="mission-value">Preserve trusted traffic</div>
+      </div>
+    </div>
+    <div class="difficulty" role="group" aria-label="Difficulty">
+      <button type="button" data-mode="watch" aria-pressed="false">Watch</button>
+      <button type="button" data-mode="hunter" aria-pressed="true">Hunter</button>
+      <button type="button" data-mode="storm" aria-pressed="false">Storm</button>
+    </div>
+    <div><button class="primary-btn" id="deployButton" type="button" disabled>Initializing sonar</button></div>
+    <div class="control-runes" aria-hidden="true">
+      <span class="rune"><span class="rune-mark">V</span>Hold to drop</span>
+      <span class="rune"><span class="rune-mark">&lt;&gt;</span>Drag to aim</span>
+      <span class="rune"><span class="rune-mark">A</span>Release to reel</span>
+    </div>
+  </div>
+</section>
+
+<div id="loading">
+  <div class="loading-lockup">
+    <div class="loading-mark" aria-hidden="true"></div>
+    <div class="loading-title">Initializing Ghost Net</div>
+    <div class="loading-line" aria-hidden="true"></div>
+  </div>
+</div>
+
+<div class="cinematic" id="cinematic" aria-hidden="true">
+  <div class="cinematic-copy">
+    <div class="cinematic-kicker" id="cinematicKicker">Sector 01</div>
+    <div class="cinematic-title" id="cinematicTitle">Inbox Reef</div>
+    <div class="cinematic-sub" id="cinematicSub">Routine traffic with hidden hooks</div>
+  </div>
+</div>
+
+<section class="screen hidden" id="pauseScreen" aria-labelledby="pauseTitle">
+  <div class="screen-content pause-panel">
+    <p class="eyebrow">Patrol suspended</p>
+    <h2 id="pauseTitle">Line secured</h2>
+    <div class="pause-actions">
+      <button class="primary-btn" id="resumeButton" type="button">Resume patrol</button>
+      <button class="secondary-btn" id="restartButton" type="button">Restart operation</button>
+      <a class="secondary-btn" href="caught-in-the-net.html" style="display:inline-flex;align-items:center;text-decoration:none;">Arcade</a>
+    </div>
+  </div>
+</section>
+
+<section class="screen hidden" id="resultScreen" aria-labelledby="resultTitle">
+  <div class="screen-content result-panel">
+    <p class="eyebrow" id="resultKicker">Operation complete</p>
+    <h2 id="resultTitle">Ghost net cleared</h2>
+    <div class="rank" id="rankValue">A</div>
+    <div class="result-grid">
+      <div class="result-stat"><b id="resultScore">0</b><span>Score</span></div>
+      <div class="result-stat"><b id="resultCaught">0</b><span>Threats caught</span></div>
+      <div class="result-stat"><b id="resultBreaches">0</b><span>Breaches</span></div>
+      <div class="result-stat"><b id="resultBest">0</b><span>Best</span></div>
+    </div>
+    <div class="fact">
+      <b>Catch of the day</b>
+      <span id="factText">Phishers create urgency so you act before you verify the sender and destination.</span>
+    </div>
+    <div class="result-actions">
+      <button class="primary-btn" id="againButton" type="button">Run again</button>
+      <a class="secondary-btn" href="caught-in-the-net.html" style="display:inline-flex;align-items:center;text-decoration:none;">Arcade</a>
+    </div>
+  </div>
+</section>
+
+<div class="damage-flash" id="damageFlash" aria-hidden="true"></div>
+<div class="sr-only" id="liveRegion" role="status" aria-live="polite"></div>
+
+<script src="sounds.js"></script>
+<script src="leaderboard.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./assets/vendor/three.module.min.js",
+    "three/addons/": "./assets/vendor/addons/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const viewport = document.getElementById('viewport');
+const labelsLayer = document.getElementById('labels');
+const loading = document.getElementById('loading');
+const titleScreen = document.getElementById('titleScreen');
+const pauseScreen = document.getElementById('pauseScreen');
+const resultScreen = document.getElementById('resultScreen');
+const deployButton = document.getElementById('deployButton');
+const pauseButton = document.getElementById('pauseButton');
+const resumeButton = document.getElementById('resumeButton');
+const restartButton = document.getElementById('restartButton');
+const againButton = document.getElementById('againButton');
+const hud = document.getElementById('hud');
+const lineState = document.getElementById('lineState');
+const integrityValue = document.getElementById('integrityValue');
+const integrityFill = document.getElementById('integrityFill');
+const sectorLabel = document.getElementById('sectorLabel');
+const timeValue = document.getElementById('timeValue');
+const operationFill = document.getElementById('operationFill');
+const scoreValue = document.getElementById('scoreValue');
+const comboValue = document.getElementById('comboValue');
+const depthMarker = document.getElementById('depthMarker');
+const depthValue = document.getElementById('depthValue');
+const feed = document.getElementById('feed');
+const feedKicker = document.getElementById('feedKicker');
+const feedText = document.getElementById('feedText');
+const catchCard = document.getElementById('catchCard');
+const catchKicker = document.getElementById('catchKicker');
+const catchTitle = document.getElementById('catchTitle');
+const catchSubject = document.getElementById('catchSubject');
+const catchReason = document.getElementById('catchReason');
+const cinematic = document.getElementById('cinematic');
+const cinematicKicker = document.getElementById('cinematicKicker');
+const cinematicTitle = document.getElementById('cinematicTitle');
+const cinematicSub = document.getElementById('cinematicSub');
+const damageFlash = document.getElementById('damageFlash');
+const liveRegion = document.getElementById('liveRegion');
+const resultKicker = document.getElementById('resultKicker');
+const resultTitle = document.getElementById('resultTitle');
+const rankValue = document.getElementById('rankValue');
+const resultScore = document.getElementById('resultScore');
+const resultCaught = document.getElementById('resultCaught');
+const resultBreaches = document.getElementById('resultBreaches');
+const resultBest = document.getElementById('resultBest');
+const factText = document.getElementById('factText');
+
+const C = {
+  abyss: 0x0A4551,
+  depth: 0x0E6874,
+  cream: 0xF4EBD9,
+  creamDim: 0xC9BFA8,
+  lure: 0xFF7A45,
+  bobber: 0xE8564A,
+  biolume: 0x53DFE8,
+  kelp: 0x4FC98C,
+  brass: 0xF5C15C
+};
+const CSS = {
+  cream: '#F4EBD9',
+  creamDim: '#C9BFA8',
+  lure: '#FF7A45',
+  bobber: '#E8564A',
+  biolume: '#53DFE8',
+  kelp: '#4FC98C',
+  brass: '#F5C15C'
+};
+const TAU = Math.PI * 2;
+const ROUND_SECONDS = 90;
+const BEST_KEY = 'citn-reel-v2-best';
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lowPower = reducedMotion || (navigator.deviceMemory && navigator.deviceMemory <= 4);
+
+const MODES = {
+  watch: { integrity: 125, spawn: 1.16, speed: 0.88, score: 0.85 },
+  hunter: { integrity: 100, spawn: 1, speed: 1, score: 1 },
+  storm: { integrity: 75, spawn: 0.82, speed: 1.18, score: 1.3 }
+};
+const SECTORS = [
+  { at: 0, name: 'Inbox Reef', sub: 'Routine traffic with hidden hooks', fog: 0x0A3F49, exposure: 0.94 },
+  { at: 28, name: 'Spoof Current', sub: 'Lookalike senders entering the stream', fog: 0x0E3E49, exposure: 0.92 },
+  { at: 56, name: 'Credential Storm', sub: 'Account takeover signals rising', fog: 0x183D4B, exposure: 0.89 },
+  { at: 76, name: 'Whaling Alert', sub: 'Executive impersonation at depth', fog: 0x30394D, exposure: 0.86 }
+];
+const LANE_Y = [-2.0, -3.55, -5.15, -6.75];
+const LANE_POINTS = [120, 180, 260, 360];
+const PALETTE = [0x78AEB6, 0xD9A458, 0x749B78, 0xC76F52, 0x8B91A3, 0xB8A386, 0x4F8C96];
+const FISH_ASSETS = ['tuna_a', 'tuna_c', 'snapper_a', 'reef_a', 'reef_b', 'puffer_b', 'sword_b', 'angler_a'];
+const PHISH = [
+  { tag: 'URGENT: verify your account', why: 'Urgency pushes you to act before checking the sender.' },
+  { tag: 'CEO needs gift cards today', why: 'Gift card requests from executives are a common impersonation scam.' },
+  { tag: 'Password expires in 10 minutes', why: 'A panic deadline is designed to bypass careful verification.' },
+  { tag: 'Bank alert: confirm this login', why: 'Unexpected account alerts often hide a credential-stealing link.' },
+  { tag: 'You won a company reward', why: 'An unexpected prize is bait for a malicious sign-in page.' },
+  { tag: 'HR: update your payroll details', why: 'Sensitive payroll changes should be verified through a trusted channel.' },
+  { tag: 'DocuSlgn: signature required', why: 'The display name uses a lookalike character to imitate a known service.' },
+  { tag: 'Reset your paypa1 password', why: 'The sender swaps a letter for a number in a lookalike domain.' },
+  { tag: 'Wire payment before the meeting', why: 'A rushed money request with no context is a high-risk signal.' },
+  { tag: 'Package held: pay a small fee', why: 'Tiny delivery fees are common bait for card and identity theft.' },
+  { tag: 'Mailbox full: fix storage now', why: 'A fake quota warning pressures you into a false login page.' },
+  { tag: 'Shared file from outside vendor', why: 'An unexpected document should be verified before opening.' },
+  { tag: 'MFA disabled: restore access', why: 'Security alerts can be forged to steal the credentials they claim to protect.' },
+  { tag: 'Tax refund requires confirmation', why: 'Unexpected financial rewards often lead to identity theft.' }
+];
+const LEGIT = [
+  { tag: 'Team standup moved to 10am', why: 'A routine internal update with no sensitive request.' },
+  { tag: 'Invoice 2231 from Acme', why: 'An expected invoice from a known vendor and normal process.' },
+  { tag: 'Lunch order for Friday', why: 'A familiar sender and no pressure, link, or sensitive request.' },
+  { tag: 'Q3 report attached', why: 'Expected internal reporting in a known work thread.' },
+  { tag: 'PTO request approved', why: 'A reply to an action you initiated through the normal system.' },
+  { tag: 'Minutes from security sync', why: 'Routine notes with no credential or payment request.' },
+  { tag: 'Welcome our new analyst', why: 'A normal announcement with no action required.' },
+  { tag: 'Printer offline in room 4', why: 'A plain operational notice with nothing to click.' },
+  { tag: 'Payroll processes on the 15th', why: 'A routine schedule notice with no account-change request.' },
+  { tag: 'Kudos to the platform team', why: 'No urgency, no sensitive request, and no unexpected link.' },
+  { tag: 'Book club meets Thursday', why: 'A regular internal thread with no unusual ask.' },
+  { tag: 'Benefits enrollment reminder', why: 'An expected seasonal reminder using the known benefits portal.' }
+];
+const FACTS = [
+  'Phishers create urgency so you act before you verify the sender and destination.',
+  'A display name can be forged. Check the full sender address and the real link destination.',
+  'Unexpected gift card, payroll, and wire requests should be verified through a second channel.',
+  'False positives disrupt trusted work. Good filtering blocks threats without stopping normal traffic.',
+  'When a message feels wrong, open the known site directly instead of using the message link.'
+];
+
+function sfx(name, arg) {
+  try {
+    const S = window.CyberSounds;
+    if (S && typeof S[name] === 'function') S[name](arg);
+  } catch (error) {}
+}
+function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function smooth(a, b, speed, dt) { return lerp(a, b, 1 - Math.exp(-speed * dt)); }
+function pad(value, width) {
+  let out = String(Math.max(0, Math.round(value)));
+  while (out.length < width) out = '0' + out;
+  return out;
+}
+function formatTime(value) {
+  const seconds = Math.max(0, Math.ceil(value));
+  return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+}
+function pick(items) { return items[Math.floor(Math.random() * items.length)]; }
+function hash(value) { return Math.abs(Math.sin(value * 91.197 + 14.17) * 43758.5453) % 1; }
+
+let scene;
+let camera;
+let renderer;
+let composer;
+let bloomPass;
+let world;
+let water;
+let waterMaterial;
+let causticMaterial;
+let sunLight;
+let hemiLight;
+let boat;
+let boatTargetX = 0;
+let boatX = 0;
+let rodTipLocal = new THREE.Vector3(2.18, 1.25, 0);
+let lineGeometry;
+let linePositions;
+let hookGroup;
+let hookLight;
+let particles;
+let particleGeometry;
+let particlePositions;
+let particleColors;
+let ambientPoints;
+let ambientPositions;
+let lightRays = [];
+let fishTextures = [];
+
+let state = 'title';
+let modeName = 'hunter';
+let mode = MODES.hunter;
+let integrity = mode.integrity;
+let elapsed = 0;
+let timeLeft = ROUND_SECONDS;
+let score = 0;
+let displayedScore = 0;
+let chain = 0;
+let sector = -1;
+let spawnClock = 0;
+let feedClock = 0;
+let catchClock = 0;
+let endingClock = 0;
+let screenShake = 0;
+let slowMotion = 0;
+let pointerDown = false;
+let activePointer = null;
+let hookMode = 'idle';
+let hookX = 0;
+let hookY = -0.28;
+let hookVelocityX = 0;
+let caughtFish = null;
+let fish = [];
+let effectParticles = [];
+let bossSpawned = false;
+let bossCaught = false;
+let threatsCaught = 0;
+let falsePositives = 0;
+let breaches = 0;
+let safePassed = 0;
+let best = 0;
+let visualTime = 0;
+let lastFrame = performance.now();
+let resultShown = false;
+let gameReady = false;
+let cameraTarget = new THREE.Vector3(0, -3.1, 0);
+let cameraLook = new THREE.Vector3(0, -3.1, 0);
+let targetFogColor = new THREE.Color(SECTORS[0].fog);
+let targetExposure = SECTORS[0].exposure;
+
+try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (error) { best = 0; }
+
+const shared = {};
+
+function buildSharedGeometry() {
+  shared.body = new THREE.SphereGeometry(1, lowPower ? 16 : 24, lowPower ? 10 : 16);
+  shared.eye = new THREE.SphereGeometry(0.085, 12, 8);
+  shared.pupil = new THREE.SphereGeometry(0.04, 10, 6);
+  shared.spritePlane = new THREE.PlaneGeometry(1, 1, lowPower ? 4 : 10, 2);
+  shared.glowPlane = new THREE.PlaneGeometry(1, 1, 1, 1);
+  shared.glowTexture = createGlowTexture();
+  shared.fin = new THREE.BufferGeometry();
+  shared.fin.setAttribute('position', new THREE.Float32BufferAttribute([
+    0, 0, 0,
+    -0.8, 0.52, 0,
+    -0.82, -0.52, 0
+  ], 3));
+  shared.fin.computeVertexNormals();
+  shared.ring = new THREE.TorusGeometry(0.72, 0.035, 8, 24);
+  shared.bubble = new THREE.SphereGeometry(0.05, 8, 6);
+}
+
+function createGlowTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const context = canvas.getContext('2d');
+  const gradient = context.createRadialGradient(64, 64, 4, 64, 64, 64);
+  gradient.addColorStop(0, 'rgba(255,255,255,0.9)');
+  gradient.addColorStop(0.3, 'rgba(255,255,255,0.35)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 128, 128);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function createRayTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 512;
+  const context = canvas.getContext('2d');
+  const vertical = context.createLinearGradient(0, 0, 0, canvas.height);
+  vertical.addColorStop(0, 'rgba(255,255,255,0.74)');
+  vertical.addColorStop(0.38, 'rgba(255,255,255,0.34)');
+  vertical.addColorStop(1, 'rgba(255,255,255,0)');
+  context.fillStyle = vertical;
+  context.beginPath();
+  context.moveTo(52, 0);
+  context.lineTo(76, 0);
+  context.lineTo(126, canvas.height);
+  context.lineTo(2, canvas.height);
+  context.closePath();
+  context.fill();
+  context.globalCompositeOperation = 'destination-in';
+  const horizontal = context.createLinearGradient(0, 0, canvas.width, 0);
+  horizontal.addColorStop(0, 'rgba(255,255,255,0)');
+  horizontal.addColorStop(0.28, 'rgba(255,255,255,0.6)');
+  horizontal.addColorStop(0.5, 'rgba(255,255,255,1)');
+  horizontal.addColorStop(0.72, 'rgba(255,255,255,0.6)');
+  horizontal.addColorStop(1, 'rgba(255,255,255,0)');
+  context.fillStyle = horizontal;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+async function loadFishTextures() {
+  const loader = new THREE.TextureLoader();
+  const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const loaded = await Promise.all(FISH_ASSETS.map(async key => {
+    try {
+      const texture = await loader.loadAsync('./assets/reel-fish/' + key + '.webp');
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = anisotropy;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      return { key, texture };
+    } catch (error) {
+      console.warn('Fish texture unavailable:', key);
+      return null;
+    }
+  }));
+  return loaded.filter(Boolean);
+}
+
+function createSkyTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 1024;
+  const context = canvas.getContext('2d');
+  const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#F6B66D');
+  gradient.addColorStop(0.18, '#4394A0');
+  gradient.addColorStop(0.54, '#176272');
+  gradient.addColorStop(1, '#083844');
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function createWater() {
+  const geometry = new THREE.PlaneGeometry(42, 30, lowPower ? 48 : 96, lowPower ? 28 : 56);
+  const vertexShader = [
+    'uniform float uTime;',
+    'varying float vWave;',
+    'varying vec3 vWorld;',
+    'void main(){',
+    '  vec3 p = position;',
+    '  float wave = sin(p.x * 0.62 + uTime * 1.4) * 0.12;',
+    '  wave += sin(p.y * 0.42 - uTime * 0.9) * 0.08;',
+    '  wave += sin((p.x + p.y) * 0.24 + uTime * 0.65) * 0.05;',
+    '  p.z += wave;',
+    '  vWave = wave;',
+    '  vec4 world = modelMatrix * vec4(p, 1.0);',
+    '  vWorld = world.xyz;',
+    '  gl_Position = projectionMatrix * viewMatrix * world;',
+    '}'
+  ].join('\n');
+  const fragmentShader = [
+    'uniform float uTime;',
+    'varying float vWave;',
+    'varying vec3 vWorld;',
+    'void main(){',
+    '  float foam = smoothstep(0.12, 0.24, abs(vWave));',
+    '  float shimmer = 0.5 + 0.5 * sin(vWorld.x * 2.4 + uTime * 2.0);',
+    '  vec3 deep = vec3(0.012, 0.115, 0.155);',
+    '  vec3 surface = vec3(0.05, 0.31, 0.37);',
+    '  vec3 color = mix(deep, surface, 0.5 + vWave * 2.2);',
+    '  color += vec3(0.3, 0.65, 0.66) * foam * (0.4 + shimmer * 0.3);',
+    '  gl_FragColor = vec4(color, 0.55);',
+    '}'
+  ].join('\n');
+  waterMaterial = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 } },
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const mesh = new THREE.Mesh(geometry, waterMaterial);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = 0;
+  mesh.renderOrder = 4;
+  world.add(mesh);
+  return mesh;
+}
+
+function createSeafloor() {
+  const geometry = new THREE.PlaneGeometry(42, 30, 48, 34);
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    positions.setZ(i, Math.sin(x * 0.52) * 0.18 + Math.cos(y * 0.38) * 0.15 + Math.sin((x + y) * 0.21) * 0.12);
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x285C5F,
+    roughness: 0.9,
+    metalness: 0.02
+  });
+  const floor = new THREE.Mesh(geometry, material);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -8.55;
+  floor.receiveShadow = true;
+  world.add(floor);
+
+  const causticGeometry = new THREE.PlaneGeometry(42, 30, 1, 1);
+  const vertexShader = [
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vUv = uv;',
+    '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+    '}'
+  ].join('\n');
+  const fragmentShader = [
+    'uniform float uTime;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec2 p = vUv * vec2(36.0, 22.0);',
+    '  float a = abs(sin(p.x + sin(p.y * 0.6 + uTime) * 1.8));',
+    '  float b = abs(sin(p.y * 1.2 - uTime * 0.7 + sin(p.x * 0.42)));',
+    '  float line = smoothstep(0.88, 0.99, 1.0 - abs(a - b));',
+    '  float fade = smoothstep(0.0, 0.25, vUv.y) * smoothstep(1.0, 0.75, vUv.y);',
+    '  gl_FragColor = vec4(0.28, 0.92, 0.82, line * 0.22 * fade);',
+    '}'
+  ].join('\n');
+  causticMaterial = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 } },
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const caustics = new THREE.Mesh(causticGeometry, causticMaterial);
+  caustics.rotation.x = -Math.PI / 2;
+  caustics.position.y = -8.42;
+  world.add(caustics);
+
+  const grid = new THREE.GridHelper(36, 36, 0x53DFE8, 0x1B5A61);
+  grid.position.y = -8.36;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.12;
+  grid.material.depthWrite = false;
+  world.add(grid);
+}
+
+function cylinderBetween(a, b, radius, material, segments = 10) {
+  const direction = new THREE.Vector3().subVectors(b, a);
+  const length = direction.length();
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, segments), material);
+  mesh.position.copy(a).add(b).multiplyScalar(0.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  return mesh;
+}
+
+function createEnvironment() {
+  const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x285B5D, roughness: 0.94, metalness: 0.02 });
+  const kelpMaterial = new THREE.MeshStandardMaterial({ color: 0x2E936F, roughness: 0.78, metalness: 0.02 });
+  const cableMaterial = new THREE.MeshStandardMaterial({ color: 0x285E66, roughness: 0.68, metalness: 0.24 });
+  const rackMaterial = new THREE.MeshStandardMaterial({ color: 0x123D48, roughness: 0.6, metalness: 0.4 });
+  const dataMaterial = new THREE.MeshBasicMaterial({ color: C.biolume, transparent: true, opacity: 0.58, toneMapped: false });
+  const coralMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0xE8896C, roughness: 0.76, metalness: 0.02 }),
+    new THREE.MeshStandardMaterial({ color: 0xE7C56B, roughness: 0.76, metalness: 0.02 }),
+    new THREE.MeshStandardMaterial({ color: 0x63CDA3, roughness: 0.76, metalness: 0.02 })
+  ];
+
+  for (let i = 0; i < 22; i++) {
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5 + hash(i) * 0.9, 1), rockMaterial);
+    rock.position.set(-15 + hash(i * 2.1) * 30, -8.15 + hash(i * 3.7) * 0.35, -6 + hash(i * 5.3) * 7);
+    rock.scale.set(1.4 + hash(i * 6.8), 0.55 + hash(i * 7.2) * 0.7, 1 + hash(i * 8.4));
+    rock.rotation.set(hash(i + 1) * 0.8, hash(i + 2) * TAU, hash(i + 3) * 0.5);
+    rock.receiveShadow = true;
+    world.add(rock);
+  }
+
+  for (let i = 0; i < (lowPower ? 18 : 30); i++) {
+    const x = -15 + hash(i * 3.1 + 9) * 30;
+    const z = -4.6 + hash(i * 4.7 + 11) * 5.8;
+    const height = 0.8 + hash(i * 6.2 + 13) * 1.9;
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(x, -8.35, z),
+      new THREE.Vector3(x + 0.1, -8.35 + height * 0.35, z),
+      new THREE.Vector3(x - 0.13, -8.35 + height * 0.7, z),
+      new THREE.Vector3(x + 0.18, -8.35 + height, z)
+    ]);
+    const kelp = new THREE.Mesh(new THREE.TubeGeometry(curve, 8, 0.035 + hash(i) * 0.025, 6, false), kelpMaterial);
+    kelp.userData.phase = hash(i * 8.2) * TAU;
+    kelp.userData.baseX = x;
+    world.add(kelp);
+  }
+
+  for (let i = 0; i < 5; i++) {
+    const group = new THREE.Group();
+    const rack = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.9 + hash(i) * 0.8, 0.55), rackMaterial);
+    rack.position.y = 0.8;
+    rack.castShadow = true;
+    rack.receiveShadow = true;
+    group.add(rack);
+    for (let row = 0; row < 5; row++) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.035, 0.015), dataMaterial);
+      strip.position.set(0, 0.18 + row * 0.32, 0.29);
+      group.add(strip);
+    }
+    group.position.set(-10 + i * 5.2, -8.25, -5.2 + (i % 2) * 0.7);
+    group.rotation.y = (hash(i + 22) - 0.5) * 0.25;
+    world.add(group);
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const a = new THREE.Vector3(-12 + i * 7, -8.1, -3.6);
+    const b = new THREE.Vector3(-8 + i * 7, -7.2 + (i % 2) * 0.5, -4.4);
+    const cable = cylinderBetween(a, b, 0.05, cableMaterial, 8);
+    world.add(cable);
+  }
+
+  for (let i = 0; i < 9; i++) {
+    const material = coralMaterials[i % coralMaterials.length];
+    const x = -12.5 + hash(i * 4.9 + 18) * 25;
+    const z = -3.8 + hash(i * 6.7 + 31) * 4.5;
+    const height = 0.55 + hash(i * 7.3 + 4) * 0.72;
+    for (let branch = 0; branch < 3; branch++) {
+      const spread = (branch - 1) * (0.18 + hash(i + branch) * 0.16);
+      const base = new THREE.Vector3(x, -8.28, z);
+      const tip = new THREE.Vector3(x + spread, -8.28 + height * (0.72 + branch * 0.13), z + (branch - 1) * 0.08);
+      const stem = cylinderBetween(base, tip, 0.045 + branch * 0.008, material, 7);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.085 + branch * 0.012, 8, 6), material);
+      cap.position.copy(tip);
+      world.add(stem, cap);
+    }
+  }
+
+  const rayTexture = createRayTexture();
+  for (let i = 0; i < 7; i++) {
+    const material = new THREE.MeshBasicMaterial({
+      color: i % 2 ? C.biolume : C.cream,
+      map: rayTexture,
+      transparent: true,
+      opacity: 0.08 + hash(i) * 0.045,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const ray = new THREE.Mesh(new THREE.PlaneGeometry(2.5 + hash(i) * 2.5, 12), material);
+    ray.position.set(-10 + i * 3.4, -3.4, -4.5 + hash(i + 50) * 2);
+    ray.rotation.z = -0.12 + hash(i + 60) * 0.24;
+    ray.userData.phase = hash(i + 70) * TAU;
+    lightRays.push(ray);
+    world.add(ray);
+  }
+}
+
+function createBoat() {
+  const group = new THREE.Group();
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(-2.05, 0.18);
+  hullShape.lineTo(2.05, 0.18);
+  hullShape.lineTo(1.45, -0.52);
+  hullShape.quadraticCurveTo(0, -0.78, -1.55, -0.5);
+  hullShape.closePath();
+  const hullGeometry = new THREE.ExtrudeGeometry(hullShape, {
+    depth: 1.15,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    steps: 1,
+    bevelSize: 0.08,
+    bevelThickness: 0.08
+  });
+  hullGeometry.translate(0, 0, -0.575);
+  const hullMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x20515A,
+    emissive: 0x102F34,
+    emissiveIntensity: 0.5,
+    roughness: 0.42,
+    metalness: 0.28,
+    clearcoat: 0.65,
+    clearcoatRoughness: 0.24
+  });
+  const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+  hull.castShadow = true;
+  group.add(hull);
+
+  const accent = new THREE.Mesh(
+    new THREE.BoxGeometry(3.6, 0.08, 1.18),
+    new THREE.MeshStandardMaterial({ color: C.lure, roughness: 0.5, metalness: 0.12 })
+  );
+  accent.position.y = 0.17;
+  group.add(accent);
+
+  const deck = new THREE.Mesh(
+    new THREE.BoxGeometry(3.45, 0.14, 1.02),
+    new THREE.MeshStandardMaterial({ color: 0xA9794C, roughness: 0.76, metalness: 0.02 })
+  );
+  deck.position.y = 0.31;
+  deck.castShadow = true;
+  group.add(deck);
+
+  const cabinMaterial = new THREE.MeshPhysicalMaterial({ color: 0xE4D5B9, roughness: 0.45, metalness: 0.08, clearcoat: 0.35 });
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.72, 0.84), cabinMaterial);
+  cabin.position.set(-0.45, 0.72, 0);
+  cabin.castShadow = true;
+  group.add(cabin);
+
+  const glassMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x5CD8E3,
+    emissive: 0x0B6670,
+    emissiveIntensity: 1.2,
+    roughness: 0.14,
+    metalness: 0.22,
+    transmission: lowPower ? 0 : 0.2,
+    transparent: true,
+    opacity: 0.88
+  });
+  const windowFront = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.025), glassMaterial);
+  windowFront.position.set(0.12, 0.77, 0.43);
+  group.add(windowFront);
+  const windowSide = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.3, 0.025), glassMaterial);
+  windowSide.position.set(-0.55, 0.77, 0.43);
+  group.add(windowSide);
+
+  const metalMaterial = new THREE.MeshStandardMaterial({ color: C.brass, roughness: 0.28, metalness: 0.75 });
+  const mast = cylinderBetween(new THREE.Vector3(-0.58, 1.05, 0), new THREE.Vector3(-0.58, 2.18, 0), 0.035, metalMaterial, 10);
+  group.add(mast);
+  const antenna = cylinderBetween(new THREE.Vector3(-0.58, 2.08, 0), new THREE.Vector3(-0.05, 2.08, 0), 0.025, metalMaterial, 8);
+  group.add(antenna);
+
+  const rod = cylinderBetween(new THREE.Vector3(1.2, 0.52, 0), rodTipLocal, 0.035, metalMaterial, 10);
+  group.add(rod);
+  const reel = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.035, 8, 18), metalMaterial);
+  reel.position.set(1.25, 0.58, 0);
+  reel.rotation.x = Math.PI / 2;
+  group.add(reel);
+
+  const railMaterial = new THREE.MeshStandardMaterial({ color: C.creamDim, roughness: 0.36, metalness: 0.7 });
+  [-0.45, 0.45].forEach(z => {
+    group.add(cylinderBetween(new THREE.Vector3(-1.65, 0.44, z), new THREE.Vector3(1.65, 0.44, z), 0.018, railMaterial, 6));
+  });
+
+  group.position.set(0, 0.38, 0);
+  world.add(group);
+  return group;
+}
+
+function createHookAndLine() {
+  linePositions = new Float32Array(6);
+  lineGeometry = new THREE.BufferGeometry();
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  const lineMaterial = new THREE.LineBasicMaterial({ color: C.cream, transparent: true, opacity: 0.74 });
+  const line = new THREE.Line(lineGeometry, lineMaterial);
+  line.frustumCulled = false;
+  world.add(line);
+  shared.line = line;
+
+  const group = new THREE.Group();
+  const hookMaterial = new THREE.MeshStandardMaterial({
+    color: C.brass,
+    roughness: 0.24,
+    metalness: 0.86,
+    emissive: 0x6A4210,
+    emissiveIntensity: 0.5
+  });
+  const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.38, 10), hookMaterial);
+  shank.position.y = 0.12;
+  group.add(shank);
+  const bend = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.035, 10, 28, Math.PI * 1.45), hookMaterial);
+  bend.rotation.z = Math.PI * 0.14;
+  bend.position.set(-0.13, -0.05, 0);
+  group.add(bend);
+  const barb = cylinderBetween(new THREE.Vector3(-0.27, -0.02, 0), new THREE.Vector3(-0.38, 0.09, 0), 0.025, hookMaterial, 8);
+  group.add(barb);
+  hookLight = new THREE.PointLight(C.biolume, 2.2, 3.4, 2);
+  hookLight.position.set(0, 0, 0.18);
+  group.add(hookLight);
+  world.add(group);
+  return group;
+}
+
+function createParticleSystems() {
+  const ambientCount = lowPower ? 180 : 340;
+  ambientPositions = new Float32Array(ambientCount * 3);
+  for (let i = 0; i < ambientCount; i++) {
+    ambientPositions[i * 3] = -14 + Math.random() * 28;
+    ambientPositions[i * 3 + 1] = -8 + Math.random() * 8;
+    ambientPositions[i * 3 + 2] = -5 + Math.random() * 7;
+  }
+  const ambientGeometry = new THREE.BufferGeometry();
+  ambientGeometry.setAttribute('position', new THREE.BufferAttribute(ambientPositions, 3));
+  const ambientMaterial = new THREE.PointsMaterial({
+    color: C.biolume,
+    size: lowPower ? 0.035 : 0.045,
+    transparent: true,
+    opacity: 0.28,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  ambientPoints = new THREE.Points(ambientGeometry, ambientMaterial);
+  world.add(ambientPoints);
+
+  const maxParticles = lowPower ? 280 : 520;
+  particlePositions = new Float32Array(maxParticles * 3);
+  particleColors = new Float32Array(maxParticles * 3);
+  for (let i = 0; i < maxParticles; i++) particlePositions[i * 3 + 1] = -99;
+  particleGeometry = new THREE.BufferGeometry();
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+  const material = new THREE.PointsMaterial({
+    size: lowPower ? 0.08 : 0.1,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  particles = new THREE.Points(particleGeometry, material);
+  world.add(particles);
+}
+
+function createFishMesh(options = {}) {
+  const boss = !!options.boss;
+  const group = new THREE.Group();
+  if (fishTextures.length) {
+    const asset = boss
+      ? (fishTextures.find(record => record.key === 'angler_a') || fishTextures[0])
+      : pick(fishTextures);
+    const image = asset.texture.image;
+    const aspect = image && image.height ? image.width / image.height : 1;
+    const target = boss ? 4.1 : 2.2;
+    const width = aspect >= 1 ? target : target * aspect;
+    const height = aspect >= 1 ? target / aspect : target;
+    const material = new THREE.MeshBasicMaterial({
+      map: asset.texture,
+      color: 0xFFFFFF,
+      transparent: true,
+      alphaTest: 0.05,
+      side: THREE.DoubleSide,
+      depthWrite: true
+    });
+    material.onBeforeCompile = shader => {
+      shader.uniforms.uFishTime = { value: 0 };
+      shader.uniforms.uFishPhase = { value: Math.random() * TAU };
+      shader.vertexShader = [
+        'uniform float uFishTime;',
+        'uniform float uFishPhase;',
+        shader.vertexShader
+      ].join('\n');
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        '#include <begin_vertex>\ntransformed.z += sin(uFishTime * 6.0 + position.x * 7.0 + uFishPhase) * 0.055 * (0.5 - position.x);'
+      );
+      material.userData.shader = shader;
+    };
+    material.customProgramCacheKey = () => 'ghost-net-fish-warp-v1';
+    const plane = new THREE.Mesh(shared.spritePlane, material);
+    plane.scale.set(width, height, 1);
+    plane.castShadow = !lowPower;
+    group.add(plane);
+
+    const glowMaterial = new THREE.MeshBasicMaterial({
+      map: shared.glowTexture,
+      color: C.biolume,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false
+    });
+    const glow = new THREE.Mesh(shared.glowPlane, glowMaterial);
+    glow.scale.set(width * 1.38, height * 1.38, 1);
+    glow.position.z = -0.08;
+    group.add(glow);
+
+    group.userData.spriteMaterial = material;
+    group.userData.glowMaterial = glowMaterial;
+    group.userData.tail = null;
+    group.userData.assetKey = asset.key;
+    return group;
+  }
+  const color = options.color || pick(PALETTE);
+  const bodyMaterial = new THREE.MeshPhysicalMaterial({
+    color,
+    roughness: boss ? 0.34 : 0.43,
+    metalness: boss ? 0.2 : 0.07,
+    clearcoat: boss ? 0.8 : 0.58,
+    clearcoatRoughness: 0.22,
+    emissive: 0x000000,
+    emissiveIntensity: 0
+  });
+  const body = new THREE.Mesh(shared.body, bodyMaterial);
+  const bodyScale = boss ? new THREE.Vector3(2.55, 1.0, 0.78) : new THREE.Vector3(1.2 + Math.random() * 0.34, 0.56 + Math.random() * 0.14, 0.44 + Math.random() * 0.12);
+  body.scale.copy(bodyScale);
+  body.castShadow = !lowPower;
+  group.add(body);
+
+  const finMaterial = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(color).multiplyScalar(0.66),
+    roughness: 0.5,
+    metalness: 0.05,
+    side: THREE.DoubleSide,
+    emissive: 0x000000,
+    emissiveIntensity: 0
+  });
+  const tail = new THREE.Mesh(shared.fin, finMaterial);
+  tail.position.x = -bodyScale.x * 0.86;
+  tail.scale.set(boss ? 1.35 : 0.72, boss ? 1.35 : 0.72, 1);
+  group.add(tail);
+
+  const dorsal = new THREE.Mesh(shared.fin, finMaterial);
+  dorsal.position.set(-0.05, bodyScale.y * 0.77, 0);
+  dorsal.rotation.z = -Math.PI / 2;
+  dorsal.scale.set(boss ? 0.75 : 0.42, boss ? 0.72 : 0.42, 1);
+  group.add(dorsal);
+
+  const sideFin = new THREE.Mesh(shared.fin, finMaterial);
+  sideFin.position.set(0.05, -0.08, bodyScale.z * 0.86);
+  sideFin.rotation.set(Math.PI / 2, 0, -Math.PI / 2);
+  sideFin.scale.set(boss ? 0.68 : 0.36, boss ? 0.64 : 0.35, 1);
+  group.add(sideFin);
+
+  const eyeMaterial = new THREE.MeshBasicMaterial({ color: C.cream, toneMapped: false });
+  const pupilMaterial = new THREE.MeshBasicMaterial({ color: C.abyss });
+  [-1, 1].forEach(side => {
+    const eye = new THREE.Mesh(shared.eye, eyeMaterial);
+    eye.position.set(bodyScale.x * 0.73, bodyScale.y * 0.18, side * bodyScale.z * 0.76);
+    group.add(eye);
+    const pupil = new THREE.Mesh(shared.pupil, pupilMaterial);
+    pupil.position.set(bodyScale.x * 0.8, bodyScale.y * 0.18, side * bodyScale.z * 0.83);
+    group.add(pupil);
+  });
+
+  if (!boss && Math.random() > 0.45) {
+    const stripeMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color).multiplyScalar(0.48),
+      transparent: true,
+      opacity: 0.62
+    });
+    for (let i = 0; i < 2; i++) {
+      const ring = new THREE.Mesh(shared.ring, stripeMaterial);
+      ring.rotation.y = Math.PI / 2;
+      ring.position.x = -0.12 - i * 0.36;
+      ring.scale.set(1, bodyScale.y * (0.9 - i * 0.1), bodyScale.z * (0.9 - i * 0.1));
+      group.add(ring);
+    }
+  }
+
+  if (boss) {
+    const lureMaterial = new THREE.MeshBasicMaterial({ color: C.brass, toneMapped: false });
+    const lureStem = cylinderBetween(new THREE.Vector3(1.35, 0.46, 0), new THREE.Vector3(1.85, 1.12, 0), 0.035, lureMaterial, 8);
+    group.add(lureStem);
+    const lure = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), lureMaterial);
+    lure.position.set(1.87, 1.15, 0);
+    group.add(lure);
+  }
+
+  group.userData.bodyMaterial = bodyMaterial;
+  group.userData.finMaterial = finMaterial;
+  group.userData.tail = tail;
+  group.userData.bodyScale = bodyScale;
+  return group;
+}
+
+function makeBag(items) {
+  let bag = [];
+  return () => {
+    if (!bag.length) {
+      bag = items.slice();
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = bag[i];
+        bag[i] = bag[j];
+        bag[j] = temp;
+      }
+    }
+    return bag.pop();
+  };
+}
+const nextPhish = makeBag(PHISH);
+const nextLegit = makeBag(LEGIT);
+
+function visibleHalfWidth() {
+  const vertical = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) * Math.abs(camera.position.z);
+  return vertical * camera.aspect * 0.5;
+}
+
+function createSignalTag(text, isBoss) {
+  const element = document.createElement('div');
+  element.className = 'signal-tag' + (isBoss ? ' boss' : '');
+  element.textContent = text;
+  labelsLayer.appendChild(element);
+  return element;
+}
+
+function spawnFish(options = {}) {
+  if (!gameReady) return null;
+  const isBoss = !!options.boss;
+  const maxFish = camera.aspect < 0.9 ? 6 : (lowPower ? 7 : (sector >= 2 ? 9 : 8));
+  if (!isBoss && fish.length >= maxFish) return null;
+  const laneCounts = [0, 0, 0, 0];
+  fish.forEach(item => { if (!item.boss && !item.caught) laneCounts[item.lane]++; });
+  const open = [];
+  for (let i = 0; i < 4; i++) if (laneCounts[i] < 2) open.push(i);
+  if (!isBoss && !open.length) return null;
+
+  const lane = isBoss ? 2 : (options.lane ?? pick(open));
+  let direction = options.direction || (Math.random() > 0.5 ? 1 : -1);
+  const kind = options.kind || (Math.random() < 0.56 ? 'phish' : 'legit');
+  const content = isBoss
+    ? { tag: 'CEO: wire $84,000 before board call', why: 'Executive impersonation, secrecy, urgency, and a high-value payment request.' }
+    : (kind === 'phish' ? nextPhish() : nextLegit());
+  const half = visibleHalfWidth();
+  const entryOffset = isBoss ? 0.8 : 2.2;
+  const startX = options.randomX
+    ? lerp(-half * 0.62, half * 0.62, Math.random())
+    : (direction > 0 ? -half - entryOffset : half + entryOffset);
+  if (options.randomX && !options.direction && Math.abs(startX) > half * 0.48) {
+    direction = startX < 0 ? 1 : -1;
+  }
+  const mesh = createFishMesh({ boss: isBoss, color: options.color });
+  const scale = isBoss ? 1.1 : 0.72 + lane * 0.055 + Math.random() * 0.18;
+  const z = isBoss ? -0.15 : -0.72 + Math.random() * 1.14;
+  mesh.scale.setScalar(scale);
+  mesh.scale.x *= direction;
+  mesh.position.set(startX, LANE_Y[lane], z);
+  mesh.rotation.z = (Math.random() - 0.5) * 0.08;
+  world.add(mesh);
+  const tag = createSignalTag(content.tag, isBoss);
+  const baseSpeed = isBoss ? 0.62 : (1.0 + lane * 0.14 + Math.random() * 0.38);
+  const item = {
+    mesh,
+    tag,
+    kind,
+    subject: content.tag,
+    why: content.why,
+    lane,
+    direction,
+    speed: baseSpeed * mode.speed * (1 + sector * 0.08),
+    baseY: LANE_Y[lane],
+    z,
+    phase: Math.random() * TAU,
+    caught: false,
+    boss: isBoss,
+    scale,
+    resolved: false
+  };
+  fish.push(item);
+  return item;
+}
+
+function removeFish(item) {
+  const index = fish.indexOf(item);
+  if (index >= 0) fish.splice(index, 1);
+  if (item.tag && item.tag.parentNode) item.tag.parentNode.removeChild(item.tag);
+  world.remove(item.mesh);
+  const materials = new Set();
+  item.mesh.traverse(child => {
+    if (child.material) {
+      if (Array.isArray(child.material)) child.material.forEach(material => materials.add(material));
+      else materials.add(child.material);
+    }
+  });
+  materials.forEach(material => {
+    if (!material || material === shared.eyeMaterial) return;
+    material.dispose();
+  });
+}
+
+function clearFish() {
+  fish.slice().forEach(removeFish);
+  caughtFish = null;
+}
+
+function emitParticles(position, color, count = 14, force = 1.4) {
+  const c = new THREE.Color(color);
+  for (let i = 0; i < count; i++) {
+    const direction = new THREE.Vector3(
+      Math.random() * 2 - 1,
+      Math.random() * 1.4,
+      Math.random() * 2 - 1
+    ).normalize().multiplyScalar(force * (0.3 + Math.random() * 0.8));
+    effectParticles.push({
+      position: position.clone(),
+      velocity: direction,
+      color: c.clone(),
+      life: 0.55 + Math.random() * 0.7,
+      max: 1.25
+    });
+  }
+}
+
+function updateParticles(dt) {
+  const positions = particleGeometry.attributes.position.array;
+  const colors = particleGeometry.attributes.color.array;
+  const max = positions.length / 3;
+  for (let i = effectParticles.length - 1; i >= 0; i--) {
+    const particle = effectParticles[i];
+    particle.life -= dt;
+    particle.position.addScaledVector(particle.velocity, dt);
+    particle.velocity.multiplyScalar(Math.pow(0.18, dt));
+    particle.velocity.y += 0.12 * dt;
+    if (particle.life <= 0) effectParticles.splice(i, 1);
+  }
+  for (let i = 0; i < max; i++) {
+    const particle = effectParticles[i];
+    if (particle) {
+      positions[i * 3] = particle.position.x;
+      positions[i * 3 + 1] = particle.position.y;
+      positions[i * 3 + 2] = particle.position.z;
+      const alpha = clamp(particle.life / particle.max, 0, 1);
+      colors[i * 3] = particle.color.r * alpha;
+      colors[i * 3 + 1] = particle.color.g * alpha;
+      colors[i * 3 + 2] = particle.color.b * alpha;
+    } else {
+      positions[i * 3] = 0;
+      positions[i * 3 + 1] = -99;
+      positions[i * 3 + 2] = 0;
+      colors[i * 3] = 0;
+      colors[i * 3 + 1] = 0;
+      colors[i * 3 + 2] = 0;
+    }
+  }
+  particleGeometry.attributes.position.needsUpdate = true;
+  particleGeometry.attributes.color.needsUpdate = true;
+}
+
+function updateAmbient(dt) {
+  for (let i = 0; i < ambientPositions.length / 3; i++) {
+    ambientPositions[i * 3 + 1] += dt * (0.08 + hash(i) * 0.16);
+    ambientPositions[i * 3] += Math.sin(visualTime * 0.35 + i) * dt * 0.012;
+    if (ambientPositions[i * 3 + 1] > 0.3) {
+      ambientPositions[i * 3 + 1] = -8.2;
+      ambientPositions[i * 3] = -14 + Math.random() * 28;
+    }
+  }
+  ambientPoints.geometry.attributes.position.needsUpdate = true;
+}
+
+function showCinematic(kicker, title, sub, duration = 2100) {
+  cinematicKicker.textContent = kicker;
+  cinematicTitle.textContent = title;
+  cinematicSub.textContent = sub;
+  cinematic.classList.add('show');
+  clearTimeout(showCinematic.timer);
+  showCinematic.timer = setTimeout(() => cinematic.classList.remove('show'), reducedMotion ? 220 : duration);
+}
+
+function showFeed(kicker, text, tone = '') {
+  feedKicker.textContent = kicker;
+  feedText.textContent = text;
+  feed.className = tone;
+  feed.classList.add('show');
+  feedClock = 2.3;
+  liveRegion.textContent = kicker + '. ' + text + '.';
+}
+
+function showCatch(data) {
+  catchKicker.textContent = data.kicker;
+  catchTitle.textContent = data.title;
+  catchSubject.textContent = data.subject;
+  catchReason.textContent = data.reason;
+  catchCard.className = data.tone || '';
+  catchCard.classList.add('show');
+  catchClock = 2.7;
+}
+
+function flashDamage() {
+  damageFlash.classList.add('on');
+  setTimeout(() => damageFlash.classList.remove('on'), 130);
+}
+
+function enterSector(index) {
+  if (index === sector || index < 0 || index >= SECTORS.length) return;
+  sector = index;
+  const data = SECTORS[index];
+  sectorLabel.textContent = data.name;
+  targetFogColor.setHex(data.fog);
+  targetExposure = data.exposure;
+  showCinematic(index === 3 ? 'Priority signal' : 'Sector 0' + (index + 1), data.name, data.sub, index === 3 ? 2600 : 2050);
+  sfx(index === 3 ? 'alert' : 'levelUp');
+  if (index === 3 && !bossSpawned) {
+    bossSpawned = true;
+    setTimeout(() => {
+      if (state === 'playing' && !bossCaught) spawnFish({ boss: true, kind: 'phish', direction: -1, lane: 2, color: 0x3F5E66 });
+    }, reducedMotion ? 0 : 900);
+    showFeed('Whaling alert', 'Executive impersonation signal at depth', 'alert');
+  } else {
+    showFeed('Current shift', data.name + ' entered', 'good');
+  }
+}
+
+function setDifficulty(name) {
+  if (!MODES[name]) return;
+  modeName = name;
+  mode = MODES[name];
+  document.querySelectorAll('[data-mode]').forEach(button => {
+    button.setAttribute('aria-pressed', button.dataset.mode === name ? 'true' : 'false');
+  });
+  sfx('click');
+}
+
+function updateHud() {
+  const integrityPercent = clamp(integrity / mode.integrity, 0, 1);
+  integrityValue.textContent = Math.round(integrityPercent * 100) + '%';
+  integrityFill.style.transform = 'scaleX(' + integrityPercent.toFixed(3) + ')';
+  integrityFill.style.backgroundColor = integrityPercent > 0.55 ? CSS.kelp : (integrityPercent > 0.28 ? CSS.brass : CSS.bobber);
+  timeValue.textContent = formatTime(timeLeft);
+  operationFill.style.transform = 'scaleX(' + clamp(elapsed / ROUND_SECONDS, 0, 1).toFixed(3) + ')';
+  displayedScore = smooth(displayedScore, score, 7, 1 / 60);
+  scoreValue.textContent = pad(displayedScore, 6);
+  const multiplier = clamp(1 + Math.floor(chain / 2), 1, 5);
+  comboValue.textContent = 'CHAIN X' + multiplier;
+  const depthPercent = clamp((-hookY - 0.25) / 7.9, 0, 1);
+  depthMarker.style.top = (depthPercent * 100).toFixed(1) + '%';
+  depthValue.textContent = Math.round(depthPercent * 42) + ' M';
+}
+
+function addIntegrity(amount, reason) {
+  if (state !== 'playing') return;
+  integrity = clamp(integrity + amount, 0, mode.integrity);
+  if (amount < 0) {
+    screenShake = reducedMotion ? 0 : 0.44;
+    flashDamage();
+    sfx('breach');
+    showFeed('Integrity loss', reason, 'alert');
+  }
+  if (integrity <= 0) finishMission(false);
+}
+
+function setFishVerdict(item, color) {
+  const glowMaterial = item.mesh.userData.glowMaterial;
+  if (glowMaterial) {
+    glowMaterial.color.setHex(color);
+    glowMaterial.opacity = 0.62;
+    return;
+  }
+  item.mesh.userData.bodyMaterial.emissive.setHex(color);
+  item.mesh.userData.bodyMaterial.emissiveIntensity = 1.8;
+  item.mesh.userData.finMaterial.emissive.setHex(color);
+  item.mesh.userData.finMaterial.emissiveIntensity = 0.9;
+}
+
+function resolveCatch() {
+  const item = caughtFish;
+  if (!item || item.resolved) return;
+  item.resolved = true;
+  const point = item.boss ? 1800 : LANE_POINTS[item.lane];
+  if (item.kind === 'phish') {
+    chain++;
+    const multiplier = clamp(1 + Math.floor((chain - 1) / 2), 1, 5);
+    const gain = Math.round(point * multiplier * mode.score);
+    score += gain;
+    threatsCaught++;
+    if (item.boss) bossCaught = true;
+    integrity = clamp(integrity + (item.boss ? 12 : 3), 0, mode.integrity);
+    setFishVerdict(item, C.kelp);
+    showCatch({
+      kicker: item.boss ? 'Whaling threat neutralized' : 'Threat intercepted',
+      title: '+' + gain + ' points',
+      subject: item.subject,
+      reason: item.why,
+      tone: 'good'
+    });
+    showFeed('Signal confirmed', item.boss ? 'Executive spoof contained' : 'Phishing route isolated', 'good');
+    sfx(item.boss ? 'crackWin' : 'caught');
+    if (chain > 1) sfx('combo', multiplier);
+  } else {
+    chain = 0;
+    falsePositives++;
+    score = Math.max(0, score - 125);
+    setFishVerdict(item, C.bobber);
+    showCatch({
+      kicker: 'False positive',
+      title: 'Trusted mail intercepted',
+      subject: item.subject,
+      reason: item.why,
+      tone: 'bad'
+    });
+    addIntegrity(-24, 'Trusted traffic blocked');
+    sfx('wrong');
+  }
+  emitParticles(item.mesh.position, item.kind === 'phish' ? C.kelp : C.bobber, item.boss ? 34 : 20, item.boss ? 2.6 : 1.8);
+  slowMotion = reducedMotion ? 0 : 0.42;
+  updateHud();
+  setTimeout(() => {
+    if (item && fish.includes(item)) removeFish(item);
+  }, reducedMotion ? 0 : 260);
+  caughtFish = null;
+  hookMode = 'idle';
+  hookY = -0.28;
+}
+
+function catchFish(item) {
+  if (!item || caughtFish || item.caught) return;
+  item.caught = true;
+  caughtFish = item;
+  item.tag.classList.remove('visible');
+  hookMode = 'caught';
+  setFishVerdict(item, item.kind === 'phish' ? C.kelp : C.bobber);
+  emitParticles(item.mesh.position, C.biolume, item.boss ? 26 : 12, 1.4);
+  screenShake = reducedMotion ? 0 : 0.18;
+  slowMotion = reducedMotion ? 0 : 0.24;
+  sfx('pop');
+}
+
+function updateFish(dt) {
+  const half = visibleHalfWidth();
+  for (let i = fish.length - 1; i >= 0; i--) {
+    const item = fish[i];
+    const tail = item.mesh.userData.tail;
+    if (tail) tail.rotation.y = reducedMotion ? 0 : Math.sin(visualTime * (item.boss ? 5 : 8) + item.phase) * (item.boss ? 0.18 : 0.36);
+    const spriteMaterial = item.mesh.userData.spriteMaterial;
+    if (spriteMaterial && spriteMaterial.userData.shader) {
+      spriteMaterial.userData.shader.uniforms.uFishTime.value = visualTime;
+    }
+    if (item.caught) {
+      item.mesh.position.set(hookX, hookY - (item.boss ? 0.7 : 0.42), 0);
+      item.mesh.rotation.z = Math.sin(visualTime * 8) * 0.16;
+      continue;
+    }
+    const swim = state === 'playing' ? 1 : (reducedMotion ? 0 : 0.3);
+    item.mesh.position.x += item.direction * item.speed * dt * swim;
+    item.mesh.position.y = item.baseY + (reducedMotion ? 0 : Math.sin(visualTime * 1.35 + item.phase) * (item.boss ? 0.14 : 0.09));
+    item.mesh.position.z = item.z + (reducedMotion ? 0 : Math.sin(visualTime * 0.62 + item.phase) * 0.08);
+    item.mesh.rotation.z = (reducedMotion ? 0 : Math.sin(visualTime * 1.1 + item.phase) * 0.035);
+    item.mesh.rotation.y = (reducedMotion || !spriteMaterial) ? 0 : Math.sin(visualTime * 0.8 + item.phase) * 0.045;
+    const escaped = item.direction > 0 ? item.mesh.position.x > half + 2.7 : item.mesh.position.x < -half - 2.7;
+    if (escaped) {
+      if (state === 'playing') {
+        if (item.kind === 'phish') {
+          if (elapsed > 8) {
+            breaches++;
+            chain = 0;
+            addIntegrity(item.boss ? -25 : -5, item.boss ? 'Whaling attempt reached the harbor' : 'Phishing signal reached the harbor');
+          }
+        } else {
+          safePassed++;
+          score += Math.round(15 * mode.score);
+        }
+      }
+      removeFish(item);
+    }
+  }
+}
+
+function updateLabels() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const cinematicActive = cinematic.classList.contains('show');
+  const vector = new THREE.Vector3();
+  const candidates = [];
+  fish.forEach(item => {
+    if (state !== 'playing' || cinematicActive || item.caught || item.mesh.position.z > 0.42) {
+      item.tag.classList.remove('visible');
+      return;
+    }
+    item.mesh.getWorldPosition(vector);
+    vector.y += item.boss ? 1.25 : 0.72 * item.scale;
+    vector.project(camera);
+    const x = (vector.x * 0.5 + 0.5) * width;
+    const y = (-vector.y * 0.5 + 0.5) * height;
+    const visible = vector.z > -1 && vector.z < 1 && x > -24 && x < width + 24 && y > 76 && y < height - 48;
+    if (!visible) {
+      item.tag.classList.remove('visible');
+      return;
+    }
+    candidates.push({ item, x, y, z: item.mesh.position.z });
+  });
+
+  candidates.sort((a, b) => {
+    if (a.item.boss !== b.item.boss) return a.item.boss ? -1 : 1;
+    return a.z - b.z;
+  });
+  const limit = camera.aspect < 0.9 ? 4 : 5;
+  const placed = [];
+  candidates.forEach((candidate, index) => {
+    const item = candidate.item;
+    if (index >= limit) {
+      item.tag.classList.remove('visible');
+      return;
+    }
+    const tagWidth = Math.min(260, 40 + item.subject.length * 6.4);
+    const tagHeight = item.boss ? 38 : 31;
+    const x = clamp(candidate.x, tagWidth / 2 + 12, width - tagWidth / 2 - 12);
+    let y = candidate.y;
+    let tries = 0;
+    while (tries < 4) {
+      const rect = { left: x - tagWidth / 2, right: x + tagWidth / 2, top: y - tagHeight, bottom: y };
+      const overlap = placed.some(other => !(rect.right < other.left || rect.left > other.right || rect.bottom < other.top || rect.top > other.bottom));
+      if (!overlap) {
+        placed.push(rect);
+        break;
+      }
+      y -= tagHeight + 8;
+      tries++;
+    }
+    if (y < 84 || tries >= 4) {
+      item.tag.classList.remove('visible');
+      return;
+    }
+    item.tag.style.left = x.toFixed(1) + 'px';
+    item.tag.style.top = y.toFixed(1) + 'px';
+    const depthScale = clamp(1 - Math.abs(item.mesh.position.z) * 0.08, 0.78, 1);
+    item.tag.style.transform = 'translate(-50%, -100%) scale(' + depthScale.toFixed(3) + ')';
+    item.tag.classList.add('visible');
+  });
+}
+
+function updateHook(dt) {
+  const rodTip = boat.localToWorld(rodTipLocal.clone());
+  const targetHookX = boatX + 1.72;
+  hookVelocityX += (targetHookX - hookX) * dt * 10;
+  hookVelocityX *= Math.pow(0.025, dt);
+  hookX += hookVelocityX * dt;
+
+  if (hookMode === 'dropping') {
+    hookY -= dt * 3.45;
+    if (hookY <= -7.92) {
+      hookY = -7.92;
+      hookMode = 'reeling';
+      sfx('miss');
+    }
+  } else if (hookMode === 'reeling' || hookMode === 'caught') {
+    hookY += dt * (caughtFish && caughtFish.boss ? 2.2 : 5.4);
+    if (hookY >= -0.28) {
+      hookY = -0.28;
+      if (caughtFish) resolveCatch();
+      else hookMode = pointerDown ? 'dropping' : 'idle';
+    }
+  } else {
+    hookY = -0.28 + (reducedMotion ? 0 : Math.sin(visualTime * 1.7) * 0.025);
+  }
+
+  hookGroup.position.set(hookX, hookY, 0);
+  hookGroup.rotation.z = reducedMotion ? 0 : Math.sin(visualTime * 1.8) * 0.08;
+  hookLight.intensity = hookMode === 'idle' ? 1.4 : 2.8;
+
+  linePositions[0] = rodTip.x;
+  linePositions[1] = rodTip.y;
+  linePositions[2] = rodTip.z;
+  linePositions[3] = hookX;
+  linePositions[4] = hookY + 0.28;
+  linePositions[5] = 0;
+  lineGeometry.attributes.position.needsUpdate = true;
+
+  if (state === 'playing' && !caughtFish && hookY < -0.9) {
+    for (const item of fish) {
+      if (item.caught) continue;
+      const dx = item.mesh.position.x - hookX;
+      const dy = item.mesh.position.y - hookY;
+      const dz = item.mesh.position.z;
+      const radius = item.boss ? 1.35 : 0.62 * item.scale;
+      if (dx * dx + dy * dy + dz * dz < radius * radius) {
+        catchFish(item);
+        break;
+      }
+    }
+  }
+
+  if (state === 'playing' || state === 'ending') {
+    lineState.textContent = hookMode === 'dropping'
+      ? 'Line descending'
+      : ((hookMode === 'reeling' || hookMode === 'caught') ? 'Reeling signal' : 'Line ready');
+    lineState.className = hookMode === 'dropping' ? 'active drop' : ((hookMode === 'reeling' || hookMode === 'caught') ? 'active reel' : 'active');
+  } else {
+    lineState.className = '';
+  }
+
+  if (!reducedMotion && hookMode === 'dropping' && Math.random() < dt * 10) {
+    emitParticles(new THREE.Vector3(hookX, hookY, 0), C.biolume, 1, 0.45);
+  }
+}
+
+function updateBoat(dt) {
+  boatX = smooth(boatX, boatTargetX, 4.6, dt);
+  const waveA = reducedMotion ? 0 : Math.sin(visualTime * 1.35 + boatX * 0.25);
+  const waveB = reducedMotion ? 0 : Math.sin(visualTime * 0.82 - boatX * 0.18);
+  boat.position.x = boatX;
+  boat.position.y = 0.38 + waveA * 0.085 + waveB * 0.035;
+  boat.rotation.z = waveA * 0.018;
+  boat.rotation.x = waveB * 0.014;
+  if (!reducedMotion && Math.random() < dt * 7) {
+    emitParticles(new THREE.Vector3(boatX - 1.6, 0.02, 0.3), C.cream, 1, 0.35);
+  }
+}
+
+function updateEnvironment(dt) {
+  waterMaterial.uniforms.uTime.value = visualTime;
+  causticMaterial.uniforms.uTime.value = visualTime;
+  scene.fog.color.lerp(targetFogColor, 1 - Math.exp(-dt * 1.2));
+  renderer.toneMappingExposure = smooth(renderer.toneMappingExposure, targetExposure, 1.6, dt);
+  hemiLight.intensity = 1.45 - sector * 0.055;
+  sunLight.intensity = 2.65 - sector * 0.14;
+  lightRays.forEach((ray, index) => {
+    ray.material.opacity = (0.08 + hash(index) * 0.045) * (0.75 + Math.sin(visualTime * 0.45 + ray.userData.phase) * 0.25);
+    if (!reducedMotion) ray.rotation.z += Math.sin(visualTime * 0.35 + index) * dt * 0.002;
+  });
+}
+
+function updateCamera(dt) {
+  const aspect = window.innerWidth / window.innerHeight;
+  const titleOrbit = state === 'title' && !reducedMotion ? Math.sin(visualTime * 0.22) * 0.42 : 0;
+  const desiredX = titleOrbit + (state === 'playing' ? boatX * 0.12 : 0);
+  const desiredY = state === 'title' ? -2.75 : -3.05 + hookY * 0.025;
+  const desiredZ = aspect < 0.82 ? 15.8 : 14.7;
+  camera.position.x = smooth(camera.position.x, desiredX, 2.4, dt);
+  camera.position.y = smooth(camera.position.y, desiredY, 2.2, dt);
+  camera.position.z = smooth(camera.position.z, desiredZ, 2.2, dt);
+  cameraTarget.set(boatX * 0.08, state === 'title' ? -2.85 : -3.2, 0);
+  cameraLook.lerp(cameraTarget, 1 - Math.exp(-dt * 3));
+  let shakeX = 0;
+  let shakeY = 0;
+  if (screenShake > 0 && !reducedMotion) {
+    shakeX = (Math.random() * 2 - 1) * screenShake * 0.18;
+    shakeY = (Math.random() * 2 - 1) * screenShake * 0.12;
+    screenShake = Math.max(0, screenShake - dt);
+  }
+  camera.lookAt(cameraLook.x + shakeX, cameraLook.y + shakeY, cameraLook.z);
+}
+
+function updateSpawning(dt) {
+  if (sector === 3 && bossSpawned && !bossCaught) {
+    spawnClock -= dt;
+    if (spawnClock <= 0 && fish.filter(item => !item.boss).length < 4) {
+      spawnFish();
+      spawnClock = 2.5 * mode.spawn;
+    }
+    return;
+  }
+  spawnClock -= dt;
+  if (spawnClock <= 0) {
+    spawnFish();
+    const rate = sector === 0 ? 1.55 : (sector === 1 ? 1.25 : 0.98);
+    spawnClock = rate * mode.spawn * (0.82 + Math.random() * 0.42);
+  }
+}
+
+function startGame() {
+  state = 'playing';
+  titleScreen.classList.add('hidden');
+  pauseScreen.classList.add('hidden');
+  resultScreen.classList.add('hidden');
+  hud.classList.add('active');
+  hud.setAttribute('aria-hidden', 'false');
+  labelsLayer.setAttribute('aria-hidden', 'false');
+  lineState.classList.add('active');
+  pauseButton.disabled = false;
+  pauseButton.classList.add('active');
+  pauseButton.textContent = 'II';
+  pauseButton.setAttribute('aria-label', 'Pause game');
+  clearFish();
+  integrity = mode.integrity;
+  elapsed = 0;
+  timeLeft = ROUND_SECONDS;
+  score = 0;
+  displayedScore = 0;
+  chain = 0;
+  sector = -1;
+  spawnClock = 1.4;
+  feedClock = 0;
+  catchClock = 0;
+  endingClock = 0;
+  resultShown = false;
+  pointerDown = false;
+  activePointer = null;
+  hookMode = 'idle';
+  hookY = -0.28;
+  hookX = 1.72;
+  caughtFish = null;
+  bossSpawned = false;
+  bossCaught = false;
+  threatsCaught = 0;
+  falsePositives = 0;
+  breaches = 0;
+  safePassed = 0;
+  boatX = 0;
+  boatTargetX = 0;
+  effectParticles.length = 0;
+  for (let i = 0; i < 5; i++) spawnFish({ randomX: true });
+  enterSector(0);
+  updateHud();
+  showFeed('Ghost net online', 'Read the signal, then set the hook', 'good');
+  liveRegion.textContent = 'Patrol started.';
+  sfx('send');
+}
+
+function togglePause(force) {
+  if (state !== 'playing' && state !== 'paused') return;
+  const shouldPause = typeof force === 'boolean' ? force : state === 'playing';
+  state = shouldPause ? 'paused' : 'playing';
+  pointerDown = false;
+  activePointer = null;
+  if (hookMode === 'dropping') hookMode = 'reeling';
+  pauseScreen.classList.toggle('hidden', !shouldPause);
+  pauseButton.textContent = shouldPause ? '>' : 'II';
+  pauseButton.setAttribute('aria-label', shouldPause ? 'Resume game' : 'Pause game');
+  if (shouldPause) resumeButton.focus();
+  sfx('click');
+}
+
+function finishMission(success) {
+  if (endingClock > 0 || resultShown || state === 'won' || state === 'over') return;
+  pointerDown = false;
+  activePointer = null;
+  hookMode = 'reeling';
+  endingClock = success ? 1.7 : 0.8;
+  state = 'ending';
+  if (success) {
+    score += Math.round((integrity * 8 + (bossCaught ? 1200 : 0)) * mode.score);
+    showCinematic('Operation complete', 'Ghost Net Cleared', bossCaught ? 'Whaling signal contained' : 'Harbor routes secured', 1600);
+    sfx('win');
+  } else {
+    showCinematic('Operation failed', 'Signal Collapse', 'Trusted route integrity lost', 900);
+    sfx('lose');
+  }
+}
+
+function showResults() {
+  resultShown = true;
+  const success = integrity > mode.integrity * 0.25;
+  state = success ? 'won' : 'over';
+  hud.classList.remove('active');
+  hud.setAttribute('aria-hidden', 'true');
+  labelsLayer.setAttribute('aria-hidden', 'true');
+  lineState.classList.remove('active');
+  pauseButton.disabled = true;
+  pauseButton.classList.remove('active');
+  fish.forEach(item => item.tag.classList.remove('visible'));
+  const finalScore = Math.max(0, Math.round(score));
+  const isBest = finalScore > best;
+  if (isBest) {
+    best = finalScore;
+    try { localStorage.setItem(BEST_KEY, String(best)); } catch (error) {}
+  }
+  let grade = success ? 'B' : 'D';
+  if (success && falsePositives === 0 && breaches <= 2 && bossCaught) grade = 'S';
+  else if (success && falsePositives <= 1 && breaches <= 5 && bossCaught) grade = 'A';
+  resultKicker.textContent = success ? (isBest ? 'New patrol record' : 'Operation complete') : 'Operation interrupted';
+  resultTitle.textContent = success ? 'Ghost net cleared' : 'Signal collapse';
+  rankValue.textContent = grade;
+  resultScore.textContent = pad(finalScore, 6);
+  resultCaught.textContent = String(threatsCaught);
+  resultBreaches.textContent = String(breaches);
+  resultBest.textContent = pad(best, 6);
+  factText.textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
+  resultScreen.classList.remove('hidden');
+  liveRegion.textContent = (success ? 'Operation complete. ' : 'Operation failed. ') + 'Score ' + finalScore + '.';
+  setTimeout(() => againButton.focus(), 100);
+  if (window.CyberLeaderboard) {
+    CyberLeaderboard.record({
+      game: 'reel-v2',
+      title: "Reel 'Em In: Ghost Net",
+      unit: 'pts',
+      score: finalScore,
+      onDone: () => { try { againButton.focus(); } catch (error) {} }
+    });
+  }
+}
+
+function updateGame(dt) {
+  visualTime += dt;
+  const simDt = dt * (slowMotion > 0 ? 0.28 : 1);
+  if (slowMotion > 0) slowMotion = Math.max(0, slowMotion - dt);
+  updateEnvironment(dt);
+  updateBoat(simDt);
+  updateHook(simDt);
+  updateFish(simDt);
+  updateParticles(simDt);
+  updateAmbient(simDt);
+  updateCamera(dt);
+
+  if (feedClock > 0) {
+    feedClock -= dt;
+    if (feedClock <= 0) feed.classList.remove('show');
+  }
+  if (catchClock > 0) {
+    catchClock -= dt;
+    if (catchClock <= 0) catchCard.classList.remove('show');
+  }
+
+  if (state === 'playing') {
+    elapsed += dt;
+    timeLeft -= dt;
+    if (elapsed >= SECTORS[3].at && sector < 3) enterSector(3);
+    else if (elapsed >= SECTORS[2].at && sector < 2) enterSector(2);
+    else if (elapsed >= SECTORS[1].at && sector < 1) enterSector(1);
+    updateSpawning(dt);
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      finishMission(integrity > mode.integrity * 0.25);
+    }
+    updateHud();
+  } else if (state === 'title') {
+    spawnClock -= dt;
+    if (spawnClock <= 0 && fish.length < 5) {
+      spawnFish();
+      spawnClock = 1.8 + Math.random();
+    }
+  } else if (state === 'ending') {
+    endingClock -= dt;
+    if (endingClock <= 0) showResults();
+  }
+  updateLabels();
+}
+
+function onResize() {
+  const width = Math.max(320, window.innerWidth);
+  const height = Math.max(480, window.innerHeight);
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, lowPower ? 1.25 : 1.6);
+  renderer.setPixelRatio(pixelRatio);
+  renderer.setSize(width, height, false);
+  composer.setPixelRatio(pixelRatio);
+  composer.setSize(width, height);
+  camera.aspect = width / height;
+  camera.fov = width / height < 0.82 ? 43 : 42;
+  camera.updateProjectionMatrix();
+  bloomPass.setSize(width, height);
+}
+
+function pointerToBoatX(clientX) {
+  const half = visibleHalfWidth();
+  return clamp((clientX / window.innerWidth - 0.5) * half * 1.7, -half * 0.64, half * 0.64);
+}
+
+function onPointerDown(event) {
+  if (state !== 'playing' || activePointer !== null) return;
+  activePointer = event.pointerId;
+  pointerDown = true;
+  boatTargetX = pointerToBoatX(event.clientX);
+  if (!caughtFish && (hookMode === 'idle' || hookMode === 'reeling')) hookMode = 'dropping';
+  try { renderer.domElement.setPointerCapture(event.pointerId); } catch (error) {}
+  event.preventDefault();
+}
+
+function onPointerMove(event) {
+  if (state !== 'playing' || activePointer !== event.pointerId) return;
+  boatTargetX = pointerToBoatX(event.clientX);
+  event.preventDefault();
+}
+
+function onPointerUp(event) {
+  if (activePointer !== event.pointerId) return;
+  activePointer = null;
+  pointerDown = false;
+  if (!caughtFish && hookMode === 'dropping') hookMode = 'reeling';
+}
+
+async function initScene() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x083A45);
+  scene.fog = new THREE.FogExp2(SECTORS[0].fog, 0.03);
+  world = new THREE.Group();
+  scene.add(world);
+
+  camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 90);
+  camera.position.set(0, -2.75, 14.7);
+  camera.lookAt(0, -3.0, 0);
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: !lowPower,
+    alpha: false,
+    powerPreference: 'high-performance'
+  });
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = SECTORS[0].exposure;
+  renderer.shadowMap.enabled = !lowPower;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.domElement.setAttribute('aria-label', 'Reel Em In 3D game canvas');
+  viewport.appendChild(renderer.domElement);
+
+  const renderPass = new RenderPass(scene, camera);
+  bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), lowPower ? 0.24 : 0.42, 0.52, 0.8);
+  const outputPass = new OutputPass();
+  composer = new EffectComposer(renderer);
+  composer.addPass(renderPass);
+  composer.addPass(bloomPass);
+  composer.addPass(outputPass);
+
+  const sky = new THREE.Mesh(
+    new THREE.PlaneGeometry(44, 28),
+    new THREE.MeshBasicMaterial({ map: createSkyTexture(), fog: false, depthWrite: false })
+  );
+  sky.position.set(0, 1.6, -14);
+  scene.add(sky);
+  const sun = new THREE.Mesh(
+    new THREE.CircleGeometry(1.55, 48),
+    new THREE.MeshBasicMaterial({ color: 0xFFD17A, transparent: true, opacity: 0.6, toneMapped: false, fog: false })
+  );
+  sun.position.set(-7.5, 5.2, -13.5);
+  scene.add(sun);
+
+  hemiLight = new THREE.HemisphereLight(0xB0EFEF, 0x123D40, 1.45);
+  scene.add(hemiLight);
+  sunLight = new THREE.DirectionalLight(0xFFF2D2, 2.65);
+  sunLight.position.set(-7, 9, 7);
+  sunLight.castShadow = !lowPower;
+  if (!lowPower) {
+    sunLight.shadow.mapSize.set(1024, 1024);
+    sunLight.shadow.camera.left = -14;
+    sunLight.shadow.camera.right = 14;
+    sunLight.shadow.camera.top = 10;
+    sunLight.shadow.camera.bottom = -10;
+  }
+  scene.add(sunLight);
+  const fillLight = new THREE.PointLight(0x8AF4ED, 1.65, 15, 2);
+  fillLight.position.set(4, -3.5, 3);
+  scene.add(fillLight);
+  const warmLight = new THREE.PointLight(0xFFB071, 1.55, 11, 2);
+  warmLight.position.set(-5, -1.2, 2);
+  scene.add(warmLight);
+
+  buildSharedGeometry();
+  createWater();
+  createSeafloor();
+  createEnvironment();
+  boat = createBoat();
+  hookGroup = createHookAndLine();
+  createParticleSystems();
+  onResize();
+
+  fishTextures = await loadFishTextures();
+  gameReady = true;
+  for (let i = 0; i < 4; i++) spawnFish({ randomX: true });
+  spawnClock = 1.5;
+
+  renderer.domElement.addEventListener('pointerdown', onPointerDown);
+  renderer.domElement.addEventListener('pointermove', onPointerMove);
+  renderer.domElement.addEventListener('pointerup', onPointerUp);
+  renderer.domElement.addEventListener('pointercancel', onPointerUp);
+  renderer.domElement.addEventListener('touchstart', event => event.preventDefault(), { passive: false });
+  renderer.domElement.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
+  renderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
+
+  deployButton.disabled = false;
+  deployButton.textContent = 'Launch patrol';
+  loading.classList.add('hidden');
+  setTimeout(() => {
+    try { deployButton.focus(); } catch (error) {}
+  }, 120);
+}
+
+function frame(now) {
+  const dt = Math.min(0.04, Math.max(0, (now - lastFrame) / 1000));
+  lastFrame = now;
+  if (state !== 'paused') updateGame(dt);
+  composer.render();
+  requestAnimationFrame(frame);
+}
+
+document.querySelectorAll('[data-mode]').forEach(button => {
+  button.addEventListener('click', () => setDifficulty(button.dataset.mode));
+});
+deployButton.addEventListener('click', startGame);
+againButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', startGame);
+pauseButton.addEventListener('click', () => togglePause());
+resumeButton.addEventListener('click', () => togglePause(false));
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', () => setTimeout(onResize, 90));
+window.addEventListener('blur', () => { if (state === 'playing') togglePause(true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'playing') togglePause(true); });
+window.addEventListener('keydown', event => {
+  const target = event.target;
+  if (target && (target.tagName === 'BUTTON' || target.tagName === 'A')) return;
+  if (event.code === 'Space') {
+    event.preventDefault();
+    if (!event.repeat && state === 'playing') {
+      pointerDown = true;
+      if (!caughtFish) hookMode = 'dropping';
+    } else if (!event.repeat && state === 'title' && gameReady) {
+      startGame();
+    }
+  } else if (event.code === 'ArrowLeft' && state === 'playing') {
+    boatTargetX -= 0.75;
+  } else if (event.code === 'ArrowRight' && state === 'playing') {
+    boatTargetX += 0.75;
+  } else if (event.code === 'Escape') {
+    event.preventDefault();
+    togglePause();
+  }
+});
+window.addEventListener('keyup', event => {
+  if (event.code === 'Space') {
+    pointerDown = false;
+    if (!caughtFish && hookMode === 'dropping') hookMode = 'reeling';
+  }
+});
+
+initScene()
+  .then(() => requestAnimationFrame(frame))
+  .catch(error => {
+    console.error(error);
+    document.querySelector('.loading-title').textContent = '3D renderer unavailable';
+    document.querySelector('.loading-line').style.display = 'none';
+  });
+
+if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+  window.__REEL_V2_TEST__ = {
+    start: startGame,
+    phish: () => spawnFish({ kind: 'phish', randomX: true, lane: 2 }),
+    legit: () => spawnFish({ kind: 'legit', randomX: true, lane: 1 }),
+    boss: () => {
+      if (state !== 'playing') startGame();
+      elapsed = 76.1;
+      timeLeft = ROUND_SECONDS - elapsed;
+      enterSector(3);
+      cinematic.classList.remove('show');
+    },
+    catchBoss: () => {
+      if (state !== 'playing') startGame();
+      let item = fish.find(candidate => candidate.boss && !candidate.caught);
+      if (!item) {
+        bossSpawned = true;
+        item = spawnFish({ boss: true, kind: 'phish', randomX: true, lane: 2 });
+      }
+      if (item) {
+        item.mesh.position.set(hookX, -1.2, 0);
+        hookY = -1.2;
+        catchFish(item);
+      }
+    },
+    catch: kind => {
+      if (state !== 'playing') startGame();
+      const item = spawnFish({ kind: kind === 'legit' ? 'legit' : 'phish', randomX: true, lane: 2 });
+      if (item) {
+        item.mesh.position.set(hookX, -1.2, 0);
+        hookY = -1.2;
+        catchFish(item);
+      }
+    },
+    finish: () => {
+      if (state !== 'playing') startGame();
+      timeLeft = 0;
+    },
+    fail: () => {
+      if (state !== 'playing') startGame();
+      integrity = mode.integrity * 0.2;
+      timeLeft = 0;
+    },
+    status: () => ({
+      state,
+      sector,
+      score: Math.round(score),
+      integrity: Math.round(integrity),
+      fish: fish.length,
+      hookMode,
+      hookY: Number(hookY.toFixed(2)),
+      threatsCaught,
+      falsePositives,
+      breaches,
+      bossSpawned,
+      bossCaught,
+      renderer: renderer ? renderer.info.render : null
+    })
+  };
+}
+</script>
+</body>
+</html>
