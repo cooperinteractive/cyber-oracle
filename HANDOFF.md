@@ -1,6 +1,6 @@
 # HANDOFF: Cyber Oracle / Caught in the Net
 
-_Last updated: 2026-07-10_
+_Last updated: 2026-07-13_
 
 ## What this is
 A collection of offline cybersecurity web toys. There is no build step or network dependency. Most pages are single HTML files; premium 3D review builds may load local assets from `assets/`. See `README.md` for the full inventory.
@@ -52,6 +52,16 @@ Shared `leaderboard.js` gives every scored game a local per-game top-8 board (ke
 2. **Promote the remaining v2 games?** `reel-em-in-v2.html`, `packet-trawler-v2.html`, and `kraken-attack-v2.html` are standalone (originals untouched). Deep Dive's premium build is approved and promoted.
 3. **Merge to main.** Work is on branch `claude/mystifying-lalande-811d3d` (a worktree). Fast-forward or PR into `main` when ready.
 4. Optional: add the new arcade to `games.html` or cross-link the two hubs.
+
+## Live deployment (2026-07-13)
+
+The arcade is live on practicethepause.com under `/arcade/`:
+hub at https://practicethepause.com/arcade/ (redirects to caught-in-the-net.html),
+all 7 games plus the 3 v2 builds, leaderboard page, shared scripts, and local
+assets (reel-fish webp, vendored Three.js). Deployed by copying into
+`public/arcade/` of the practice-pause-site repo (Cloudflare Pages, auto-deploy
+from main; commit 888a628). The copied hub's footer links to the site home
+instead of games.html. This repo stays the source of truth; re-copy to update.
 
 ## Physical wall installation
 Design plan + $30K budget + prop sourcing list: `docs/installation/caught-in-the-net-wall.md`.
