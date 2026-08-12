@@ -47,6 +47,18 @@ The new 3D review fork reuses eight of those sprites as local files under `asset
 ## Leaderboard
 Shared `leaderboard.js` gives every scored game a local per-game top-8 board (keys `citn-lb-<game>`). At game over each game calls `CyberLeaderboard.record({game, title, score, unit, onDone})`; if the run earns a spot it shows a touch initials entry (a NEW LEADER moment at rank 1), then the board, then returns to the game-over screen. `leaderboard.html` (Hall of Fame) shows every board and has an operator "Reset all boards" button. The promoted Deep Dive game records mission points to the canonical `dash` board and migrates any local best score or board earned under the temporary `dash-v2` identifier. Connect Four is 2-player and has no score board.
 
+## The Data Protection Wizard (WebEx game)
+`data-protection-wizard.html`: a standalone 60-second data-classification arcade
+game built for hosting on WebEx (not part of the Caught in the Net hub). You are
+the Data Protection Wizard casting one of four seals (Public, Confidential,
+Highly Confidential, Restricted) on real corporate data artifacts. 44-item bank,
+streak multiplier to x5, miscast micro-lessons, rank titles, local top-8 initials
+leaderboard (keys dpw-best, dpw-lb, dpw-muted). One 200 KB self-contained file:
+embedded painterly key art (webp data URI), inline synth audio, system fonts,
+zero external requests. DOM + CSS transitions only (no game loop), so idle CPU
+is near zero. Browser-verified over HTTP: full round, correct/wrong stamps,
+timer, results, initials entry, zero console errors.
+
 ## Open decisions / next steps
 1. **Review Reel 'Em In 3D.** Open `reel-em-in-v2.html`. If approved, promote it over `reel-em-in.html`, migrate the `reel-v2` local best/board into `reel`, and update the hub link. Do not promote from review without approval.
 2. **Promote the remaining v2 games?** `reel-em-in-v2.html`, `packet-trawler-v2.html`, and `kraken-attack-v2.html` are standalone (originals untouched). Deep Dive's premium build is approved and promoted.
