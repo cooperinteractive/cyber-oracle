@@ -354,6 +354,30 @@
 
   .end-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
 
+  /* pause control + menu */
+  .pausebtn {
+    position: fixed; top: 14px; left: 14px; z-index: 40;
+    width: 52px; height: 52px; min-height: 52px; padding: 0;
+    border-radius: 12px; font-size: 1rem; line-height: 1;
+    display: none;
+  }
+  body.mode-play .pausebtn { display: block; }
+  .pause-overlay {
+    position: fixed; inset: 0; z-index: 45;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 24px; text-align: center;
+    background: rgba(6, 8, 18, 0.86);
+  }
+  .pause-overlay.hidden { display: none; }
+  .pause-overlay .ptitle {
+    font-family: var(--display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.2em; font-size: clamp(1.3rem, 4vw, 2rem);
+    background: linear-gradient(180deg, #FFF3D6, #F2B94B);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .pause-overlay .pline { font-family: var(--mono); color: var(--parchment-dim); font-size: 0.9rem; margin-bottom: 8px; }
+  .pause-overlay .btn { min-width: 260px; }
+
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
 </head>
@@ -364,6 +388,7 @@
 <div class="ember b" aria-hidden="true"></div>
 
 <button type="button" class="btn mute" id="muteBtn" aria-label="Toggle sound">&#128266;</button>
+<button type="button" class="btn pausebtn" id="pauseBtn" aria-label="Pause the trial">&#10074;&#10074;</button>
 
 <!-- ============ TITLE ============ -->
 <section class="screen" id="title">
@@ -376,7 +401,6 @@
     <b style="color:var(--c-blue)">Confidential</b>,
     <b style="color:var(--h-amber)">Highly Confidential</b>, or
     <b style="color:var(--r-red)">Restricted</b>.
-    Chain true castings to multiply your power.
   </p>
   <div class="title-row">
     <button type="button" class="btn primary" id="playBtn">&#10022; Begin the Trial</button>
@@ -466,9 +490,18 @@
 
     <div class="end-actions">
       <button type="button" class="btn primary" id="againBtn">&#10022; Face the Trial Again</button>
+      <button type="button" class="btn" id="homeBtn">Return to Title</button>
     </div>
   </div>
 </section>
+
+<div class="pause-overlay hidden" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Paused">
+  <div class="ptitle">The Trial Pauses</div>
+  <div class="pline" id="pauseLine">Score 0 &middot; 60s remains</div>
+  <button type="button" class="btn primary" id="resumeBtn">&#10022; Resume the Trial</button>
+  <button type="button" class="btn" id="restartBtn">Restart the Trial</button>
+  <button type="button" class="btn" id="quitBtn">Abandon to Title</button>
+</div>
 
 <div class="sr" role="status" aria-live="polite" id="live"></div>
 
@@ -620,6 +653,7 @@
   var score = 0, streak = 0, sealed = 0, miscast = 0;
   var left = ROUND, timerId = null, lastWhole = ROUND;
   var locked = false, playing = false;
+  var paused = false, roundT0 = 0;
   var best = 0;
   try { best = parseInt(localStorage.getItem('dpw-best') || '0', 10) || 0; } catch (e) {}
 
@@ -692,10 +726,16 @@
     draw();
     live.textContent = 'The trial begins. Sixty seconds.';
     sfx.click();
-    var t0 = performance.now();
+    paused = false;
+    el('pauseOverlay').classList.add('hidden');
+    roundT0 = performance.now();
+    startTimer();
+  }
+
+  function startTimer() {
     clearInterval(timerId);
     timerId = setInterval(function () {
-      left = Math.max(0, ROUND - (performance.now() - t0) / 1000);
+      left = Math.max(0, ROUND - (performance.now() - roundT0) / 1000);
       flame.style.transform = 'scaleX(' + (left / ROUND).toFixed(4) + ')';
       var whole = Math.ceil(left);
       if (whole !== lastWhole) {
@@ -706,6 +746,37 @@
       }
       if (left <= 0) finish();
     }, 120);
+  }
+
+  /* ---- pause, resume, restart, quit ---- */
+  function pauseGame() {
+    if (!playing || paused) return;
+    paused = true;
+    clearInterval(timerId);
+    el('pauseLine').innerHTML = 'Score ' + score + ' &middot; ' + Math.ceil(left) + 's remains';
+    el('pauseOverlay').classList.remove('hidden');
+    sfx.click();
+    live.textContent = 'The trial pauses.';
+    setTimeout(function () { try { el('resumeBtn').focus(); } catch (e) {} }, 40);
+  }
+  function resumeGame() {
+    if (!playing || !paused) return;
+    paused = false;
+    el('pauseOverlay').classList.add('hidden');
+    roundT0 = performance.now() - (ROUND - left) * 1000;
+    startTimer();
+    sfx.click();
+    live.textContent = 'The trial resumes. ' + Math.ceil(left) + ' seconds remain.';
+  }
+  function quitToTitle() {
+    clearInterval(timerId);
+    playing = false; paused = false; locked = true;
+    el('pauseOverlay').classList.add('hidden');
+    document.body.classList.remove('casting');
+    setScreen('title');
+    sfx.click();
+    live.textContent = 'Trial abandoned.';
+    try { el('playBtn').focus(); } catch (e) {}
   }
 
   /* the wizard casts: pose swap + bolt from the staff rune to the artifact */
@@ -759,7 +830,7 @@
   }
 
   function judge(tier) {
-    if (!playing || locked) return;
+    if (!playing || locked || paused) return;
     locked = true;
     var right = tier === current.t;
     var answer = current;
@@ -932,6 +1003,11 @@
   });
   el('playBtn').addEventListener('click', start);
   el('againBtn').addEventListener('click', start);
+  el('homeBtn').addEventListener('click', quitToTitle);
+  el('pauseBtn').addEventListener('click', pauseGame);
+  el('resumeBtn').addEventListener('click', resumeGame);
+  el('restartBtn').addEventListener('click', function () { paused = false; el('pauseOverlay').classList.add('hidden'); start(); });
+  el('quitBtn').addEventListener('click', quitToTitle);
 
   var KEYMAP = { '1': 'P', '2': 'C', '3': 'H', '4': 'R' };
   window.addEventListener('keydown', function (ev) {
@@ -941,6 +1017,12 @@
       else if (ev.key === 'Enter') { ev.preventDefault(); confirmEntry(); }
       return;
     }
+    if (playing && (ev.key === 'Escape' || ev.key === 'p' || ev.key === 'P')) {
+      ev.preventDefault();
+      if (paused) resumeGame(); else pauseGame();
+      return;
+    }
+    if (paused) return;
     if (playing && KEYMAP[ev.key]) { judge(KEYMAP[ev.key]); return; }
     if (ev.key === 'Enter' || ev.key === ' ') {
       if (!titleEl.classList.contains('hidden')) { ev.preventDefault(); start(); }
