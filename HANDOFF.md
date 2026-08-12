@@ -49,15 +49,19 @@ Shared `leaderboard.js` gives every scored game a local per-game top-8 board (ke
 
 ## The Data Protection Wizard (WebEx game)
 `data-protection-wizard.html`: a standalone 60-second data-classification arcade
-game built for hosting on WebEx (not part of the Caught in the Net hub). You are
-the Data Protection Wizard casting one of four seals (Public, Confidential,
-Highly Confidential, Restricted) on real corporate data artifacts. 44-item bank,
-streak multiplier to x5, miscast micro-lessons, rank titles, local top-8 initials
-leaderboard (keys dpw-best, dpw-lb, dpw-muted). One 200 KB self-contained file:
-embedded painterly key art (webp data URI), inline synth audio, system fonts,
-zero external requests. DOM + CSS transitions only (no game loop), so idle CPU
-is near zero. Browser-verified over HTTP: full round, correct/wrong stamps,
-timer, results, initials entry, zero console errors.
+game for WebEx and web hosting. THIRD-PERSON: the wizard character stands in a
+painted archive hall facing four glowing vault doors (one per tier); on each
+answer he snaps to a casting pose and fires a tier-colored bolt at the artifact,
+and correctly sealed artifacts fly into their matching door. Four seals: Public,
+Confidential, Highly Confidential, Restricted. 44-item bank, streak multiplier
+to x5, miscast micro-lessons, rank titles, local top-8 initials leaderboard
+(keys dpw-best, dpw-lb, dpw-muted). One ~465 KB self-contained file: title key
+art, hall plate, and two wizard pose sprites embedded as webp data URIs, inline
+synth audio, system fonts, zero external requests. DOM + CSS transitions only.
+Deployed live at practicethepause.com/data-wizard (copy lives in the
+practice-pause-site repo at public/data-wizard/index.html; this repo is the
+source of truth).
+
 
 ## Open decisions / next steps
 1. **Review Reel 'Em In 3D.** Open `reel-em-in-v2.html`. If approved, promote it over `reel-em-in.html`, migrate the `reel-v2` local best/board into `reel`, and update the hub link. Do not promote from review without approval.
