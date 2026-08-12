@@ -2,968 +2,1599 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyber Connect Four | Cyber Games</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Hook, Line and Sinker | Caught in the Net</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* water */
+    --abyss: #041B26;
+    --depth: #072A3C;
+    --panel: #0B3348;
+    --panel-deep: #082838;
+    --line: rgba(244, 235, 217, 0.16);
+    /* ink */
+    --cream: #F4EBD9;
+    --cream-dim: #C9BFA8;
+    /* accents */
+    --lure: #FF7A45;
+    --bobber: #E8564A;
+    --biolume: #53DFE8;
+    --kelp: #4FC98C;
+    --brass: #F5C15C;
+    /* type */
+    --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+    --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+  }
+
   html, body { height: 100%; }
 
+  html { background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%); }
+
   body {
-    min-height: 100vh; min-height: 100dvh;
-    background: radial-gradient(ellipse at top, #0a1020 0%, #02000a 80%);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    color: #e0e0e0;
-    overflow-x: hidden;
-    padding: 16px 16px 60px;
-    user-select: none;
+    color: var(--cream);
+    font-family: var(--body);
+    height: 100%;
+    overflow: hidden;
     -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
-  body::before {
-    content: ''; position: fixed; inset: 0;
-    background-image:
-      radial-gradient(1px 1px at 30% 30%, #fff, transparent),
-      radial-gradient(1px 1px at 70% 80%, #aaf, transparent);
-    background-size: 200% 200%;
-    opacity: 0.2; z-index: 0; pointer-events: none;
+  /* ---------- ambient decor ---------- */
+  .sea { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .sea::before {
+    content: '';
+    position: absolute;
+    inset: -40%;
+    background:
+      repeating-linear-gradient(52deg, var(--line) 0 1px, transparent 1px 76px),
+      repeating-linear-gradient(-52deg, var(--line) 0 1px, transparent 1px 76px);
+    opacity: 0.33;
   }
-
-  .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
-
-  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
-
-  .back-link {
-    color: #66aaff; text-decoration: none;
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
-    padding: 6px 12px;
-    border: 1px solid rgba(102, 170, 255, 0.4);
-    border-radius: 20px; transition: all 0.2s;
+  .sea::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 40% 0;
+    background:
+      linear-gradient(173deg, rgba(83, 223, 232, 0.07) 0 8%, transparent 8% 20%,
+        rgba(83, 223, 232, 0.05) 20% 26%, transparent 26% 55%,
+        rgba(83, 223, 232, 0.06) 55% 61%, transparent 61%);
+    mix-blend-mode: screen;
   }
-  .back-link:hover, .back-link:focus-visible { background: rgba(102, 170, 255, 0.1); color: #fff; outline: none; }
-
-  header { text-align: center; margin-bottom: 14px; }
-  h1 {
-    font-size: clamp(1.4rem, 4.5vw, 2.1rem);
-    font-weight: 200;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    background: linear-gradient(90deg, #ff4488, #66aaff, #ff4488);
-    background-size: 200% 100%;
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: hueShift 5s linear infinite;
-  }
-  @keyframes hueShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
-  .subtitle { color: #c8d8ff; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-style: italic; }
-
-  /* Score banner */
-  .scoreboard {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 10px;
-    margin-bottom: 14px;
-    align-items: stretch;
-  }
-
-  .team {
-    background: rgba(0, 10, 25, 0.7);
-    border: 1px solid;
-    border-radius: 12px;
-    padding: 10px 14px;
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s;
-  }
-
-  .team.red { border-color: rgba(255, 80, 100, 0.4); }
-  .team.blue { border-color: rgba(100, 170, 255, 0.4); }
-
-  .team.active {
-    box-shadow: 0 0 25px currentColor;
-  }
-
-  .team.red.active { border-color: rgba(255, 80, 100, 1); box-shadow: 0 0 25px rgba(255, 80, 100, 0.5); }
-  .team.blue.active { border-color: rgba(100, 170, 255, 1); box-shadow: 0 0 25px rgba(100, 170, 255, 0.5); }
-
-  .team-icon {
-    width: 38px; height: 38px;
+  .bubble {
+    position: absolute;
+    bottom: -30px;
+    border: 1.5px solid rgba(83, 223, 232, 0.28);
     border-radius: 50%;
-    display: flex;
+    background: radial-gradient(circle at 32% 30%, rgba(244, 235, 217, 0.14), transparent 55%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .bubble { animation: rise linear infinite; }
+    @keyframes rise {
+      from { transform: translateY(0) translateX(0); opacity: 0; }
+      6%   { opacity: 1; }
+      92%  { opacity: 1; }
+      to   { transform: translateY(-110vh) translateX(24px); opacity: 0; }
+    }
+  }
+
+  /* ---------- home chip ---------- */
+  .home-chip {
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 200;
+    min-height: 56px;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-
-  .team.red .team-icon { background: radial-gradient(circle at 35% 30%, #ff77aa, #aa0044); box-shadow: 0 0 12px rgba(255, 80, 100, 0.5); }
-  .team.blue .team-icon { background: radial-gradient(circle at 35% 30%, #88ccff, #0066aa); box-shadow: 0 0 12px rgba(100, 170, 255, 0.5); }
-
-  .team-info { min-width: 0; flex: 1; }
-
-  .team-name {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 1px;
+    gap: 8px;
+    padding: 0 18px;
+    border: 2px solid var(--cream);
+    border-radius: 14px;
+    background: rgba(2, 20, 29, 0.62);
+    color: var(--cream);
+    font-family: var(--display);
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 6px 16px rgba(2, 15, 22, 0.5);
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .home-chip:active { transform: scale(0.96); background: rgba(2, 20, 29, 0.85); }
+  .home-chip:focus-visible { outline: 3px solid var(--biolume); outline-offset: 3px; }
+
+  /* themed override for the mute toggle injected by sounds.js */
+  #cyber-sound-toggle {
+    background: var(--panel) !important;
+    color: var(--cream) !important;
+    border: 2px solid var(--line) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 16px rgba(2, 15, 22, 0.5) !important;
   }
 
-  .team.red .team-name { color: #ff8aa8; text-shadow: 0 0 8px rgba(255, 80, 100, 0.5); }
-  .team.blue .team-name { color: #99ccff; text-shadow: 0 0 8px rgba(100, 170, 255, 0.5); }
-
-  .team-role {
-    font-family: 'Courier New', monospace;
-    font-size: 0.65rem;
-    color: #c8d8ff;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .vs {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Courier New', monospace;
-    font-size: 1rem;
-    font-weight: bold;
-    color: #fff;
-    text-shadow: 0 0 12px rgba(255, 0, 200, 0.6);
-    letter-spacing: 2px;
-    padding: 0 8px;
-  }
-
-  /* Turn indicator + piece staging */
+  /* ---------- layout shell ---------- */
   .stage {
     position: relative;
-    height: 84px;
-    margin-bottom: 6px;
+    z-index: 1;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 6px clamp(8px, 2vw, 20px) 10px;
+    gap: clamp(6px, 1.4vh, 12px);
+  }
+
+  header.bar {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 1180px;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 14px;
+    padding: 4px 76px 0;
+    text-align: center;
+  }
+  header.bar h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    font-size: clamp(1.05rem, 2.7vw, 1.7rem);
+    color: var(--cream);
+    text-shadow: 0 2px 0 rgba(2, 20, 29, 0.9);
+  }
+  header.bar h1 .amp { color: var(--lure); }
+
+  /* scoreboard */
+  .scoreboard {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .score {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-deep);
+  }
+  .score .who {
+    font-family: var(--display);
+    font-size: clamp(0.62rem, 1.5vw, 0.78rem);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .score .num {
+    font-family: var(--mono);
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: var(--brass);
+    min-width: 1.2em;
+    text-align: center;
+  }
+  .score.p1 .who { color: var(--lure); }
+  .score.p2 .who { color: var(--biolume); }
+  .score .vs {
+    font-family: var(--display);
+    color: var(--cream-dim);
+    letter-spacing: 0.14em;
+    align-self: center;
+    font-size: 0.72rem;
+  }
+
+  /* status line */
+  .status {
+    flex: 0 0 auto;
+    font-family: var(--mono);
+    font-size: clamp(0.66rem, 1.6vw, 0.82rem);
+    letter-spacing: 0.05em;
+    color: var(--cream-dim);
+    text-align: center;
+    min-height: 1.1em;
+    padding: 0 8px;
+  }
+
+  /* ---------- play area: dock | board | dock ---------- */
+  .arena {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 1180px;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 1.8vw, 22px);
+  }
+
+  .dock {
+    flex: 0 0 auto;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(8px, 1.6vh, 14px);
+    padding: 10px;
+    border-radius: 16px;
+    border: 2px solid var(--line);
+    background: linear-gradient(180deg, rgba(11, 51, 72, 0.5), rgba(8, 40, 56, 0.25));
+    width: clamp(112px, 15vw, 168px);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .dock .dock-name {
+    font-family: var(--display);
+    font-size: clamp(0.72rem, 1.7vw, 0.95rem);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 6px;
   }
-
-  .turn-text {
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #c8d8ff;
-    text-align: center;
-  }
-
-  .turn-text strong { font-weight: 700; }
-  .turn-text strong.red { color: #ff8aa8; text-shadow: 0 0 8px rgba(255, 80, 100, 0.5); }
-  .turn-text strong.blue { color: #99ccff; text-shadow: 0 0 8px rgba(100, 170, 255, 0.5); }
-
-  /* The draggable piece */
-  .piece-staging {
-    position: relative;
-    width: 100%;
-    height: 56px;
-  }
-
-  .piece {
-    position: absolute;
-    top: 4px;
-    width: 48px;
-    height: 48px;
+  .dock .dock-name .avatar {
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
     border-radius: 50%;
-    cursor: grab;
+    border: 2px solid currentColor;
+    background: rgba(2, 20, 29, 0.4);
+  }
+  .dock .dock-name .avatar svg { width: 26px; height: 26px; }
+  .dock.p1 { color: var(--lure); }
+  .dock.p2 { color: var(--biolume); }
+  .dock.active {
+    border-color: currentColor;
+    background: linear-gradient(180deg, rgba(11, 51, 72, 0.72), rgba(8, 40, 56, 0.4));
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .dock.active { animation: dockGlow 1.9s ease-in-out infinite; }
+    @keyframes dockGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+      50% { box-shadow: 0 0 22px 2px currentColor; }
+    }
+  }
+  /* fixed glow for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .dock.active { box-shadow: 0 0 16px 1px currentColor; }
+  }
+
+  .power-btn {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    border: 3px solid;
-    transition: left 0.15s ease-out, box-shadow 0.2s, transform 0.15s;
-    touch-action: none;
-    z-index: 5;
+    gap: 4px;
+    min-height: 56px;
+    padding: 8px 6px;
+    border: 2px solid currentColor;
+    border-radius: 14px;
+    background: rgba(2, 20, 29, 0.45);
+    color: inherit;
+    font-family: var(--display);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.12s ease, opacity 0.12s ease;
+  }
+  .power-btn .pname { font-size: clamp(0.58rem, 1.4vw, 0.72rem); text-align: center; line-height: 1.05; }
+  .power-btn .puses {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--cream-dim);
+  }
+  .power-btn .pic { width: 24px; height: 24px; }
+  .power-btn:active:not(:disabled) { transform: scale(0.95); }
+  .power-btn:not(:disabled):hover { background: rgba(2, 20, 29, 0.7); }
+  .power-btn.armed {
+    background: currentColor;
+    color: var(--abyss);
+  }
+  .power-btn.armed .puses { color: var(--abyss); }
+  .power-btn.armed .pic path,
+  .power-btn.armed .pic circle,
+  .power-btn.armed .pic line,
+  .power-btn.armed .pic rect { stroke: var(--abyss); }
+  .power-btn:disabled { opacity: 0.34; cursor: default; }
+  .power-btn:focus-visible { outline: 3px solid var(--cream); outline-offset: 2px; }
+
+  .cancel-btn {
+    min-height: 44px;
+    padding: 6px;
+    border: 2px dashed var(--bobber);
+    border-radius: 12px;
+    background: rgba(232, 86, 74, 0.14);
+    color: var(--cream);
+    font-family: var(--display);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .cancel-btn:active { transform: scale(0.96); }
+  .cancel-btn:focus-visible { outline: 3px solid var(--biolume); outline-offset: 2px; }
+  .cancel-btn[hidden] { display: none; }
+
+  /* ---------- the net board ---------- */
+  .board-frame {
+    flex: 0 1 auto;
+    position: relative;
+    /* Size the board to fit within the arena in both orientations.
+       Width budget: the two side docks (~15vw each) and the arena gaps must fit
+       alongside the frame. The frame spans about 8.4 cell widths
+       (7 cells + 6 gaps at 0.12 + 2 paddings at 0.34), so the per-cell width cap
+       is (100vw minus both docks minus safety) divided by 8.4.
+       Height budget: 6 rows plus header, scoreboard, status and dock chrome, so
+       we cap each cell near 12vh. The smaller of the two caps wins. */
+    --wcap: calc((100vw - 32vw - 96px) / 8.4);
+    --cell: clamp(34px, min(var(--wcap), 12vh), 96px);
+    --gap: calc(var(--cell) * 0.12);
+    padding: calc(var(--cell) * 0.34);
+    border-radius: 20px;
+    border: 3px solid var(--line);
+    background:
+      radial-gradient(120% 120% at 50% 0%, rgba(83,223,232,0.05), transparent 55%),
+      linear-gradient(180deg, var(--panel) 0%, var(--panel-deep) 100%);
+    box-shadow: 0 16px 40px rgba(2, 15, 22, 0.55), inset 0 0 0 1px rgba(244,235,217,0.05);
   }
 
-  .piece.red {
-    background: radial-gradient(circle at 35% 30%, #ff77aa, #aa0033);
-    border-color: #ff99bb;
-    box-shadow: 0 0 18px rgba(255, 80, 100, 0.7), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
-    color: #fff;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
-  }
-
-  .piece.blue {
-    background: radial-gradient(circle at 35% 30%, #88ccff, #0055aa);
-    border-color: #aaddff;
-    box-shadow: 0 0 18px rgba(100, 170, 255, 0.7), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
-    color: #fff;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
-  }
-
-  .piece:active, .piece.dragging {
-    cursor: grabbing;
-    transform: scale(1.1);
-    transition: transform 0.1s, box-shadow 0.2s;
-  }
-
-  .piece.dragging {
-    transition: none;
-  }
-
-  .piece.locked {
-    cursor: default;
+  /* floating preview chip row above columns */
+  .preview-row {
+    position: absolute;
+    left: calc(var(--cell) * 0.34);
+    top: calc(var(--cell) * 0.34 - var(--cell) - var(--gap));
+    height: var(--cell);
+    display: grid;
+    grid-template-columns: repeat(7, var(--cell));
+    gap: var(--gap);
     pointer-events: none;
   }
-
-  /* Game board */
-  .board-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 7 / 6.4;
-    margin-bottom: 14px;
+  .preview-chip {
+    grid-row: 1;
+    width: var(--cell);
+    height: var(--cell);
+    opacity: 0;
+    transition: opacity 0.14s ease;
+  }
+  .preview-chip.show { opacity: 0.9; }
+  @media (prefers-reduced-motion: no-preference) {
+    .preview-chip.show { animation: bob 1.6s ease-in-out infinite; }
+    @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   }
 
-  .board {
+  .grid-wrap { position: relative; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, var(--cell));
+    grid-template-rows: repeat(6, var(--cell));
+    gap: var(--gap);
+    position: relative;
+  }
+
+  /* each cell is a net opening (rope ring) */
+  .cell {
+    position: relative;
+    width: var(--cell);
+    height: var(--cell);
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, rgba(2,20,29,0.9), rgba(2,20,29,0.55) 62%, transparent 74%);
+    box-shadow: inset 0 0 0 3px rgba(244,235,217,0.14);
+  }
+  /* knot dots at each intersection */
+  .cell::after {
+    content: '';
+    position: absolute;
+    right: calc(var(--gap) * -0.5 - 2px);
+    bottom: calc(var(--gap) * -0.5 - 2px);
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(244,235,217,0.28);
+  }
+
+  /* dropped chip */
+  .chip {
+    position: absolute;
+    width: var(--cell);
+    height: var(--cell);
+    left: 0; top: 0;
+    z-index: 3;
+    will-change: transform;
+  }
+  .chip svg { width: 100%; height: 100%; display: block; }
+  .chip.win { z-index: 4; }
+  @media (prefers-reduced-motion: no-preference) {
+    .chip.win { animation: haul 0.7s ease-in-out infinite alternate; }
+    @keyframes haul { from { transform: var(--rest) translateY(0); } to { transform: var(--rest) translateY(-7px); } }
+  }
+
+  /* column touch targets overlay */
+  .cols {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, #0a1428, #050a18);
-    border: 2px solid rgba(0, 255, 255, 0.3);
-    border-radius: 14px;
-    padding: 10px;
-    box-shadow:
-      0 12px 40px rgba(0, 0, 0, 0.6),
-      inset 0 0 60px rgba(0, 0, 0, 0.4),
-      0 0 30px rgba(0, 255, 255, 0.08);
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(6, 1fr);
-    gap: 4px;
+    grid-template-columns: repeat(7, var(--cell));
+    gap: var(--gap);
+    z-index: 5;
   }
-
-  .cell {
-    background: radial-gradient(circle at 35% 30%, #0a1828, #02050d 70%);
-    border-radius: 50%;
-    box-shadow:
-      inset 0 4px 8px rgba(0, 0, 0, 0.8),
-      inset 0 -2px 4px rgba(255, 255, 255, 0.04);
-    position: relative;
-    overflow: hidden;
+  .col {
+    grid-row: 1;
+    min-width: 56px;
+    height: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    padding: 0;
   }
+  .col:focus-visible { outline: 3px solid var(--cream); outline-offset: -3px; border-radius: 12px; }
+  .col:not(:disabled):hover { background: rgba(244,235,217,0.05); }
 
-  /* Column hover overlay */
-  .column-hint {
+  /* tangle net overlay on a locked column */
+  .tangle {
     position: absolute;
-    top: 6px;
-    bottom: 6px;
-    width: calc((100% - 20px) / 7 - 4px);
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
+    z-index: 6;
+    border-radius: 14px;
     pointer-events: none;
-    transition: background 0.15s;
-    z-index: 1;
+    background:
+      repeating-linear-gradient(45deg, rgba(232,86,74,0.55) 0 2px, transparent 2px 11px),
+      repeating-linear-gradient(-45deg, rgba(232,86,74,0.55) 0 2px, transparent 2px 11px);
+    box-shadow: inset 0 0 0 2px rgba(232,86,74,0.6);
+  }
+  .tangle::after {
+    content: 'LACED';
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    font-family: var(--display);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--bobber);
+    text-shadow: 0 1px 3px rgba(2,15,22,0.9);
   }
 
-  .column-hint.active.red { background: rgba(255, 80, 100, 0.12); border: 1px dashed rgba(255, 80, 100, 0.4); }
-  .column-hint.active.blue { background: rgba(100, 170, 255, 0.12); border: 1px dashed rgba(100, 170, 255, 0.4); }
-  .column-hint.full { background: rgba(255, 100, 100, 0.05); border: 1px dashed rgba(255, 100, 100, 0.3); }
+  /* targeting mode: highlight tappable enemy chips */
+  .grid.targeting .chip.enemy-target { cursor: pointer; }
+  /* guarantee a finger-sized tap area on touch screens, even when cells are small */
+  @media (pointer: coarse) {
+    .grid.targeting .chip.enemy-target {
+      min-width: 56px; min-height: 56px;
+      margin: min(0px, calc((56px - var(--cell)) / -2));
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .grid.targeting .chip.enemy-target { animation: targetPulse 1s ease-in-out infinite; }
+    @keyframes targetPulse {
+      0%,100% { filter: drop-shadow(0 0 0 rgba(232,86,74,0)); }
+      50% { filter: drop-shadow(0 0 8px rgba(232,86,74,0.95)); }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grid.targeting .chip.enemy-target { filter: drop-shadow(0 0 6px rgba(232,86,74,0.9)); }
+  }
 
-  /* Dropped pieces */
-  .drop {
-    position: absolute;
-    width: calc((100% - 20px - 24px) / 7);
-    aspect-ratio: 1;
-    border-radius: 50%;
-    border: 3px solid;
+  /* ink burst + splash particle layer */
+  .fx { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: visible; }
+  .particle { position: absolute; border-radius: 50%; will-change: transform, opacity; }
+  @media (prefers-reduced-motion: no-preference) {
+    .particle { animation: pop var(--dur, 0.6s) ease-out forwards; }
+    @keyframes pop {
+      from { transform: translate(0,0) scale(1); opacity: 0.95; }
+      to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+    }
+    .bubbletrail { animation: trailUp 0.5s ease-out forwards; }
+    @keyframes trailUp {
+      from { transform: translateY(0) scale(1); opacity: 0.7; }
+      to { transform: translateY(-26px) scale(0.3); opacity: 0; }
+    }
+  }
+
+  /* ---------- game-over overlay ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    z-index: 2;
-    color: #fff;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    background: rgba(2, 15, 22, 0.82);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
-
-  .drop.red {
-    background: radial-gradient(circle at 35% 30%, #ff77aa, #aa0033);
-    border-color: #ff99bb;
-    box-shadow: 0 0 16px rgba(255, 80, 100, 0.6), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
+  .overlay[hidden] { display: none; }
+  .panel-card {
+    width: min(560px, 94vw);
+    max-height: 92vh;
+    overflow: auto;
+    text-align: center;
+    padding: clamp(22px, 4vw, 38px);
+    border-radius: 20px;
+    border: 2px solid var(--line);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-deep) 100%);
+    box-shadow: 0 24px 60px rgba(2, 15, 22, 0.7);
   }
-  .drop.blue {
-    background: radial-gradient(circle at 35% 30%, #88ccff, #0055aa);
-    border-color: #aaddff;
-    box-shadow: 0 0 16px rgba(100, 170, 255, 0.6), inset 0 -6px 12px rgba(0, 0, 0, 0.4);
-  }
-
-  .drop.win {
-    animation: winFlash 0.6s ease-in-out infinite alternate;
-  }
-
-  @keyframes winFlash {
-    0% { box-shadow: 0 0 16px currentColor, inset 0 -6px 12px rgba(0, 0, 0, 0.4); }
-    100% { box-shadow: 0 0 40px gold, 0 0 60px gold, inset 0 -6px 12px rgba(0, 0, 0, 0.4); }
-  }
-
-  /* Drop animation: piece flies down */
-  @keyframes dropDown {
-    0% { transform: translateY(var(--from)) scale(1); }
-    80% { transform: translateY(0) scale(1.05, 0.95); }
-    90% { transform: translateY(-6px) scale(0.97, 1.03); }
-    100% { transform: translateY(0) scale(1); }
-  }
-
-  .drop.dropping {
-    animation: dropDown 0.55s cubic-bezier(0.5, 0, 0.5, 1);
-  }
-
-  /* Controls */
-  .controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 14px;
-  }
-
-  .btn {
-    background: rgba(0, 0, 30, 0.5);
-    border: 1px solid rgba(0, 255, 255, 0.4);
-    color: #00ffff;
-    padding: 10px 22px;
-    border-radius: 24px;
-    font-size: 0.78rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-family: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn:hover, .btn:focus-visible { background: rgba(0, 255, 255, 0.12); color: #fff; outline: none; }
-
-  .btn.primary {
-    background: linear-gradient(90deg, rgba(255, 80, 100, 0.2), rgba(100, 170, 255, 0.2));
-    border-color: rgba(255, 0, 200, 0.5);
-    color: #fff;
+  .panel-card .banner {
+    font-family: var(--display);
     font-weight: 700;
-  }
-  .btn.primary:hover, .btn.primary:focus-visible {
-    background: linear-gradient(90deg, rgba(255, 80, 100, 0.35), rgba(100, 170, 255, 0.35));
-    box-shadow: 0 0 25px rgba(255, 0, 200, 0.3);
-  }
-
-  .instructions {
-    text-align: center;
-    color: #8aa0c0;
-    font-size: 0.78rem;
-    line-height: 1.55;
-    margin-bottom: 12px;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
-  }
-
-  /* Last-piece reveal */
-  .reveal {
-    background: rgba(0, 10, 25, 0.7);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 10px;
-    padding: 8px 12px;
-    margin-bottom: 14px;
-    backdrop-filter: blur(8px);
-    font-size: 0.78rem;
-    color: #c8d8ff;
-    text-align: center;
-    line-height: 1.45;
-    min-height: 32px;
-    transition: opacity 0.3s;
-  }
-
-  .reveal strong { color: #fff; }
-  .reveal .red-text { color: #ff8aa8; }
-  .reveal .blue-text { color: #99ccff; }
-
-  /* Game over */
-  .game-over {
-    text-align: center;
-    padding: 26px 22px;
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
-    display: none;
-  }
-
-  .game-over.visible { display: block; animation: revealIn 0.5s ease; }
-
-  @keyframes revealIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .game-over.red-win { background: linear-gradient(135deg, rgba(60, 0, 30, 0.8), rgba(30, 0, 0, 0.8)); border: 1px solid rgba(255, 80, 100, 0.6); }
-  .game-over.blue-win { background: linear-gradient(135deg, rgba(0, 30, 60, 0.8), rgba(0, 0, 40, 0.8)); border: 1px solid rgba(100, 170, 255, 0.6); }
-  .game-over.draw { background: linear-gradient(135deg, rgba(40, 40, 40, 0.8), rgba(20, 20, 20, 0.8)); border: 1px solid rgba(255, 170, 0, 0.5); }
-
-  .game-over h2 {
-    font-size: 1.5rem;
-    color: #fff;
-    letter-spacing: 4px;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    letter-spacing: 0.08em;
+    line-height: 1.02;
+    font-size: clamp(1.6rem, 6vw, 2.6rem);
+    color: var(--cream);
+  }
+  .panel-card .banner.p1 { color: var(--lure); }
+  .panel-card .banner.p2 { color: var(--biolume); }
+  .panel-card .banner.draw { color: var(--cream-dim); }
+  .panel-card .subline {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    color: var(--cream-dim);
+  }
+  .tally {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin: 20px 0 6px;
+  }
+  .tally .t {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-deep);
+  }
+  .tally .t .lbl {
+    font-family: var(--display);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .tally .t.p1 .lbl { color: var(--lure); }
+  .tally .t.p2 .lbl { color: var(--biolume); }
+  .tally .t .val { font-family: var(--mono); font-size: 1.5rem; color: var(--brass); }
+
+  .factcard {
+    margin: 18px 0 22px;
+    text-align: left;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px dashed var(--line);
+    background: rgba(2, 20, 29, 0.4);
+  }
+  .factcard .fc-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--display);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--brass);
+    margin-bottom: 8px;
+  }
+  .factcard .fc-head svg { width: 18px; height: 18px; }
+  .factcard .fc-body {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--cream);
   }
 
-  .game-over.red-win h2 { color: #ff6b88; text-shadow: 0 0 18px rgba(255, 80, 100, 0.6); }
-  .game-over.blue-win h2 { color: #66aaff; text-shadow: 0 0 18px rgba(100, 170, 255, 0.6); }
-  .game-over.draw h2 { color: #ffcc66; text-shadow: 0 0 18px rgba(255, 170, 0, 0.6); }
-
-  .game-over p {
-    color: #d8e8ff;
-    font-size: 0.95rem;
-    line-height: 1.65;
-    margin-bottom: 18px;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
+  .rematch {
+    min-height: 62px;
+    width: 100%;
+    padding: 0 22px;
+    border: 2px solid var(--lure);
+    border-radius: 16px;
+    background: rgba(255, 122, 69, 0.16);
+    color: var(--cream);
+    font-family: var(--display);
+    font-size: 1.05rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.12s ease;
   }
+  .rematch:active { transform: scale(0.97); background: rgba(255, 122, 69, 0.3); }
+  .rematch:focus-visible { outline: 3px solid var(--biolume); outline-offset: 3px; }
 
-  @media (max-width: 540px) {
-    .scoreboard { grid-template-columns: 1fr 1fr; }
-    .vs { grid-column: 1 / -1; order: -1; padding: 4px; font-size: 0.85rem; }
-    .team-name { font-size: 0.78rem; }
-    .team-role { font-size: 0.6rem; }
-    .piece { width: 42px; height: 42px; font-size: 1.2rem; }
-    .stage { height: 76px; }
-  }
-
-  @media (max-width: 380px) {
-    .piece { width: 36px; height: 36px; font-size: 1rem; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    h1, .drop.win { animation: none !important; }
-    .drop.dropping { animation: none !important; }
+  /* very short landscape: trim vertical chrome */
+  @media (max-height: 560px) {
+    header.bar { padding-top: 0; }
+    .status { min-height: 0; }
   }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="top-bar">
-    <a href="games.html" class="back-link">&#8592; Cyber Games</a>
-    <span class="back-link" style="border-color: rgba(255, 215, 0, 0.4); color: gold; cursor: default;">2 players &middot; local</span>
-  </div>
+<div class="sea" aria-hidden="true" id="sea"></div>
 
-  <header>
-    <h1>Cyber Connect Four</h1>
-    <div class="subtitle">Red Team vs. Blue Team</div>
+<a class="home-chip" href="caught-in-the-net.html">&#8962; ARCADE</a>
+
+<div class="stage">
+  <header class="bar">
+    <h1>Hook, Line <span class="amp">&amp;</span> Sinker</h1>
   </header>
 
-  <div class="scoreboard">
-    <div class="team red active" id="teamRed">
-      <div class="team-icon" aria-hidden="true">&#9889;</div>
-      <div class="team-info">
-        <div class="team-name">Red Team</div>
-        <div class="team-role">Wins: <span id="redWins">0</span></div>
-      </div>
-    </div>
-    <div class="vs" aria-hidden="true">VS</div>
-    <div class="team blue" id="teamBlue">
-      <div class="team-icon" aria-hidden="true">&#128737;</div>
-      <div class="team-info">
-        <div class="team-name">Blue Team</div>
-        <div class="team-role">Wins: <span id="blueWins">0</span></div>
-      </div>
-    </div>
+  <div class="scoreboard" aria-hidden="true">
+    <div class="score p1"><span class="who">Phishers</span><span class="num" id="scoreP1">0</span></div>
+    <span class="vs">catch tally</span>
+    <div class="score p2"><span class="num" id="scoreP2">0</span><span class="who">Defenders</span></div>
   </div>
 
-  <p class="instructions">
-    Drag your piece over a column. Drop to play.<br>
-    Four in a row (any direction) wins the round.
-  </p>
+  <div class="status" id="status" role="status" aria-live="polite">Phishers cast first. Tap a column to drop a hook.</div>
 
-  <div class="stage">
-    <div class="turn-text" id="turnText"><strong class="red">Red Team</strong>'s turn</div>
-    <div class="piece-staging" id="staging">
-      <div class="piece red" id="piece" tabindex="0" role="button" aria-label="Drag piece to a column">&#9889;</div>
+  <div class="arena">
+
+    <!-- Phishers dock -->
+    <div class="dock p1" id="dockP1">
+      <div class="dock-name">
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 26 26"><path d="M13 2 v11 a6 6 0 1 0 6 -6" fill="none" stroke="#FF7A45" stroke-width="2.6" stroke-linecap="round"/><circle cx="13" cy="2.6" r="1.8" fill="#F4EBD9"/></svg>
+        </span>
+        Phishers
+      </div>
+      <button class="power-btn" id="p1-depth" type="button" data-player="1" data-power="depth"
+        aria-label="Phishers Depth Charge, 2 remaining. Blows up one Defender chip. Uses your turn.">
+        <svg class="pic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="7" fill="none" stroke="#FF7A45" stroke-width="2.2"/><path d="M12 7 V3 M12 3 l-3 2 M12 3 l3 2" stroke="#FF7A45" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="12" cy="14" r="2.4" fill="#FF7A45"/></svg>
+        <span class="pname">Depth Charge</span>
+        <span class="puses" id="p1-depth-uses">2 left</span>
+      </button>
+      <button class="power-btn" id="p1-tangle" type="button" data-player="1" data-power="tangle"
+        aria-label="Phishers Tangle Net, 2 remaining. Laces one column shut for the Defenders next turn. Uses your turn.">
+        <svg class="pic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6 L20 18 M20 6 L4 18 M12 4 V20 M4 12 H20" stroke="#FF7A45" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        <span class="pname">Tangle Net</span>
+        <span class="puses" id="p1-tangle-uses">2 left</span>
+      </button>
+      <button class="cancel-btn" id="p1-cancel" type="button" hidden>Cancel</button>
     </div>
+
+    <!-- board -->
+    <div class="board-frame" id="boardFrame">
+      <div class="preview-row" id="previewRow" aria-hidden="true"></div>
+      <div class="grid-wrap">
+        <div class="grid" id="grid" role="grid" aria-label="Fishing net board, 7 columns by 6 rows"></div>
+        <div class="fx" id="fx" aria-hidden="true"></div>
+        <div class="cols" id="cols"></div>
+      </div>
+    </div>
+
+    <!-- Defenders dock -->
+    <div class="dock p2" id="dockP2">
+      <div class="dock-name">
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 26 26"><path d="M13 3 L21 6 V13 c0 5 -4 8 -8 10 c-4 -2 -8 -5 -8 -10 V6 Z" fill="none" stroke="#53DFE8" stroke-width="2.4" stroke-linejoin="round"/><path d="M9.5 13 l2.4 2.6 L17 9.5" fill="none" stroke="#53DFE8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Defenders
+      </div>
+      <button class="power-btn" id="p2-depth" type="button" data-player="2" data-power="depth"
+        aria-label="Defenders Depth Charge, 2 remaining. Blows up one Phisher chip. Uses your turn.">
+        <svg class="pic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="7" fill="none" stroke="#53DFE8" stroke-width="2.2"/><path d="M12 7 V3 M12 3 l-3 2 M12 3 l3 2" stroke="#53DFE8" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="12" cy="14" r="2.4" fill="#53DFE8"/></svg>
+        <span class="pname">Depth Charge</span>
+        <span class="puses" id="p2-depth-uses">2 left</span>
+      </button>
+      <button class="power-btn" id="p2-tangle" type="button" data-player="2" data-power="tangle"
+        aria-label="Defenders Tangle Net, 2 remaining. Laces one column shut for the Phishers next turn. Uses your turn.">
+        <svg class="pic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6 L20 18 M20 6 L4 18 M12 4 V20 M4 12 H20" stroke="#53DFE8" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        <span class="pname">Tangle Net</span>
+        <span class="puses" id="p2-tangle-uses">2 left</span>
+      </button>
+      <button class="cancel-btn" id="p2-cancel" type="button" hidden>Cancel</button>
+    </div>
+
   </div>
-
-  <div class="reveal" id="reveal" aria-live="polite">Drop your first piece...</div>
-
-  <main>
-    <div class="board-wrap" id="boardWrap">
-      <div class="board" id="board" role="grid" aria-label="Connect Four board"></div>
-    </div>
-
-    <div class="controls">
-      <button class="btn primary" id="newGameBtn" type="button">New game</button>
-      <button class="btn" id="resetScoreBtn" type="button">Reset score</button>
-    </div>
-
-    <div class="game-over" id="gameOver" role="status">
-      <h2 id="ggTitle"></h2>
-      <p id="ggMsg"></p>
-      <button class="btn primary" id="rematchBtn" type="button">Rematch</button>
-    </div>
-  </main>
 </div>
 
+<!-- game over overlay -->
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ovBanner">
+  <div class="panel-card">
+    <div class="banner" id="ovBanner">Phishers haul in the catch!</div>
+    <div class="subline" id="ovSub">Four in a row on the net.</div>
+    <div class="tally">
+      <div class="t p1"><span class="lbl">Phishers</span><span class="val" id="tallyP1">0</span></div>
+      <div class="t p2"><span class="lbl">Defenders</span><span class="val" id="tallyP2">0</span></div>
+    </div>
+    <div class="factcard">
+      <div class="fc-head">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1 L16 4 V9 c0 4 -3 6.5 -7 8 c-4 -1.5 -7 -4 -7 -8 V4 Z" fill="none" stroke="#F5C15C" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Catch of the Day
+      </div>
+      <div class="fc-body" id="factBody">Fact goes here.</div>
+    </div>
+    <button class="rematch" id="rematchBtn" type="button">Rematch, loser casts first</button>
+  </div>
+</div>
+
+<script src="sounds.js"></script>
 <script>
-const COLS = 7;
-const ROWS = 6;
+(function () {
+  'use strict';
 
-// Cosmetic piece labels - swapped each turn so each piece has a different cyber identity
-const RED_PIECES = [
-  { icon: '\u{1F41B}', name: 'Malware' },
-  { icon: '\u{1F41F}', name: 'Phishing' },
-  { icon: '\u{1F480}', name: 'Zero-day' },
-  { icon: '\u{1F528}', name: 'Brute Force' },
-  { icon: '\u{1F4A3}', name: 'Ransomware' },
-  { icon: '\u{1F575}', name: 'Insider' },
-  { icon: '\u{1F30A}', name: 'DDoS' }
-];
+  var COLS = 7, ROWS = 6;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const BLUE_PIECES = [
-  { icon: '\u{1F525}', name: 'Firewall' },
-  { icon: '\u{1F510}', name: 'MFA' },
-  { icon: '\u{1F300}', name: 'Encryption' },
-  { icon: '\u{1F50D}', name: 'EDR' },
-  { icon: '\u{1F3AF}', name: 'Honeypot' },
-  { icon: '\u{1F4DC}', name: 'Audit Log' },
-  { icon: '\u{1F50C}', name: 'Patch' }
-];
-
-const FLAVOR = {
-  RR: ['flanks', 'reinforces', 'amplifies'],
-  RB: ['attacks', 'breaches against', 'targets'],
-  BR: ['blocks', 'mitigates', 'defends against'],
-  BB: ['stacks with', 'reinforces', 'integrates with']
-};
-
-const board = document.getElementById('board');
-const boardWrap = document.getElementById('boardWrap');
-const piece = document.getElementById('piece');
-const staging = document.getElementById('staging');
-const turnText = document.getElementById('turnText');
-const reveal = document.getElementById('reveal');
-const teamRed = document.getElementById('teamRed');
-const teamBlue = document.getElementById('teamBlue');
-const newGameBtn = document.getElementById('newGameBtn');
-const resetScoreBtn = document.getElementById('resetScoreBtn');
-const gameOver = document.getElementById('gameOver');
-const ggTitle = document.getElementById('ggTitle');
-const ggMsg = document.getElementById('ggMsg');
-const rematchBtn = document.getElementById('rematchBtn');
-const redWinsEl = document.getElementById('redWins');
-const blueWinsEl = document.getElementById('blueWins');
-
-// Game state
-let grid = [];   // grid[row][col] = 'red' | 'blue' | null
-let cells = [];  // 2D array of cell DOM elements
-let turn = 'red';
-let busy = false;
-let lastPieceName = null;
-let redWins = 0;
-let blueWins = 0;
-let gameDone = false;
-
-// Build the board grid
-function buildBoard() {
-  board.innerHTML = '';
-  grid = [];
-  cells = [];
-  for (let r = 0; r < ROWS; r++) {
-    grid.push(new Array(COLS).fill(null));
-    cells.push([]);
-    for (let c = 0; c < COLS; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.dataset.row = r;
-      cell.dataset.col = c;
-      cell.setAttribute('role', 'gridcell');
-      cell.setAttribute('aria-label', `Row ${r + 1}, column ${c + 1}, empty`);
-      board.appendChild(cell);
-      cells[r].push(cell);
+  function snd(name, arg) {
+    if (window.CyberSounds && typeof window.CyberSounds[name] === 'function') {
+      try { window.CyberSounds[name](arg); } catch (e) {}
     }
   }
-}
-buildBoard();
 
-// Resize / reposition piece
-function getColumnX(col) {
-  // returns X position centered above column relative to staging
-  const stageRect = staging.getBoundingClientRect();
-  const boardRect = board.getBoundingClientRect();
-  const padding = 10; // board padding
-  const gap = 4;
-  const innerWidth = boardRect.width - 2 * padding;
-  const cellW = (innerWidth - gap * (COLS - 1)) / COLS;
-  const cellCenter = boardRect.left + padding + cellW * col + cellW * 0.5 + gap * col;
-  const pieceWidth = piece.offsetWidth;
-  return cellCenter - stageRect.left - pieceWidth / 2;
-}
-
-let currentColumn = 3; // start over middle column
-
-function snapToColumn(col, animate) {
-  currentColumn = Math.max(0, Math.min(COLS - 1, col));
-  const x = getColumnX(currentColumn);
-  if (!animate) piece.style.transition = 'none';
-  piece.style.left = x + 'px';
-  if (!animate) {
-    void piece.offsetWidth;
-    piece.style.transition = '';
-  }
-  updateColumnHints(currentColumn);
-}
-
-function updateColumnHints(activeCol) {
-  // Highlight column overlay - drawn dynamically as a pseudo-overlay using cell highlights
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const cell = cells[r][c];
-      cell.style.boxShadow = '';
+  // ---------- ambient bubbles ----------
+  (function () {
+    var sea = document.getElementById('sea');
+    if (reduce || !sea) return;
+    for (var i = 0; i < 11; i++) {
+      var b = document.createElement('div');
+      b.className = 'bubble';
+      var s = 6 + Math.random() * 15;
+      b.style.width = s + 'px';
+      b.style.height = s + 'px';
+      b.style.left = (Math.random() * 100) + '%';
+      b.style.animationDuration = (15 + Math.random() * 18) + 's';
+      b.style.animationDelay = (-Math.random() * 30) + 's';
+      sea.appendChild(b);
     }
-  }
-  if (activeCol == null || gameDone) return;
-  const isFull = grid[0][activeCol] !== null;
-  for (let r = 0; r < ROWS; r++) {
-    const cell = cells[r][activeCol];
-    if (isFull) {
-      cell.style.boxShadow = 'inset 0 0 0 2px rgba(255, 100, 100, 0.4), inset 0 4px 8px rgba(0, 0, 0, 0.8)';
-    } else {
-      const color = turn === 'red' ? 'rgba(255, 80, 100, 0.4)' : 'rgba(100, 170, 255, 0.4)';
-      cell.style.boxShadow = `inset 0 0 0 2px ${color}, inset 0 4px 8px rgba(0, 0, 0, 0.8)`;
-    }
-  }
-}
+  })();
 
-// Determine which column the piece is over
-function columnFromX(clientX) {
-  const boardRect = board.getBoundingClientRect();
-  const padding = 10;
-  const gap = 4;
-  const innerWidth = boardRect.width - 2 * padding;
-  const cellW = (innerWidth - gap * (COLS - 1)) / COLS;
-  const x = clientX - boardRect.left - padding;
-  const colF = x / (cellW + gap);
-  return Math.max(0, Math.min(COLS - 1, Math.floor(colF)));
-}
-
-// Drag handling via pointer events (mouse + touch)
-let dragging = false;
-let dragOffset = 0;
-let pointerStartX = 0;
-
-piece.addEventListener('pointerdown', (e) => {
-  if (busy || gameDone) return;
-  dragging = true;
-  piece.classList.add('dragging');
-  piece.setPointerCapture(e.pointerId);
-  pointerStartX = e.clientX;
-  const stageRect = staging.getBoundingClientRect();
-  const pieceRect = piece.getBoundingClientRect();
-  dragOffset = e.clientX - pieceRect.left;
-  e.preventDefault();
-});
-
-piece.addEventListener('pointermove', (e) => {
-  if (!dragging) return;
-  const stageRect = staging.getBoundingClientRect();
-  const x = e.clientX - dragOffset - stageRect.left;
-  piece.style.transition = 'none';
-  piece.style.left = x + 'px';
-  // Update column hint based on piece center
-  const pieceCenter = e.clientX - dragOffset + piece.offsetWidth / 2;
-  const col = columnFromX(pieceCenter);
-  if (col !== currentColumn) {
-    currentColumn = col;
-    updateColumnHints(col);
-  }
-});
-
-piece.addEventListener('pointerup', (e) => {
-  if (!dragging) return;
-  dragging = false;
-  piece.classList.remove('dragging');
-  piece.style.transition = '';
-  // Drop into current column if valid
-  const pieceCenter = piece.getBoundingClientRect().left + piece.offsetWidth / 2;
-  const col = columnFromX(pieceCenter);
-  attemptDrop(col);
-});
-
-piece.addEventListener('pointercancel', () => {
-  if (!dragging) return;
-  dragging = false;
-  piece.classList.remove('dragging');
-  piece.style.transition = '';
-  snapToColumn(currentColumn, true);
-});
-
-// Click-to-drop on columns as alternate input
-boardWrap.addEventListener('click', (e) => {
-  if (busy || gameDone || dragging) return;
-  if (e.target === piece) return;
-  const col = columnFromX(e.clientX);
-  attemptDrop(col);
-});
-
-// Keyboard support
-piece.addEventListener('keydown', (e) => {
-  if (busy || gameDone) return;
-  if (e.key === 'ArrowLeft') { e.preventDefault(); snapToColumn(currentColumn - 1, true); }
-  else if (e.key === 'ArrowRight') { e.preventDefault(); snapToColumn(currentColumn + 1, true); }
-  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); attemptDrop(currentColumn); }
-});
-
-// Find the lowest empty row in a column
-function lowestRow(col) {
-  for (let r = ROWS - 1; r >= 0; r--) {
-    if (grid[r][col] === null) return r;
-  }
-  return -1;
-}
-
-function attemptDrop(col) {
-  if (busy || gameDone) return;
-  const row = lowestRow(col);
-  if (row < 0) {
-    // Column full - shake piece, sound
-    if (window.CyberSounds) CyberSounds.wrong();
-    const orig = piece.style.transform;
-    piece.style.transition = 'transform 0.05s';
-    piece.style.transform = 'translateX(-6px)';
-    setTimeout(() => { piece.style.transform = 'translateX(6px)'; }, 60);
-    setTimeout(() => { piece.style.transform = ''; piece.style.transition = ''; }, 120);
-    return;
-  }
-  doDrop(col, row);
-}
-
-function doDrop(col, row) {
-  busy = true;
-  piece.classList.add('locked');
-
-  // Pick a piece identity
-  const pool = turn === 'red' ? RED_PIECES : BLUE_PIECES;
-  const identity = pool[Math.floor(Math.random() * pool.length)];
-
-  // Snap piece visually to column center
-  snapToColumn(col, true);
-
-  // Create the dropped piece DOM element. We position it absolutely over the cell.
-  const drop = document.createElement('div');
-  drop.className = 'drop ' + turn + ' dropping';
-  drop.textContent = identity.icon;
-  drop.title = identity.name;
-  drop.dataset.row = row;
-  drop.dataset.col = col;
-
-  // Place it at the target cell position
-  const cell = cells[row][col];
-  const cellRect = cell.getBoundingClientRect();
-  const wrapRect = boardWrap.getBoundingClientRect();
-  drop.style.left = (cellRect.left - wrapRect.left) + 'px';
-  drop.style.top = (cellRect.top - wrapRect.top) + 'px';
-  drop.style.width = cellRect.width + 'px';
-
-  // Compute the from offset (negative means starts above, then animates to 0)
-  const stageRect = staging.getBoundingClientRect();
-  const fromY = stageRect.top - cellRect.top;
-  drop.style.setProperty('--from', fromY + 'px');
-
-  boardWrap.appendChild(drop);
-
-  if (window.CyberSounds) CyberSounds.pop();
-
-  setTimeout(() => {
-    if (window.CyberSounds) CyberSounds.whack();
-  }, 380);
-
-  // Update logical grid after the visual animation
-  setTimeout(() => {
-    grid[row][col] = turn;
-    cells[row][col].setAttribute('aria-label', `Row ${row + 1}, column ${col + 1}, ${turn} team`);
-
-    // Reveal flavor text
-    showFlavor(turn, identity, col, row);
-
-    // Check for win
-    const winLine = checkWin(row, col, turn);
-    if (winLine) {
-      announceWin(turn, winLine);
-      busy = false;
-      return;
-    }
-
-    // Check for draw
-    if (isFull()) {
-      announceDraw();
-      busy = false;
-      return;
-    }
-
-    // Switch turn
-    turn = (turn === 'red') ? 'blue' : 'red';
-    nextTurn();
-    busy = false;
-  }, 580);
-}
-
-function showFlavor(team, identity, col, row) {
-  // Find the piece below the new one (if any) for combat narrative
-  let belowTeam = null, belowName = null;
-  if (row + 1 < ROWS && grid[row + 1][col]) {
-    belowTeam = grid[row + 1][col];
-    // We don't track names per piece; use a generic descriptor
-    belowName = belowTeam === 'red' ? 'a Red Team piece' : 'a Blue Team piece';
-  }
-
-  let html;
-  const teamLabel = team === 'red' ? '<span class="red-text">Red Team</span>' : '<span class="blue-text">Blue Team</span>';
-  const verbKey = team === 'red' ? (belowTeam === 'blue' ? 'RB' : 'RR') : (belowTeam === 'red' ? 'BR' : 'BB');
-  const verb = belowTeam ? FLAVOR[verbKey][Math.floor(Math.random() * FLAVOR[verbKey].length)] : 'deploys';
-
-  if (belowTeam) {
-    html = `${teamLabel} drops <strong>${identity.name}</strong> ${identity.icon}, which ${verb} ${belowName} in column ${col + 1}.`;
-  } else {
-    html = `${teamLabel} ${verb} <strong>${identity.name}</strong> ${identity.icon} into column ${col + 1}.`;
-  }
-  reveal.innerHTML = html;
-}
-
-function nextTurn() {
-  // Update active team highlights
-  teamRed.classList.toggle('active', turn === 'red');
-  teamBlue.classList.toggle('active', turn === 'blue');
-
-  // Update turn text + piece appearance
-  const className = turn === 'red' ? 'red' : 'blue';
-  turnText.innerHTML = turn === 'red'
-    ? '<strong class="red">Red Team</strong>\'s turn'
-    : '<strong class="blue">Blue Team</strong>\'s turn';
-
-  const pool = turn === 'red' ? RED_PIECES : BLUE_PIECES;
-  const identity = pool[Math.floor(Math.random() * pool.length)];
-  lastPieceName = identity.name;
-  piece.className = 'piece ' + className;
-  piece.textContent = identity.icon;
-  piece.title = identity.name + ' (' + (turn === 'red' ? 'Red' : 'Blue') + ' Team)';
-  piece.setAttribute('aria-label', `${identity.name} - ${turn} team. Drag to a column to drop.`);
-
-  piece.classList.remove('locked');
-  snapToColumn(currentColumn, true);
-  updateColumnHints(currentColumn);
-}
-
-function isFull() {
-  return grid[0].every(c => c !== null);
-}
-
-// Win check: returns array of [row, col] for the winning line, or null
-function checkWin(row, col, team) {
-  const dirs = [
-    [0, 1],   // horizontal
-    [1, 0],   // vertical
-    [1, 1],   // diag down-right
-    [1, -1]   // diag down-left
+  // ---------- facts: red team vs blue team, layered defense ----------
+  var FACTS = [
+    'Red team versus blue team drills pit attackers against defenders on the same network, so a company finds its own gaps before a real crook does.',
+    'The red team plays the phisher: they probe, lure, and try to break in. The blue team defends, watches the logs, and shores up the weak spots.',
+    'Layered defense (defense in depth) stacks many small barriers. One clever hook may slip past a layer, but rarely past every layer at once.',
+    'A purple team is red and blue working together. The attackers show exactly how they got in, and the defenders patch it on the spot.',
+    'Tabletop exercises rehearse a breach with no real systems touched. Teams talk through who does what, so the real incident is not the first run.'
   ];
-  for (const [dr, dc] of dirs) {
-    const line = [[row, col]];
-    // Forward
-    let r = row + dr, c = col + dc;
-    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c] === team) {
-      line.push([r, c]); r += dr; c += dc;
-    }
-    // Backward
-    r = row - dr; c = col - dc;
-    while (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c] === team) {
-      line.unshift([r, c]); r -= dr; c -= dc;
-    }
-    if (line.length >= 4) return line.slice(0, 4); // any contiguous 4 wins
-  }
-  return null;
-}
 
-function announceWin(team, line) {
-  gameDone = true;
-  // Mark winning pieces
-  const drops = boardWrap.querySelectorAll('.drop');
-  line.forEach(([r, c]) => {
-    drops.forEach(d => {
-      if (parseInt(d.dataset.row, 10) === r && parseInt(d.dataset.col, 10) === c) {
-        d.classList.add('win');
+  // ---------- chip glyph SVGs (inline, not emoji) ----------
+  function hookSVG() {
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<defs><radialGradient id="gLure" cx="38%" cy="32%" r="72%">' +
+      '<stop offset="0%" stop-color="#FFB07A"/><stop offset="55%" stop-color="#FF7A45"/><stop offset="100%" stop-color="#C74E22"/>' +
+      '</radialGradient></defs>' +
+      '<circle cx="50" cy="50" r="45" fill="url(#gLure)" stroke="#7A2E13" stroke-width="3"/>' +
+      '<circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-dasharray="4 6"/>' +
+      '<path d="M50 24 v26 a13 13 0 1 0 13 -13" fill="none" stroke="#3A140A" stroke-width="6" stroke-linecap="round"/>' +
+      '<circle cx="50" cy="24" r="4" fill="#F4EBD9"/>' +
+      '</svg>';
+  }
+  function shieldSVG() {
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<defs><radialGradient id="gBio" cx="40%" cy="32%" r="74%">' +
+      '<stop offset="0%" stop-color="#9CF3F8"/><stop offset="55%" stop-color="#53DFE8"/><stop offset="100%" stop-color="#1F8F98"/>' +
+      '</radialGradient></defs>' +
+      '<circle cx="50" cy="50" r="45" fill="url(#gBio)" stroke="#0E4A50" stroke-width="3"/>' +
+      '<circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-dasharray="4 6"/>' +
+      '<path d="M50 26 L70 34 V52 c0 12 -9 18 -20 24 c-11 -6 -20 -12 -20 -24 V34 Z" fill="none" stroke="#08343A" stroke-width="5.5" stroke-linejoin="round"/>' +
+      '<path d="M42 50 l6 6 L62 42" fill="none" stroke="#08343A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+  }
+
+  // ---------- DOM refs ----------
+  var grid = document.getElementById('grid');
+  var colsWrap = document.getElementById('cols');
+  var previewRow = document.getElementById('previewRow');
+  var fxLayer = document.getElementById('fx');
+  var statusEl = document.getElementById('status');
+  var dock1 = document.getElementById('dockP1');
+  var dock2 = document.getElementById('dockP2');
+  var scoreP1El = document.getElementById('scoreP1');
+  var scoreP2El = document.getElementById('scoreP2');
+  var overlay = document.getElementById('overlay');
+  var frame = document.getElementById('boardFrame');
+
+  // ---------- state ----------
+  var board;            // board[r][c] = 0 | 1 | 2
+  var chipEls;          // chipEls[r][c] = element or null
+  var current;          // 1 or 2
+  var busy;             // animating / locked out
+  var over;             // round finished
+  var armed;            // null | { player, power }
+  var tangle;           // { col, blockedFor } or null (blockedFor = player who cannot use it)
+  var powersLeft;       // { 1:{depth,tangle}, 2:{depth,tangle} }
+  var wins = { 1: 0, 2: 0 };
+  var starter = 1;      // who casts first this round
+  var previewChip = null;
+  var hoverCol = -1;
+
+  // load session wins
+  (function () {
+    try {
+      var raw = localStorage.getItem('citn-c4-wins');
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && typeof o === 'object') {
+          wins[1] = parseInt(o.p1, 10) || 0;
+          wins[2] = parseInt(o.p2, 10) || 0;
+        }
       }
+    } catch (e) {}
+  })();
+
+  function saveWins() {
+    try { localStorage.setItem('citn-c4-wins', JSON.stringify({ p1: wins[1], p2: wins[2] })); } catch (e) {}
+  }
+
+  // ---------- build static board DOM ----------
+  function buildBoard() {
+    grid.innerHTML = '';
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.gridColumn = (c + 1);
+        cell.style.gridRow = (r + 1);
+        cell.setAttribute('role', 'gridcell');
+        grid.appendChild(cell);
+      }
+    }
+    colsWrap.innerHTML = '';
+    for (var c2 = 0; c2 < COLS; c2++) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'col';
+      btn.dataset.col = c2;
+      btn.setAttribute('aria-label', 'drop in column ' + (c2 + 1));
+      btn.addEventListener('click', onColClick);
+      btn.addEventListener('pointerenter', onColEnter);
+      btn.addEventListener('pointerleave', onColLeave);
+      btn.addEventListener('focus', onColEnter);
+      btn.addEventListener('blur', onColLeave);
+      colsWrap.appendChild(btn);
+    }
+    previewRow.innerHTML = '';
+    previewChip = document.createElement('div');
+    previewChip.className = 'preview-chip';
+    previewRow.appendChild(previewChip);
+  }
+
+  // pixel metrics for animation (measured from the live DOM so it is resolution
+  // proof: CSS custom properties like clamp()/calc() do not resolve to pixels via
+  // getComputedStyle, so we measure the rendered cells instead).
+  function metrics() {
+    var cells = grid.children; // 42 .cell elements, row-major
+    var fallbackCell = grid.getBoundingClientRect().width / COLS * 0.88;
+    if (!cells || cells.length < COLS + 1) {
+      var cg = fallbackCell;
+      return { cell: cg, gap: cg * 0.12, step: cg * 1.12 };
+    }
+    var a = cells[0].getBoundingClientRect();          // row 0, col 0
+    var b = cells[1].getBoundingClientRect();          // row 0, col 1
+    var cell = a.width;
+    var step = b.left - a.left;                        // includes the gap
+    if (!(cell > 0) || !(step > 0)) {                  // guard against zero/NaN
+      cell = fallbackCell; step = cell * 1.12;
+    }
+    return { cell: cell, gap: step - cell, step: step };
+  }
+
+  // ---------- reset round ----------
+  function newRound() {
+    board = [];
+    chipEls = [];
+    for (var r = 0; r < ROWS; r++) {
+      board.push([0, 0, 0, 0, 0, 0, 0]);
+      chipEls.push([null, null, null, null, null, null, null]);
+    }
+    current = starter;
+    busy = false;
+    over = false;
+    armed = null;
+    tangle = null;
+    powersLeft = { 1: { depth: 2, tangle: 2 }, 2: { depth: 2, tangle: 2 } };
+    hoverCol = -1;
+
+    buildBoard();
+    clearFx();
+    removeTangleOverlay();
+    removeCinchRope();
+    overlay.hidden = true;
+
+    updatePowerButtons();
+    updateScores();
+    updateTurnUI();
+    announceTurn(true);
+  }
+
+  function updateScores() {
+    scoreP1El.textContent = wins[1];
+    scoreP2El.textContent = wins[2];
+  }
+
+  function playerName(p) { return p === 1 ? 'Phishers' : 'Defenders'; }
+
+  function updateTurnUI() {
+    dock1.classList.toggle('active', current === 1 && !over);
+    dock2.classList.toggle('active', current === 2 && !over);
+  }
+
+  function announceTurn(first) {
+    if (over) return;
+    var msg;
+    if (armed) {
+      if (armed.power === 'depth') {
+        msg = playerName(current) + ': tap an enemy chip to blow it up. This uses your turn. Press Escape or Cancel to back out.';
+      } else {
+        msg = playerName(current) + ': tap a column to lace it shut for the other side. This uses your turn. Press Escape or Cancel to back out.';
+      }
+    } else {
+      var lead = first ? (playerName(current) + ' cast first. ') : (playerName(current) + ' up. ');
+      msg = lead + 'Tap a column to drop a chip.';
+      if (tangle && tangle.blockedFor === current) {
+        msg += ' Column ' + (tangle.col + 1) + ' is laced shut this turn.';
+      }
+    }
+    statusEl.textContent = msg;
+  }
+
+  function setStatus(msg) { statusEl.textContent = msg; }
+
+  // ---------- power buttons ----------
+  function updatePowerButtons() {
+    [1, 2].forEach(function (p) {
+      ['depth', 'tangle'].forEach(function (pw) {
+        var btn = document.getElementById('p' + p + '-' + pw);
+        var uses = document.getElementById('p' + p + '-' + pw + '-uses');
+        var left = powersLeft[p][pw];
+        uses.textContent = left + ' left';
+        var isArmedBtn = armed && armed.player === p && armed.power === pw;
+        btn.classList.toggle('armed', !!isArmedBtn);
+        var enabled = (p === current) && !busy && !over && left > 0 && (!armed || isArmedBtn);
+        btn.disabled = !enabled;
+      });
+      var cancel = document.getElementById('p' + p + '-cancel');
+      var showCancel = !!armed && armed.player === p;
+      cancel.hidden = !showCancel;
+    });
+  }
+
+  document.querySelectorAll('.power-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var p = parseInt(btn.dataset.player, 10);
+      var pw = btn.dataset.power;
+      if (p !== current || busy || over) return;
+      if (armed && armed.player === p && armed.power === pw) { cancelArm(); return; }
+      armPower(p, pw);
     });
   });
+  document.getElementById('p1-cancel').addEventListener('click', cancelArm);
+  document.getElementById('p2-cancel').addEventListener('click', cancelArm);
 
-  // Update win counts
-  if (team === 'red') { redWins++; redWinsEl.textContent = redWins; }
-  else { blueWins++; blueWinsEl.textContent = blueWins; }
-
-  // Hide piece
-  piece.classList.add('locked');
-  piece.style.opacity = '0.3';
-
-  // Clear column hints
-  updateColumnHints(null);
-
-  // Show game over
-  setTimeout(() => {
-    gameOver.className = 'game-over visible ' + team + '-win';
-    if (team === 'red') {
-      ggTitle.textContent = 'Perimeter Breached';
-      ggMsg.innerHTML = 'Red Team got four in a row. The attackers found a path through the defenses.';
-    } else {
-      ggTitle.textContent = 'Defenses Held';
-      ggMsg.innerHTML = 'Blue Team got four in a row. The perimeter held the line.';
+  function armPower(p, pw) {
+    if (powersLeft[p][pw] <= 0) return;
+    armed = { player: p, power: pw };
+    hidePreview();
+    if (pw === 'depth') {
+      grid.classList.add('targeting');
+      markEnemyTargets(true);
     }
-    if (window.CyberSounds) CyberSounds.win();
-  }, 700);
-}
+    updatePowerButtons();
+    announceTurn(false);
+    snd('click');
+  }
 
-function announceDraw() {
-  gameDone = true;
-  piece.classList.add('locked');
-  piece.style.opacity = '0.3';
-  updateColumnHints(null);
-  setTimeout(() => {
-    gameOver.className = 'game-over visible draw';
-    ggTitle.textContent = 'Stalemate';
-    ggMsg.innerHTML = 'The board is full. Neither side broke through. In real-world security, that\'s usually a win for the defenders.';
-    if (window.CyberSounds) CyberSounds.tick();
-  }, 400);
-}
+  function cancelArm() {
+    if (!armed) return;
+    armed = null;
+    grid.classList.remove('targeting');
+    markEnemyTargets(false);
+    updatePowerButtons();
+    announceTurn(false);
+    snd('click');
+  }
 
-function newGame() {
-  // Clear dropped pieces
-  boardWrap.querySelectorAll('.drop').forEach(d => d.remove());
-  buildBoard();
-  turn = 'red';
-  busy = false;
-  gameDone = false;
-  piece.style.opacity = '';
-  piece.classList.remove('locked');
-  gameOver.classList.remove('visible');
-  reveal.innerHTML = 'Drop your first piece...';
-  nextTurn();
-  // Reposition piece
-  setTimeout(() => snapToColumn(3, false), 50);
-  if (window.CyberSounds) CyberSounds.click();
-}
+  function markEnemyTargets(on) {
+    var enemy = current === 1 ? 2 : 1;
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var el = chipEls[r][c];
+        if (!el) continue;
+        if (on && board[r][c] === enemy) {
+          el.classList.add('enemy-target');
+          el.style.pointerEvents = 'auto';
+          el.setAttribute('role', 'button');
+          el.setAttribute('tabindex', '0');
+          el.setAttribute('aria-label', 'blow up ' + playerName(enemy) + ' chip in column ' + (c + 1) + ', row ' + (r + 1));
+        } else {
+          el.classList.remove('enemy-target');
+          el.style.pointerEvents = 'none';
+          el.removeAttribute('role');
+          el.removeAttribute('tabindex');
+          el.removeAttribute('aria-label');
+        }
+      }
+    }
+  }
 
-newGameBtn.addEventListener('click', newGame);
-rematchBtn.addEventListener('click', newGame);
-resetScoreBtn.addEventListener('click', () => {
-  redWins = 0; blueWins = 0;
-  redWinsEl.textContent = '0'; blueWinsEl.textContent = '0';
-  newGame();
-});
+  // ---------- preview chip ----------
+  function onColEnter(e) {
+    if (busy || over) return;
+    var c = parseInt(e.currentTarget.dataset.col, 10);
+    hoverCol = c;
+    if (armed) return;
+    showPreview(c);
+  }
+  function onColLeave() {
+    hoverCol = -1;
+    hidePreview();
+  }
+  function showPreview(c) {
+    if (isColBlocked(c) || columnFull(c)) { hidePreview(); return; }
+    previewChip.style.gridColumn = (c + 1);
+    previewChip.innerHTML = current === 1 ? hookSVG() : shieldSVG();
+    previewChip.classList.add('show');
+  }
+  function hidePreview() {
+    previewChip.classList.remove('show');
+  }
 
-// Reposition piece on resize
-window.addEventListener('resize', () => snapToColumn(currentColumn, false));
+  function columnFull(c) { return board[0][c] !== 0; }
+  function isColBlocked(c) {
+    return !!(tangle && tangle.col === c && tangle.blockedFor === current);
+  }
 
-// Initial setup
-nextTurn();
-setTimeout(() => snapToColumn(3, false), 100);
+  // ---------- column click ----------
+  function onColClick(e) {
+    if (busy || over) return;
+    var c = parseInt(e.currentTarget.dataset.col, 10);
+
+    if (armed && armed.power === 'tangle') { doTangle(c); return; }
+    if (armed && armed.power === 'depth') { return; } // depth targets chips, not columns
+
+    if (isColBlocked(c)) {
+      snd('wrong');
+      setStatus('Column ' + (c + 1) + ' is laced shut this turn. Pick another.');
+      return;
+    }
+    if (columnFull(c)) {
+      snd('wrong');
+      setStatus('Column ' + (c + 1) + ' is full. Pick another.');
+      return;
+    }
+    dropChip(c, current);
+  }
+
+  function landingRow(c) {
+    for (var r = ROWS - 1; r >= 0; r--) {
+      if (board[r][c] === 0) return r;
+    }
+    return -1;
+  }
+
+  // ---------- drop animation ----------
+  function dropChip(c, player) {
+    var r = landingRow(c);
+    if (r < 0) return;
+    busy = true;
+    hidePreview();
+    updatePowerButtons();
+
+    board[r][c] = player;
+    var el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = player === 1 ? hookSVG() : shieldSVG();
+    grid.appendChild(el);
+    chipEls[r][c] = el;
+
+    var m = metrics();
+    var restX = c * m.step;
+    var restY = r * m.step;
+    el.style.setProperty('--rest', 'translate(' + restX + 'px,' + restY + 'px)');
+
+    snd('place');
+
+    if (reduce) {
+      el.style.transform = 'translate(' + restX + 'px,' + restY + 'px)';
+      afterSettle();
+      return;
+    }
+
+    var startY = -m.step;
+    var dist = restY - startY;
+    var duration = Math.min(560, 210 + r * 62);
+    var t0 = null;
+    var squashed = false;
+
+    function beginSquash() {
+      if (squashed) return;
+      squashed = true;
+      squash(el, restX, restY);
+    }
+
+    function frameStep(ts) {
+      if (squashed) return;
+      if (t0 === null) t0 = ts;
+      var t = (ts - t0) / duration;
+      if (t > 1) t = 1;
+      var eased = t * t; // accelerate (gravity)
+      var y = startY + dist * eased;
+      el.style.transform = 'translate(' + restX + 'px,' + y + 'px)';
+      if (Math.random() < 0.34) spawnBubble(restX + m.cell * 0.5, y + m.cell * 0.5);
+      if (t < 1) {
+        requestAnimationFrame(frameStep);
+      } else {
+        beginSquash();
+      }
+    }
+    requestAnimationFrame(frameStep);
+    // Safety: requestAnimationFrame is paused when the tab is not visible, which
+    // would otherwise leave the drop unfinished and the game stuck on busy.
+    // setTimeout still fires, so guarantee the squash + settle after the fall time.
+    setTimeout(beginSquash, duration + 120);
+  }
+
+  function squash(el, restX, restY) {
+    var m = metrics();
+    var settled = false;
+    function settle() {
+      if (settled) return;
+      settled = true;
+      el.style.transition = '';
+      el.style.transform = 'translate(' + restX + 'px,' + restY + 'px) scale(1,1)';
+      afterSettle();
+    }
+    el.style.transition = 'transform 0.09s ease-out';
+    el.style.transform = 'translate(' + restX + 'px,' + (restY + m.cell * 0.06) + 'px) scale(1.14, 0.82)';
+    splash(restX + m.cell * 0.5, restY + m.cell * 0.9);
+    setTimeout(function () {
+      el.style.transform = 'translate(' + restX + 'px,' + restY + 'px) scale(0.94, 1.08)';
+      setTimeout(function () {
+        el.style.transform = 'translate(' + restX + 'px,' + restY + 'px) scale(1,1)';
+        setTimeout(settle, 90);
+      }, 80);
+    }, 80);
+  }
+
+  // ---------- particles ----------
+  function spawnBubble(x, y) {
+    var b = document.createElement('div');
+    b.className = 'particle bubbletrail';
+    var s = 4 + Math.random() * 5;
+    b.style.width = s + 'px';
+    b.style.height = s + 'px';
+    b.style.left = (x - s / 2) + 'px';
+    b.style.top = (y - s / 2) + 'px';
+    b.style.background = 'radial-gradient(circle at 35% 30%, rgba(244,235,217,0.5), rgba(83,223,232,0.35) 60%, transparent 72%)';
+    fxLayer.appendChild(b);
+    setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 520);
+  }
+
+  function splash(x, y) {
+    if (reduce) return;
+    for (var i = 0; i < 8; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      var s = 4 + Math.random() * 5;
+      p.style.width = s + 'px';
+      p.style.height = s + 'px';
+      p.style.left = (x - s / 2) + 'px';
+      p.style.top = (y - s / 2) + 'px';
+      p.style.background = 'rgba(83,223,232,0.6)';
+      var ang = Math.PI * (0.15 + Math.random() * 0.7) * -1; // upward spray
+      var dist = 14 + Math.random() * 20;
+      p.style.setProperty('--dx', (Math.cos(ang) * dist * (Math.random() < 0.5 ? -1 : 1)) + 'px');
+      p.style.setProperty('--dy', (Math.sin(ang) * dist) + 'px');
+      p.style.setProperty('--dur', (0.4 + Math.random() * 0.25) + 's');
+      fxLayer.appendChild(p);
+      (function (node) { setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); }, 700); })(p);
+    }
+  }
+
+  function inkBurst(x, y) {
+    var count = reduce ? 0 : 16;
+    for (var i = 0; i < count; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      var s = 5 + Math.random() * 8;
+      p.style.width = s + 'px';
+      p.style.height = s + 'px';
+      p.style.left = (x - s / 2) + 'px';
+      p.style.top = (y - s / 2) + 'px';
+      p.style.background = i % 3 === 0 ? 'rgba(4,20,30,0.9)' : 'rgba(232,86,74,0.75)';
+      var ang = Math.random() * Math.PI * 2;
+      var dist = 20 + Math.random() * 40;
+      p.style.setProperty('--dx', (Math.cos(ang) * dist) + 'px');
+      p.style.setProperty('--dy', (Math.sin(ang) * dist) + 'px');
+      p.style.setProperty('--dur', (0.5 + Math.random() * 0.35) + 's');
+      fxLayer.appendChild(p);
+      (function (node) { setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); }, 900); })(p);
+    }
+  }
+
+  function clearFx() { fxLayer.innerHTML = ''; }
+
+  // ---------- after a chip settles ----------
+  function afterSettle() {
+    var line = findWin();
+    if (line) { finishRound(lineOwner(line), line); return; }
+    if (boardFull()) { finishRound(0, null); return; }
+    endTurn();
+  }
+
+  function endTurn() {
+    // a tangle blocking the current player unravels now that their turn is over
+    if (tangle && tangle.blockedFor === current) {
+      removeTangleOverlay();
+      tangle = null;
+    }
+    current = current === 1 ? 2 : 1;
+    busy = false;
+    armed = null;
+    grid.classList.remove('targeting');
+    markEnemyTargets(false);
+    updatePowerButtons();
+    updateTurnUI();
+    announceTurn(false);
+    if (hoverCol >= 0) showPreview(hoverCol);
+  }
+
+  // ---------- TANGLE NET power ----------
+  function doTangle(c) {
+    var enemy = current === 1 ? 2 : 1;
+    if (columnFull(c)) {
+      snd('wrong');
+      setStatus('Column ' + (c + 1) + ' is already full. Lace a different one.');
+      return;
+    }
+    busy = true;
+    powersLeft[current].tangle -= 1;
+    tangle = { col: c, blockedFor: enemy };
+    drawTangleOverlay(c);
+    grid.classList.remove('targeting');
+    snd('alert');
+    setStatus(playerName(current) + ' laced column ' + (c + 1) + ' shut. ' + playerName(enemy) + ' cannot drop there next turn.');
+    armed = null;
+    // power consumes the turn; a tangle cannot create a win, go straight to turn end
+    setTimeout(function () { endTurn(); }, 360);
+  }
+
+  function drawTangleOverlay(c) {
+    removeTangleOverlay();
+    var m = metrics();
+    var ov = document.createElement('div');
+    ov.className = 'tangle';
+    ov.id = 'tangleOverlay';
+    ov.style.left = (c * m.step) + 'px';
+    ov.style.top = '0px';
+    ov.style.width = m.cell + 'px';
+    ov.style.height = (ROWS * m.step - m.gap) + 'px';
+    grid.parentNode.insertBefore(ov, fxLayer);
+  }
+  function removeTangleOverlay() {
+    var ov = document.getElementById('tangleOverlay');
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  }
+
+  // ---------- DEPTH CHARGE power ----------
+  grid.addEventListener('click', function (e) {
+    if (!armed || armed.power !== 'depth' || busy || over) return;
+    var chip = e.target.closest('.chip.enemy-target');
+    if (!chip) return;
+    var pos = findChipPos(chip);
+    if (pos) detonate(pos.r, pos.c);
+  });
+  grid.addEventListener('keydown', function (e) {
+    if (!armed || armed.power !== 'depth' || busy || over) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var chip = e.target.closest && e.target.closest('.chip.enemy-target');
+    if (!chip) return;
+    e.preventDefault();
+    var pos = findChipPos(chip);
+    if (pos) detonate(pos.r, pos.c);
+  });
+
+  function findChipPos(el) {
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (chipEls[r][c] === el) return { r: r, c: c };
+      }
+    }
+    return null;
+  }
+
+  function detonate(r, c) {
+    busy = true;
+    powersLeft[current].depth -= 1;
+    armed = null;
+    grid.classList.remove('targeting');
+    markEnemyTargets(false);
+    updatePowerButtons();
+
+    var m = metrics();
+    inkBurst(c * m.step + m.cell * 0.5, r * m.step + m.cell * 0.5);
+    snd('alert');
+
+    var target = chipEls[r][c];
+    if (target && target.parentNode) target.parentNode.removeChild(target);
+    chipEls[r][c] = null;
+    board[r][c] = 0;
+
+    setStatus(playerName(current) + ' set off a Depth Charge on column ' + (c + 1) + '. Chips above sink down.');
+
+    // gravity: every chip above falls one cell; then recompute the win check after settling
+    applyGravity(c, function () {
+      var line = findWin();
+      if (line) { finishRound(lineOwner(line), line); return; }
+      if (boardFull()) { finishRound(0, null); return; }
+      endTurn();
+    });
+  }
+
+  function lineOwner(line) {
+    return board[line[0][0]][line[0][1]];
+  }
+
+  // drop chips above the removed cell down by one, animated, then callback
+  function applyGravity(c, done) {
+    var stack = []; // remaining chips bottom to top
+    for (var r = ROWS - 1; r >= 0; r--) {
+      if (board[r][c] !== 0) stack.push({ player: board[r][c], el: chipEls[r][c] });
+    }
+    for (var rr = 0; rr < ROWS; rr++) { board[rr][c] = 0; chipEls[rr][c] = null; }
+
+    var m = metrics();
+    var moves = 0, settled = 0, finished = false;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      done();
+    }
+
+    for (var i = 0; i < stack.length; i++) {
+      var newR = ROWS - 1 - i;
+      board[newR][c] = stack[i].player;
+      chipEls[newR][c] = stack[i].el;
+      var el = stack[i].el;
+      var restX = c * m.step;
+      var restY = newR * m.step;
+      el.style.setProperty('--rest', 'translate(' + restX + 'px,' + restY + 'px)');
+
+      var curY = parseTranslateY(el.style.transform);
+      if (curY === null) curY = restY;
+
+      if (Math.abs(curY - restY) < 0.5) continue; // did not move
+
+      moves++;
+      (function (node, tx, ty) {
+        if (reduce) {
+          node.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
+          settled++;
+          return;
+        }
+        node.style.transition = 'transform 0.26s cubic-bezier(0.45,0.05,0.55,0.95)';
+        void node.offsetWidth; // reflow so transition applies
+        node.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
+        var handler = function () {
+          node.style.transition = '';
+          node.removeEventListener('transitionend', handler);
+          settled++;
+          if (settled >= moves) finish();
+        };
+        node.addEventListener('transitionend', handler);
+      })(el, restX, restY);
+    }
+
+    if (reduce || moves === 0) {
+      finish();
+    } else {
+      setTimeout(finish, 520); // safety in case a transitionend is missed
+    }
+  }
+
+  function parseTranslateY(str) {
+    if (!str) return null;
+    var m = str.match(/translate\(\s*[-\d.]+px\s*,\s*([-\d.]+)px/);
+    return m ? parseFloat(m[1]) : null;
+  }
+
+  // ---------- win / draw detection ----------
+  var DIRS = [[0, 1], [1, 0], [1, 1], [1, -1]];
+  function findWin() {
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var p = board[r][c];
+        if (p === 0) continue;
+        for (var d = 0; d < DIRS.length; d++) {
+          var dr = DIRS[d][0], dc = DIRS[d][1];
+          var cells = [[r, c]];
+          for (var k = 1; k < 4; k++) {
+            var nr = r + dr * k, nc = c + dc * k;
+            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break;
+            if (board[nr][nc] !== p) break;
+            cells.push([nr, nc]);
+          }
+          if (cells.length === 4) return cells;
+        }
+      }
+    }
+    return null;
+  }
+
+  function boardFull() {
+    for (var c = 0; c < COLS; c++) if (board[0][c] === 0) return false;
+    return true;
+  }
+
+  // ---------- finish round ----------
+  function finishRound(winner, line) {
+    over = true;
+    busy = true;
+    armed = null;
+    hidePreview();
+    grid.classList.remove('targeting');
+    markEnemyTargets(false);
+    updateTurnUI();
+    updatePowerButtons();
+
+    if (winner === 0) {
+      setStatus('The net is full. A draw. Both sides go home even.');
+      showOverlay(0);
+      snd('lose');
+      return;
+    }
+
+    wins[winner] += 1;
+    saveWins();
+    updateScores();
+
+    if (line) haulLine(line);
+    setStatus(playerName(winner) + ' land four in a row and haul in the catch!');
+    snd('win');
+
+    starter = winner === 1 ? 2 : 1; // loser casts first next round
+
+    setTimeout(function () { showOverlay(winner); }, 900);
+  }
+
+  function haulLine(line) {
+    var m = metrics();
+    line.forEach(function (cell) {
+      var el = chipEls[cell[0]][cell[1]];
+      if (!el) return;
+      el.classList.add('win');
+      var restX = cell[1] * m.step;
+      var restY = cell[0] * m.step;
+      el.style.setProperty('--rest', 'translate(' + restX + 'px,' + restY + 'px)');
+      var glow = document.createElement('div');
+      glow.style.cssText = 'position:absolute;inset:6%;border-radius:50%;box-shadow:0 0 0 3px #F5C15C, 0 0 14px 2px rgba(245,193,92,0.8);pointer-events:none;';
+      el.appendChild(glow);
+    });
+    drawCinchRope(line);
+  }
+
+  function drawCinchRope(line) {
+    removeCinchRope();
+    var m = metrics();
+    var first = line[0], last = line[line.length - 1];
+    var x1 = first[1] * m.step + m.cell * 0.5;
+    var y1 = first[0] * m.step + m.cell * 0.5;
+    var x2 = last[1] * m.step + m.cell * 0.5;
+    var y2 = last[0] * m.step + m.cell * 0.5;
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('id', 'cinchRope');
+    svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;overflow:visible;';
+    var ln = document.createElementNS(svgNS, 'line');
+    ln.setAttribute('x1', x1); ln.setAttribute('y1', y1);
+    ln.setAttribute('x2', x2); ln.setAttribute('y2', y2);
+    ln.setAttribute('stroke', '#F5C15C');
+    ln.setAttribute('stroke-width', '6');
+    ln.setAttribute('stroke-linecap', 'round');
+    ln.setAttribute('stroke-dasharray', '2 10');
+    svg.appendChild(ln);
+    grid.parentNode.insertBefore(svg, fxLayer);
+  }
+  function removeCinchRope() {
+    var rope = document.getElementById('cinchRope');
+    if (rope && rope.parentNode) rope.parentNode.removeChild(rope);
+  }
+
+  // ---------- overlay ----------
+  function showOverlay(winner) {
+    var banner = document.getElementById('ovBanner');
+    var sub = document.getElementById('ovSub');
+    banner.className = 'banner' + (winner === 1 ? ' p1' : winner === 2 ? ' p2' : ' draw');
+    if (winner === 0) {
+      banner.textContent = 'The net comes up empty. Draw!';
+      sub.textContent = 'Every opening filled, nobody lands four. Cast again.';
+    } else {
+      banner.textContent = playerName(winner) + ' haul in the catch!';
+      sub.textContent = 'Four chips cinched up in the net.';
+    }
+    document.getElementById('tallyP1').textContent = wins[1];
+    document.getElementById('tallyP2').textContent = wins[2];
+    document.getElementById('factBody').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
+    overlay.hidden = false;
+    var rb = document.getElementById('rematchBtn');
+    rb.textContent = 'Rematch, ' + playerName(starter) + ' cast first';
+    setTimeout(function () { rb.focus(); }, 40);
+  }
+
+  document.getElementById('rematchBtn').addEventListener('click', function () {
+    snd('click');
+    newRound();
+  });
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown', function (e) {
+    if (!overlay.hidden) return; // let the focused rematch button handle Enter/Space
+    if (over || busy) return;
+
+    if (e.key >= '1' && e.key <= '7') {
+      var c = parseInt(e.key, 10) - 1;
+      e.preventDefault();
+      if (armed && armed.power === 'tangle') { doTangle(c); return; }
+      if (armed && armed.power === 'depth') { return; }
+      if (isColBlocked(c)) { snd('wrong'); setStatus('Column ' + (c + 1) + ' is laced shut this turn.'); return; }
+      if (columnFull(c)) { snd('wrong'); setStatus('Column ' + (c + 1) + ' is full.'); return; }
+      dropChip(c, current);
+      return;
+    }
+    if (e.key === 'd' || e.key === 'D') {
+      e.preventDefault();
+      if (armed && armed.power === 'depth') cancelArm();
+      else if (!armed && powersLeft[current].depth > 0) armPower(current, 'depth');
+      return;
+    }
+    if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      if (armed && armed.power === 'tangle') cancelArm();
+      else if (!armed && powersLeft[current].tangle > 0) armPower(current, 'tangle');
+      return;
+    }
+    if (e.key === 'Escape') {
+      if (armed) { e.preventDefault(); cancelArm(); }
+      return;
+    }
+  });
+
+  // ---------- resize / orientation: reposition chips and overlays ----------
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(repositionAll, 120);
+  });
+  window.addEventListener('orientationchange', function () {
+    setTimeout(repositionAll, 250);
+  });
+
+  function repositionAll() {
+    if (!board) return;
+    var m = metrics();
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var el = chipEls[r][c];
+        if (!el) continue;
+        var restX = c * m.step;
+        var restY = r * m.step;
+        el.style.setProperty('--rest', 'translate(' + restX + 'px,' + restY + 'px)');
+        if (!el.classList.contains('win')) {
+          el.style.transition = '';
+          el.style.transform = 'translate(' + restX + 'px,' + restY + 'px)';
+        }
+      }
+    }
+    if (tangle) drawTangleOverlay(tangle.col);
+    if (over) {
+      var line = findWin();
+      if (line) drawCinchRope(line);
+    }
+  }
+
+  // ---------- init ----------
+  newRound();
+})();
 </script>
-<script src="sounds.js"></script>
 </body>
 </html>

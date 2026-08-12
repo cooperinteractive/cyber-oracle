@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Hall of Fame | Caught in the Net</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --abyss: #041B26; --depth: #072A3C; --panel: #0B3348; --panel-deep: #082838;
+    --line: rgba(244, 235, 217, 0.16);
+    --cream: #F4EBD9; --cream-dim: #C9BFA8;
+    --lure: #FF7A45; --bobber: #E8564A; --biolume: #53DFE8; --kelp: #4FC98C; --brass: #F5C15C;
+    --display: 'Futura', 'Avenir Next Condensed', 'Avenir Next', 'Trebuchet MS', sans-serif;
+    --body: 'Avenir Next', 'Avenir', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --mono: 'Menlo', 'SF Mono', ui-monospace, 'Courier New', monospace;
+  }
+  html { background: linear-gradient(180deg, var(--depth) 0%, var(--abyss) 55%, #02141D 100%); }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--body); color: var(--cream);
+    padding: 20px 18px 60px; overflow-x: hidden;
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  .sea { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .sea::before {
+    content: ''; position: absolute; inset: -40%;
+    background:
+      repeating-linear-gradient(52deg, var(--line) 0 1px, transparent 1px 76px),
+      repeating-linear-gradient(-52deg, var(--line) 0 1px, transparent 1px 76px);
+    opacity: 0.3;
+  }
+  .home-chip {
+    position: fixed; top: 12px; left: 12px; z-index: 60;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 56px; padding: 0 20px;
+    border: 2px solid var(--cream); border-radius: 14px;
+    background: rgba(4, 27, 38, 0.75); color: var(--cream); text-decoration: none;
+    font-family: var(--display); font-weight: 700;
+    font-size: 0.9rem; letter-spacing: 0.1em; text-transform: uppercase; touch-action: manipulation;
+  }
+  .home-chip:active { transform: scale(0.96); background: rgba(11, 51, 72, 0.95); }
+  .wrap { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; }
+  header { text-align: center; padding: 8px 70px 0; margin-bottom: 26px; }
+  .kicker {
+    font-family: var(--display); font-size: 0.72rem; letter-spacing: 0.4em;
+    text-indent: 0.4em; color: var(--brass); text-transform: uppercase; margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; font-size: clamp(2rem, 7vw, 3.4rem); color: var(--cream);
+    text-shadow: 0 3px 0 rgba(2, 20, 29, 0.9);
+  }
+  .trophy { font-size: clamp(2rem, 7vw, 3.2rem); display: block; margin-bottom: 6px; }
+  .sub { margin-top: 12px; color: var(--cream-dim); font-size: 0.85rem; letter-spacing: 0.16em; text-transform: uppercase; }
+  .boards { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 720px) { .boards { grid-template-columns: 1fr 1fr; } }
+  .board {
+    border: 2px solid var(--line); border-radius: 16px;
+    background: linear-gradient(180deg, var(--panel), var(--panel-deep));
+    padding: 16px 16px 12px; box-shadow: 0 10px 26px rgba(2, 15, 22, 0.45);
+  }
+  .board h2 {
+    font-family: var(--display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; font-size: 1.02rem; color: var(--cream);
+    padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px dashed var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .board h2 .u { font-family: var(--mono); font-size: 0.62rem; color: var(--cream-dim); letter-spacing: 0.14em; }
+  ol { list-style: none; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 8px; font-family: var(--mono); }
+  .row + .row { margin-top: 2px; }
+  .row .rk { width: 24px; text-align: right; color: var(--cream-dim); font-size: 0.85rem; }
+  .row.top .rk { color: var(--brass); }
+  .row .ini { width: 58px; font-family: var(--display); font-weight: 700; letter-spacing: 0.14em; font-size: 1.05rem; }
+  .row .sc { flex: 1; text-align: right; color: var(--brass); font-size: 1rem; }
+  .row.empty .ini, .row.empty .sc, .row.empty .rk { color: rgba(244, 235, 217, 0.24); }
+  footer { text-align: center; margin-top: 28px; color: var(--cream-dim); font-size: 0.78rem; }
+  footer a { color: var(--biolume); text-decoration: none; border-bottom: 1px dashed rgba(83, 223, 232, 0.5); }
+  .reset {
+    margin-top: 14px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em;
+    color: var(--cream-dim); background: none; border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 14px; cursor: pointer; touch-action: manipulation;
+  }
+  .reset:active { background: rgba(232, 86, 74, 0.14); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--biolume); outline-offset: 3px; }
+  #cyber-sound-toggle {
+    background: var(--panel) !important; color: var(--cream) !important;
+    border: 2px solid var(--line) !important; border-radius: 12px !important;
+    box-shadow: 0 6px 16px rgba(2, 15, 22, 0.5) !important;
+  }
+</style>
+</head>
+<body>
+<div class="sea" aria-hidden="true"></div>
+<a class="home-chip" href="caught-in-the-net.html">&#8962; ARCADE</a>
+
+<div class="wrap">
+  <header>
+    <span class="trophy" aria-hidden="true">&#127942;</span>
+    <div class="kicker">Caught in the Net</div>
+    <h1>Hall of Fame</h1>
+    <p class="sub">Top hauls on this kiosk</p>
+  </header>
+
+  <main class="boards" id="boards"></main>
+
+  <footer>
+    <p>Scores live on this iPad. <a href="caught-in-the-net.html">Back to the arcade</a></p>
+    <button class="reset" id="resetBtn" type="button">Reset all boards</button>
+  </footer>
+</div>
+
+<script src="sounds.js"></script>
+<script src="leaderboard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var GAMES = [
+    { game: 'reel', title: "Reel 'Em In", unit: 'pts' },
+    { game: 'trawler', title: 'Packet Trawler', unit: 'pts' },
+    { game: 'sonar', title: 'Sonar Sweep', unit: 'pts' },
+    { game: 'kraken', title: 'Kraken Attack', unit: 'pts' },
+    { game: 'dash', title: 'Deep Dive Dash', unit: 'pts' },
+    { game: 'slot', title: 'Password Slots', unit: 'coins' }
+  ];
+  var CAP = (window.CyberLeaderboard && window.CyberLeaderboard.CAP) || 8;
+  function fmt(n) { try { return Math.round(n).toLocaleString(); } catch (e) { return String(n); } }
+
+  function boardEl(cfg) {
+    var list = (window.CyberLeaderboard ? window.CyberLeaderboard.top(cfg.game, CAP) : []);
+    var el = document.createElement('section');
+    el.className = 'board';
+    var rows = '';
+    for (var i = 0; i < CAP; i++) {
+      var e = list[i];
+      if (e) {
+        rows += '<li class="row' + (i < 3 ? ' top' : '') + '">' +
+          '<span class="rk">' + (i + 1) + '</span>' +
+          '<span class="ini">' + e.ini + '</span>' +
+          '<span class="sc">' + fmt(e.score) + '</span></li>';
+      } else {
+        rows += '<li class="row empty"><span class="rk">' + (i + 1) + '</span>' +
+          '<span class="ini">&middot;&middot;&middot;</span><span class="sc">&middot;</span></li>';
+      }
+    }
+    el.innerHTML = '<h2>' + cfg.title + '<span class="u">' + cfg.unit + '</span></h2><ol>' + rows + '</ol>';
+    return el;
+  }
+
+  function render() {
+    var host = document.getElementById('boards');
+    host.innerHTML = '';
+    GAMES.forEach(function (g) { host.appendChild(boardEl(g)); });
+  }
+  render();
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    if (!window.confirm('Clear every high score on this iPad? This cannot be undone.')) return;
+    GAMES.forEach(function (g) { try { localStorage.removeItem('citn-lb-' + g.game); } catch (e) {} });
+    if (window.CyberSounds) CyberSounds.wrong();
+    render();
+  });
+})();
+</script>
+</body>
+</html>

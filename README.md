@@ -1,6 +1,6 @@
 # Cyber Oracle
 
-A collection of interactive cybersecurity and quantum-learning web toys. Each page is a self-contained HTML file with no build step and no dependencies. Drop them on any static host (GitHub Pages, Netlify, your own site, a SharePoint embed) and they work.
+A collection of interactive cybersecurity and quantum-learning web toys. There is no build step or network dependency. Most pages are self-contained HTML files; premium 3D prototypes load only local files from `assets/`. Drop the folder on any static host (GitHub Pages, Netlify, your own site, a SharePoint embed) and it works.
 
 ## Pages
 
@@ -18,7 +18,7 @@ A collection of interactive cybersecurity and quantum-learning web toys. Each pa
 | `honeypot.html` | **Game.** Place traps (firewall, tarpit, sandbox, canary) to catch attackers approaching a fake server. Threat-intel feed shows TTPs. |
 | `prompt-injection.html` | **Game.** Five-level chatbot challenge teaching the most common prompt injection techniques (direct, override, roleplay, smuggling, multi-turn). |
 | `decryption-race.html` | **Game.** Side-by-side classical vs. quantum cracking of an RSA key. Pick from RSA-128 to RSA-4096. Quantum always wins. |
-| `password-slot.html` | **Game.** Slot machine for password entropy and crack-time intuition. |
+| `password-slot.html` | **Game.** Push-your-luck password slots (see Caught in the Net section below). |
 | `incident-response.html` | **Game.** Pager-driven incident response scenarios with consequences. |
 | `social-engineering.html` | **Game.** Branching dialogue about persuasion, pressure, and refusal. |
 | `build-your-stack.html` | **Game.** Spend a limited security budget across layered defenses. |
@@ -28,11 +28,31 @@ A collection of interactive cybersecurity and quantum-learning web toys. Each pa
 | `shadow-it.html` | **Game.** Audit departments for unsanctioned SaaS and risky workflows. |
 | `attack-surface.html` | **Game.** Visualize exposed assets and hidden external risk. |
 | `insider-threat-bingo.html` | **Game.** Match insider-risk indicators against employee profiles. |
-| `connect-four.html` | **Game.** Local multiplayer red-team vs. blue-team Connect Four. |
+| `connect-four.html` | **Game.** Hook, Line and Sinker: Connect Four with power chips (see below). |
 | `permission-panic.html` | **Game.** Consent prompt triage for least-privilege app permissions. |
 | `backup-blaster.html` | **Game.** Ransomware recovery drill for clean snapshots, isolation, and RPO tradeoffs. |
 | `zero-trust-gatekeeper.html` | **Game.** Context-based access decisions: allow, challenge, or block. |
 | `assets/cyber-arcade-banner.png` | Generated hub banner art for the game arcade. |
+
+## Caught in the Net (kiosk arcade)
+
+A second, self-contained arcade built for the Cybersecurity Awareness Month wall installation. Fishing themed ("Caught in the Net"), designed for offline iPads in kiosk mounts: touch-first, short rounds, localStorage high scores, one "Catch of the Day" security tip per game over. Design spec: `docs/superpowers/specs/2026-07-02-caught-in-the-net-arcade-design.md`.
+
+| File | What it is |
+|---|---|
+| `caught-in-the-net.html` | **Arcade hub.** Poster-style table of contents for the seven kiosk games. |
+| `reel-em-in.html` | **Game.** Drop the hook and snag phishing emails; let the honest fish swim by. Illustrated linocut fish, embedded offline as webp. |
+| `reel-em-in-v2.html` | **Game (3D review fork).** Ghost Net Protocol rebuild with a full-screen Three.js ocean, animated water and caustics, local illustrated fish, signal labels, four threat sectors, difficulty modes, a whaling boss, catch analysis, grading, and responsive kiosk controls. The original remains canonical pending approval. |
+| `packet-trawler.html` | **Game.** Drag the firewall net: catch malware, let clean packets reach the harbor. |
+| `packet-trawler-v2.html` | **Game (cinematic).** Same game as Packet Trawler, rebuilt with a rendered harbor background, glowing sprites, a catch-streak multiplier, and more juice. |
+| `sonar-sweep.html` | **Game.** Threat-hunt minesweeper: ping tiles, read the signals, buoy the lurkers. |
+| `kraken-attack.html` | **Game.** Multi-touch defense: zap the botnet swarm before it reaches the Catch Locker. |
+| `kraken-attack-v2.html` | **Game (cinematic).** Same game as Kraken Attack, rebuilt with a rendered abyssal background and sprite enemies. The friendly crew diver is kept as-is. |
+| `deep-dive-dash.html` | **Game.** Deep Dive Dash: Blackwater Protocol, a three-sector courier mission with adaptive cyber threats, encryption and integrity systems, combo scoring, a charged disruption pulse, and a Zero-Day Leviathan boss. |
+| `password-slot.html` | **Game.** Reinvented push-your-luck slots: spin, lock reels, beat the crack-bot. |
+| `connect-four.html` | **Game.** Reinvented as Hook, Line and Sinker: 2-player Connect Four with power chips. |
+| `leaderboard.html` | **Hall of Fame.** Shows every game's local top-eight board. Linked from the hub. |
+| `leaderboard.js` | Shared local leaderboard engine (per-game top-8, touch initials entry). Each game records to it at game over. |
 
 ## Accessibility
 
